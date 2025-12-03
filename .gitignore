@@ -1,0 +1,11 @@
+# Eclipse workspace metadata
+.metadata/
+Servers/
+
+# Build
+bin/
+target/
+
+# OS
+Thumbs.db
+.DS_Store
