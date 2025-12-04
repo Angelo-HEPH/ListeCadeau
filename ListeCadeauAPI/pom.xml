@@ -19,4 +19,12 @@
       </plugin>
     </plugins>
   </build>
+  <dependencies>
+  	<!-- https://mvnrepository.com/artifact/com.oracle.database.jdbc/ojdbc11 -->
+	<dependency>
+	    <groupId>com.oracle.database.jdbc</groupId>
+	    <artifactId>ojdbc11</artifactId>
+	    <version>23.26.0.0.0</version>
+	</dependency>
+  </dependencies>
 </project>
