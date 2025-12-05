@@ -1,4 +1,4 @@
-package Connection;
+package be.couderiannello.Connection;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
