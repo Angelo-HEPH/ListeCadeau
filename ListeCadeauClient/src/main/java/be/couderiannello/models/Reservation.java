@@ -1,12 +1,15 @@
 package be.couderiannello.models;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Reservation {
-	
+public class Reservation implements Serializable {
+
 	//Attributs
+	private static final long serialVersionUID = 1L;
+
 	private int id;
 	private double amount;
 	private LocalDate dateReservation;
@@ -24,7 +27,7 @@ public class Reservation {
 		this();
 		setId(id);
 		setAmount(amount);
-		setDateReservation(dateReservation);
+	    this.dateReservation = LocalDate.now();
 		
         if (cadeau == null) {
             throw new IllegalArgumentException("Cadeau ne peut pas être null.");
@@ -42,21 +45,36 @@ public class Reservation {
 	public int getId() {
 		return id;
 	}
+	
 	public void setId(int id) {
+		if(id < 0) {
+            throw new IllegalArgumentException("L'id ne peut pas être plus petit que 0.");
+		}
+		
 		this.id = id;
 	}
 	
 	public double getAmount() {
 		return amount;
 	}
+	
 	public void setAmount(double amount) {
+		if(amount <= 0) {
+            throw new IllegalArgumentException("Le montant doit être supérieur à 0.");
+		}
+		
 		this.amount = amount;
 	}
 	
 	public LocalDate getDateReservation() {
 		return dateReservation;
 	}
+	
 	public void setDateReservation(LocalDate dateReservation) {
+		if(dateReservation == null) {
+            throw new IllegalArgumentException("La date de réservation ne peut pas être null.");
+		}
+		
 		this.dateReservation = dateReservation;
 	}
 
@@ -123,4 +141,37 @@ public class Reservation {
             p.getReservations().remove(this);
         }
 	}
+	
+	// ToString – HashCode – Equals 
+
+    @Override
+    public String toString() {
+        return "Reservation{" +
+                "id=" + id +
+                ", amount=" + amount +
+                ", dateReservation=" + dateReservation +
+                ", cadeauId=" + (cadeau != null ? cadeau.getId() : null) +
+                ", personnesCount=" + personnes.size() +
+                '}';
+    }
+
+    @Override
+    public int hashCode() {
+        return toString().hashCode(); 
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj == null || obj.getClass() != this.getClass())
+            return false;
+
+        Reservation r = (Reservation) obj;
+
+        return r.getId() == this.id &&
+               r.getAmount() == this.amount &&
+               r.getDateReservation().equals(this.dateReservation) &&
+               ((r.getCadeau() == null && this.cadeau == null) ||
+                (r.getCadeau() != null && this.cadeau != null &&
+                 r.getCadeau().getId() == this.cadeau.getId()));
+    }
 }

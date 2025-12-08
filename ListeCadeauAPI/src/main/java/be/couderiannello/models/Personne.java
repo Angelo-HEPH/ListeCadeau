@@ -1,11 +1,14 @@
 package be.couderiannello.models;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Personne {
+public class Personne implements Serializable {
 
 	//Attributs
+	private static final long serialVersionUID = 1L;
+
 	private int id;
 	private String name;
 	private String firstName;
@@ -51,6 +54,10 @@ public class Personne {
 		return id;
 	}
 	public void setId(int id) {
+		if(id < 0) {
+            throw new IllegalArgumentException("L'id ne peut pas être plus petit que 0.");
+		}
+		
 		this.id = id;
 	}
 	
@@ -58,6 +65,13 @@ public class Personne {
 		return name;
 	}
 	public void setName(String name) {
+		if(name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Le nom ne peut pas être vide.");
+		}
+		if (name.length() > 75) {
+		    throw new IllegalArgumentException("Name trop long (max 75 caractères).");
+		}
+		
 		this.name = name;
 	}
 	
@@ -65,55 +79,112 @@ public class Personne {
 		return firstName;
 	}
 	public void setFirstName(String firstName) {
+		if(firstName == null || firstName.isBlank()) {
+			throw new IllegalArgumentException("Le prénom ne peut pas être vide.");
+		}
+		if (firstName.length() > 75) {
+			throw new IllegalArgumentException("FirstName trop long (max 75 caractères).");
+		}
+		 
 		this.firstName = firstName;
 	}
 	
 	public int getAge() {
 		return age;
 	}
+	
 	public void setAge(int age) {
+		if(age < 0 || age > 120) {
+            throw new IllegalArgumentException("L'âge est invalide.");
+		}
+		
 		this.age = age;
 	}
 	
 	public String getStreet() {
 		return street;
 	}
+	
 	public void setStreet(String street) {
+		if(street == null || street.isBlank()) {
+			throw new IllegalArgumentException("La rue ne peut pas être vide.");
+		}
+		if (street.length() > 150) {
+			throw new IllegalArgumentException("Le nom de rue est trop long (max 150 caractères).");
+		}
+		 
 		this.street = street;
 	}
 	
 	public String getCity() {
 		return city;
 	}
+	
 	public void setCity(String city) {
+		if(city == null || street.isBlank()) {
+            throw new IllegalArgumentException("La ville ne peut pas être vide.");
+		}
+		if (city.length() > 100) {
+			throw new IllegalArgumentException("La ville est trop long (max 100 caractères).");
+		}
+		
 		this.city = city;
 	}
 	
 	public String getStreetNumber() {
 		return streetNumber;
 	}
+	
 	public void setStreetNumber(String streetNumber) {
+		if(streetNumber == null || streetNumber.isBlank()) {
+            throw new IllegalArgumentException("Le numéro de rue ne peut pas être vide.");
+		}
+		if (streetNumber.length() > 20) {
+			throw new IllegalArgumentException("Le numéro de rue est trop long (max 20 caractères).");
+		}
+		
 		this.streetNumber = streetNumber;
 	}
 	
 	public int getPostalCode() {
 		return postalCode;
 	}
+	
 	public void setPostalCode(int postalCode) {
+		if(postalCode <= 0) {
+            throw new IllegalArgumentException("Le code postal est invalide.");
+		}
+		
 		this.postalCode = postalCode;
 	}
 	
 	public String getEmail() {
 		return email;
 	}
+	
 	public void setEmail(String email) {
+		if(email == null || email.isBlank()) {
+            throw new IllegalArgumentException("L'email ne peut pas être vide.");
+		}
+        if(!email.contains("@") || !email.contains(".")) {
+            throw new IllegalArgumentException("L'email n'est pas valide.");
+        }
+        
 		this.email = email;
 	}
 	
 	public String getPassword() {
 		return password;
 	}
+	
 	public void setPassword(String password) {
+		if(password == null || password.isBlank()) {
+            throw new IllegalArgumentException("Le mot de passe ne peut pas être vide.");
+		}
+        if(password.length() < 6) {
+            throw new IllegalArgumentException("Le mot de passe doit contenir au moins 6 caractères.");
+        }
+        
 		this.password = password;
 	}
 	
@@ -123,6 +194,10 @@ public class Personne {
 	}
 
 	public void setReservations(List<Reservation> reservations) {
+		 if(reservations == null) {
+			 throw new IllegalArgumentException("La liste des réservations ne peut pas être null.");
+		 }
+		 
 		this.reservations = reservations;
 	}
 
@@ -131,6 +206,10 @@ public class Personne {
 	}
 
 	public void setNotifications(List<Notification> notifications) {
+		if(notifications == null) {
+            throw new IllegalArgumentException("La liste des notifications ne peut pas être null.");
+		}
+		
 		this.notifications = notifications;
 	}
 
@@ -139,6 +218,10 @@ public class Personne {
 	}
 
 	public void setListeCadeauInvitations(List<ListeCadeau> listeCadeauInvitations) {
+		if(listeCadeauInvitations == null) {
+            throw new IllegalArgumentException("La liste des invitations ne peut pas être null.");
+		}
+		
 		this.listeCadeauInvitations = listeCadeauInvitations;
 	}
 
@@ -147,6 +230,10 @@ public class Personne {
 	}
 
 	public void setListeCadeauCreator(List<ListeCadeau> listeCadeauCreator) {
+		 if(listeCadeauCreator == null) {
+	            throw new IllegalArgumentException("La liste des créations ne peut pas être null.");
+		 }
+		 
 		this.listeCadeauCreator = listeCadeauCreator;
 	}
 	
@@ -251,5 +338,44 @@ public class Personne {
         if (l.getCreator() == this) {
             l.setCreator(null);
         }
+    }
+    
+    // ToString - Equals - HashCode 
+    @Override
+    public String toString() {
+        return "Personne{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", firstName='" + firstName + '\'' +
+                ", age=" + age +
+                ", street='" + street + '\'' +
+                ", city='" + city + '\'' +
+                ", streetNumber='" + streetNumber + '\'' +
+                ", postalCode=" + postalCode +
+                ", email='" + email + '\'' +
+                '}';
+    }
+
+    @Override
+    public int hashCode() {
+        return toString().hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj == null || obj.getClass() != this.getClass())
+            return false;
+
+        Personne p = (Personne) obj;
+
+        return p.getId() == this.id &&
+               p.getName().equals(this.name) &&
+               p.getFirstName().equals(this.firstName) &&
+               p.getAge() == this.age &&
+               p.getStreet().equals(this.street) &&
+               p.getCity().equals(this.city) &&
+               p.getStreetNumber().equals(this.streetNumber) &&
+               p.getPostalCode() == this.postalCode &&
+               p.getEmail().equals(this.email);
     }
 }

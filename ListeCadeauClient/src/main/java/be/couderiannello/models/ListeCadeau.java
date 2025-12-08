@@ -1,12 +1,15 @@
 package be.couderiannello.models;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ListeCadeau {
-	
+public class ListeCadeau implements Serializable {
+
 	//Attributs
+	private static final long serialVersionUID = 1L;
+
 	private int id;
 	private String title;
 	private String evenement;
@@ -27,15 +30,14 @@ public class ListeCadeau {
 	}
 	
 	public ListeCadeau(int id, String title, String evenement, LocalDate creationDate, LocalDate expirationDate,
-			boolean statut, String shareLink, Personne creator, Cadeau cadeau) {
+			boolean statut, Personne creator, Cadeau cadeau) {
 		this();
 		setId(id);
 		setTitle(title);
 		setEvenement(evenement);
-		setCreationDate(creationDate);
+	    this.creationDate = LocalDate.now();
 		setExpirationDate(expirationDate);
 		setStatut(statut);
-		setShareLink(shareLink);
 		setCreator(creator);
 		
         if (creator == null) {
@@ -52,8 +54,13 @@ public class ListeCadeau {
 	
 	//Getters - Setters
 	public int getId() {
+		if(id < 0) {
+            throw new IllegalArgumentException("L'Id ne peut pas être plus petit que 0.");
+		}
+		
 		return id;
 	}
+	
 	public void setId(int id) {
 		this.id = id;
 	}
@@ -61,28 +68,57 @@ public class ListeCadeau {
 	public String getTitle() {
 		return title;
 	}
+	
 	public void setTitle(String title) {
+		if(title == null || title.isBlank()) {
+            throw new IllegalArgumentException("Le titre ne peut pas être vide.");
+		}
+		
+		if(title.length() > 150) {
+            throw new IllegalArgumentException("Le titre dépasse 150 caractères.");
+		}
+		
 		this.title = title;
 	}
 	
 	public String getEvenement() {
 		return evenement;
 	}
+	
 	public void setEvenement(String evenement) {
+		if(evenement == null || evenement.isBlank()) {
+            throw new IllegalArgumentException("L'événement ne peut pas être vide.");
+		}
+		
 		this.evenement = evenement;
 	}
 	
 	public LocalDate getCreationDate() {
 		return creationDate;
 	}
+	
 	public void setCreationDate(LocalDate creationDate) {
-		this.creationDate = creationDate;
+	    if (this.creationDate != null) {
+	        throw new IllegalStateException("La date de création ne peut pas être modifiée.");
+	    }
+	    
+	    this.creationDate = creationDate;
 	}
+
 	
 	public LocalDate getExpirationDate() {
 		return expirationDate;
 	}
+	
 	public void setExpirationDate(LocalDate expirationDate) {
+		if(expirationDate == null) {
+            throw new IllegalArgumentException("La date d'expiration est obligatoire.");
+		}
+		
+        if(creationDate != null && expirationDate.isBefore(creationDate)) {
+            throw new IllegalArgumentException("La date d'expiration ne peut pas être avant la date de création.");
+        }
+        
 		this.expirationDate = expirationDate;
 	}
 	
@@ -96,7 +132,16 @@ public class ListeCadeau {
 	public String getShareLink() {
 		return shareLink;
 	}
+	
 	public void setShareLink(String shareLink) {
+		if(shareLink == null || shareLink.isBlank()) {
+            throw new IllegalArgumentException("Le lien de partage ne peut pas être vide.");
+		}
+		
+        if(!shareLink.startsWith("http://") && !shareLink.startsWith("https://")) {
+            throw new IllegalArgumentException("Le lien de partage doit être une URL valide.");
+        }
+        
 		this.shareLink = shareLink;
 	}
 
@@ -204,5 +249,43 @@ public class ListeCadeau {
         if (c.getListeCadeau() == this) {
             c.setListeCadeau(null);
         }
+    }
+    
+    //ToString - HashCode - Equals
+    @Override
+    public String toString() {
+        return "ListeCadeau{" +
+                "id=" + id +
+                ", title='" + title + '\'' +
+                ", evenement='" + evenement + '\'' +
+                ", creationDate=" + creationDate +
+                ", expirationDate=" + expirationDate +
+                ", statut=" + Statut +
+                ", shareLink='" + shareLink + '\'' +
+                ", creatorId=" + (creator != null ? creator.getId() : null) +
+                ", invitesCount=" + invites.size() +
+                ", cadeauxCount=" + cadeaux.size() +
+                '}';
+    }
+
+    @Override
+    public int hashCode() {
+        return toString().hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj == null || obj.getClass() != this.getClass())
+            return false;
+
+        ListeCadeau lc = (ListeCadeau) obj;
+
+        return lc.getId() == this.id &&
+               lc.getTitle().equals(this.title) &&
+               lc.getEvenement().equals(this.evenement) &&
+               lc.getCreationDate().equals(this.creationDate) &&
+               lc.getExpirationDate().equals(this.expirationDate) &&
+               lc.isStatut() == this.Statut &&
+               lc.getShareLink().equals(this.shareLink);
     }
 }
