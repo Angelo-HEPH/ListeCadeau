@@ -17,11 +17,11 @@ public class PersonneDAO extends DAO<Personne> {
 
         final String SQL_INSERT = """
             INSERT INTO Personne 
-            (Nom, Prenom, Age, Rue, Ville, Numero, CodePostal, Email, MotDePasse)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (ID, Nom, Prenom, Age, Rue, Ville, Numero, CodePostal, Email, MotDePasse)
+            VALUES (SEQ_PERSONNE.NEXTVAL, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
 
-        try (PreparedStatement st = connect.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement st = connect.prepareStatement(SQL_INSERT)) {
 
             st.setString(1, p.getName());
             st.setString(2, p.getFirstName());
@@ -35,20 +35,26 @@ public class PersonneDAO extends DAO<Personne> {
 
             st.executeUpdate();
 
-            try (ResultSet rs = st.getGeneratedKeys()) {
+            final String SQL_GET_ID = "SELECT SEQ_PERSONNE.CURRVAL FROM dual";
+
+            try (PreparedStatement stId = connect.prepareStatement(SQL_GET_ID);
+                 ResultSet rs = stId.executeQuery()) {
+
                 if (rs.next()) {
                     int generatedId = rs.getInt(1);
                     p.setId(generatedId);
-                    return generatedId;   
+                    return generatedId;
+                } else {
+                    throw new RuntimeException("Impossible de récupérer l'ID généré.");
                 }
             }
 
         } catch (SQLException e) {
+            e.printStackTrace();
             throw new RuntimeException("Erreur PersonneDAO.create()", e);
         }
-
-        return -1; 
     }
+
 
     @Override
     public boolean delete(Personne p) {

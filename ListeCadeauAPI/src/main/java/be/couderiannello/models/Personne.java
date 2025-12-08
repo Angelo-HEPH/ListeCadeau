@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import be.couderiannello.dao.PersonneDAO;
+
 public class Personne implements Serializable {
 
 	//Attributs
@@ -377,5 +379,29 @@ public class Personne implements Serializable {
                p.getStreetNumber().equals(this.streetNumber) &&
                p.getPostalCode() == this.postalCode &&
                p.getEmail().equals(this.email);
+    }
+    
+    
+    //DAO
+    public static int create(Personne p, PersonneDAO dao) {
+        int id = dao.create(p);
+        p.setId(id);
+        return id;
+    }
+    
+    public static Personne findById(int id, PersonneDAO dao) {
+    	return dao.find(id);
+    }
+    
+    public static List<Personne> findAll(PersonneDAO dao){
+    	return dao.findAll();
+    }
+    
+    public static boolean delete(Personne p, PersonneDAO dao) {
+    	return dao.delete(p);
+    }
+    
+    public static boolean update(Personne p, PersonneDAO dao) {
+    	return dao.update(p);
     }
 }
