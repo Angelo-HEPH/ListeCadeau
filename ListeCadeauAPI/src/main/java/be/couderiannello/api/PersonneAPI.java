@@ -64,6 +64,8 @@ public class PersonneAPI {
             responseJson.put("name", p.getName());
             responseJson.put("firstName", p.getFirstName());
             responseJson.put("email", p.getEmail());
+            responseJson.put("password", p.getPassword());
+
 
             return Response
                     .status(Status.CREATED)
@@ -112,6 +114,7 @@ public class PersonneAPI {
             json.put("streetNumber", p.getStreetNumber());
             json.put("postalCode", p.getPostalCode());
             json.put("email", p.getEmail());
+            json.put("password", p.getPassword());
 
             return Response
                     .status(Status.OK)
@@ -146,6 +149,7 @@ public class PersonneAPI {
                 json.put("streetNumber", p.getStreetNumber());
                 json.put("postalCode", p.getPostalCode());
                 json.put("email", p.getEmail());
+                json.put("password", p.getPassword());
                 array.put(json);
             }
 
@@ -276,4 +280,50 @@ public class PersonneAPI {
                     .build();
         }
     }
+    
+    @POST
+    @Path("/login")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response login(String loginJson) {
+        try {
+            JSONObject json = new JSONObject(loginJson);
+
+            String email = json.getString("email");
+            String password = json.getString("password"); 
+
+            PersonneDAO dao = new PersonneDAO(ConnectionBdd.getInstance());
+            Personne p = Personne.authenticate(email, password,dao);
+
+            if (p == null) {
+                return Response
+                        .status(Status.UNAUTHORIZED)
+                        .entity("Email ou mot de passe incorrect.")
+                        .build();
+            }
+
+            JSONObject responseJson = new JSONObject();
+            responseJson.put("id", p.getId());
+            responseJson.put("name", p.getName());
+            responseJson.put("firstName", p.getFirstName());
+            responseJson.put("email", p.getEmail());
+
+            return Response
+                    .status(Status.OK)
+                    .entity(responseJson.toString())
+                    .build();
+
+        } catch (JSONException e) {
+            return Response
+                    .status(Status.BAD_REQUEST)
+                    .entity("JSON invalide.")
+                    .build();
+        } catch (Exception e) {
+            return Response
+                    .status(Status.BAD_REQUEST)
+                    .entity("Erreur lors de la connexion.")
+                    .build();
+        }
+    }
+
 }

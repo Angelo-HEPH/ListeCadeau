@@ -404,4 +404,9 @@ public class Personne implements Serializable {
     public static boolean update(Personne p, PersonneDAO dao) {
     	return dao.update(p);
     }
+    
+    public static Personne authenticate(String email, String password, PersonneDAO dao) {
+    	return dao.authenticate(email,password);
+    	
+    }
 }

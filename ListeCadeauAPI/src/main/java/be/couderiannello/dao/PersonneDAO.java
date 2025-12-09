@@ -216,6 +216,47 @@ public class PersonneDAO extends DAO<Personne> {
 
         p.setNotifications(list);
     }
+    
+    public Personne authenticate(String email, String password) {
+
+        final String SQL = """
+            SELECT * 
+            FROM Personne 
+            WHERE Email = ? 
+              AND MotDePasse = HASH_MD5(?)
+        """;
+
+        try (PreparedStatement st = connect.prepareStatement(SQL)) {
+
+            st.setString(1, email);
+            st.setString(2, password); 
+
+            try (ResultSet rs = st.executeQuery()) {
+
+                if (!rs.next()) {
+                    return null;
+                }
+
+                Personne p = new Personne(
+                    rs.getInt("Id"),
+                    rs.getString("Nom"),
+                    rs.getString("Prenom"),
+                    rs.getInt("Age"),
+                    rs.getString("Rue"),
+                    rs.getString("Ville"),
+                    rs.getString("Numero"),
+                    rs.getInt("CodePostal"),
+                    rs.getString("Email"),
+                    rs.getString("MotDePasse") 
+                );
+
+                return p;
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur PersonneDAO.authenticate()", e);
+        }
+    }
 
     private void loadCreatedLists(Personne p) {
 
