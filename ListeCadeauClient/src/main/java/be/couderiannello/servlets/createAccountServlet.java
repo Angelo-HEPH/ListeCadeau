@@ -53,7 +53,7 @@ public class createAccountServlet extends HttpServlet {
             p.setPassword(password);
 
             PersonneDAO dao = PersonneDAO.getInstance();
-            int id = Personne.create(p, dao);
+            int id = p.create(dao);
 
             p.setId(id);
 
@@ -64,6 +64,7 @@ public class createAccountServlet extends HttpServlet {
                    .forward(request, response);
 
         } catch (Exception e) {
+        	e.printStackTrace();
             request.setAttribute("error", "Erreur lors de la création : " + e.getMessage());
             request.getRequestDispatcher("/WEB-INF/view/personne/createAccount.jsp")
                    .forward(request, response);

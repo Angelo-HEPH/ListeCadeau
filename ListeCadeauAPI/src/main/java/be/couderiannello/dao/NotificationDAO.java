@@ -7,7 +7,7 @@ import java.util.List;
 import be.couderiannello.models.Notification;
 import be.couderiannello.models.Personne;
 
-public class NotificationDAO extends DAO<Notification> {
+public class NotificationDAO extends JdbcDAO<Notification> {
 
     public NotificationDAO(Connection conn) {
         super(conn);
@@ -18,11 +18,13 @@ public class NotificationDAO extends DAO<Notification> {
 
         final String SQL_INSERT = """
             INSERT INTO Notification
-            (Message, DateEnvoie, Lu, PersonneId)
-            VALUES (?, ?, ?, ?)
+            (Id, Message, DateEnvoie, Lu, PersonneId)
+            VALUES (SEQ_NOTIFICATION.NEXTVAL, ?, ?, ?, ?)
         """;
 
-        try (PreparedStatement st = connect.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS)) {
+        final String SQL_GET_ID = "SELECT SEQ_NOTIFICATION.CURRVAL FROM dual";
+
+        try (PreparedStatement st = connect.prepareStatement(SQL_INSERT)) {
 
             st.setString(1, n.getMessage());
             st.setDate(2, Date.valueOf(n.getSendDate()));
@@ -31,20 +33,25 @@ public class NotificationDAO extends DAO<Notification> {
 
             st.executeUpdate();
 
-            try (ResultSet rs = st.getGeneratedKeys()) {
+            try (PreparedStatement stId = connect.prepareStatement(SQL_GET_ID);
+                 ResultSet rs = stId.executeQuery()) {
+
                 if (rs.next()) {
                     int id = rs.getInt(1);
                     n.setId(id);
                     return id;
+                } 
+                else {
+                    n.setId(-1);
+                    return -1;
                 }
             }
 
         } catch (SQLException e) {
             throw new RuntimeException("Erreur NotificationDAO.create()", e);
         }
-
-        return -1;
     }
+
 
     @Override
     public boolean delete(Notification n) {
@@ -81,9 +88,12 @@ public class NotificationDAO extends DAO<Notification> {
             throw new RuntimeException("Erreur NotificationDAO.update()", e);
         }
     }
-
-    @Override
+    
     public Notification find(int id) {
+        return find(id, true);
+    }
+
+    public Notification find(int id, boolean loadPersonne) {
 
         final String SQL = "SELECT * FROM Notification WHERE Id=?";
 
@@ -101,9 +111,11 @@ public class NotificationDAO extends DAO<Notification> {
                 n.setMessage(rs.getString("Message"));
                 n.setSendDate(rs.getDate("DateEnvoie").toLocalDate());
                 n.setRead(rs.getInt("Lu") == 1);
-
-                Personne p = loadPersonne(rs.getInt("PersonneId"));
-                n.setPersonne(p);
+                
+                if (loadPersonne) {
+                    Personne p = loadPersonne(rs.getInt("PersonneId"));
+                    n.setPersonne(p);
+                }
 
                 return n;
             }
@@ -115,6 +127,10 @@ public class NotificationDAO extends DAO<Notification> {
 
     @Override
     public List<Notification> findAll() {
+        return findAll(true);
+    }
+    
+    public List<Notification> findAll(boolean loadPersonne) {
 
         final String SQL = "SELECT * FROM Notification ORDER BY DateEnvoie DESC";
 
@@ -132,8 +148,10 @@ public class NotificationDAO extends DAO<Notification> {
                 n.setSendDate(rs.getDate("DateEnvoie").toLocalDate());
                 n.setRead(rs.getInt("Lu") == 1);
 
-                Personne p = loadPersonne(rs.getInt("PersonneId"));
-                n.setPersonne(p);
+                if (loadPersonne) {
+                    Personne p = loadPersonne(rs.getInt("PersonneId"));
+                    n.setPersonne(p);
+                }
 
                 list.add(n);
             }

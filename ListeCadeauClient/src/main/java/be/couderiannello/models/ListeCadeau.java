@@ -5,41 +5,44 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import be.couderiannello.dao.DAO;
+import be.couderiannello.dao.ListeCadeauDAO;
+
 public class ListeCadeau implements Serializable {
 
-	//Attributs
-	private static final long serialVersionUID = 1L;
+    //Attributs
+    private static final long serialVersionUID = 1L;
 
-	private int id;
-	private String title;
-	private String evenement;
-	private LocalDate creationDate;
-	private LocalDate expirationDate;
-	private boolean Statut;
-	private String shareLink;
-	
-	//Relations
-	private Personne creator;
-	private List<Personne> invites;
-	private List<Cadeau> cadeaux;
-	
-	//Constructor
-	public ListeCadeau() {
-		invites = new ArrayList<Personne>();
-		cadeaux = new ArrayList<Cadeau>();
-	}
-	
-	public ListeCadeau(int id, String title, String evenement, LocalDate creationDate, LocalDate expirationDate,
-			boolean statut, Personne creator, Cadeau cadeau) {
-		this();
-		setId(id);
-		setTitle(title);
-		setEvenement(evenement);
-	    this.creationDate = LocalDate.now();
-		setExpirationDate(expirationDate);
-		setStatut(statut);
-		setCreator(creator);
-		
+    private int id;
+    private String title;
+    private String evenement;
+    private LocalDate creationDate;
+    private LocalDate expirationDate;
+    private boolean Statut;
+    private String shareLink;
+    
+    //Relations
+    private Personne creator;
+    private List<Personne> invites;
+    private List<Cadeau> cadeaux;
+    
+    //Constructor
+    public ListeCadeau() {
+        invites = new ArrayList<Personne>();
+        cadeaux = new ArrayList<Cadeau>();
+    }
+    
+    public ListeCadeau(int id, String title, String evenement, LocalDate creationDate, LocalDate expirationDate,
+            boolean statut, Personne creator, Cadeau cadeau) {
+        this();
+        setId(id);
+        setTitle(title);
+        setEvenement(evenement);
+        this.creationDate = LocalDate.now();
+        setExpirationDate(expirationDate);
+        setStatut(statut);
+        setCreator(creator);
+        
         if (creator == null) {
             throw new IllegalArgumentException("Le créateur ne peut pas être null.");
         }
@@ -50,105 +53,105 @@ public class ListeCadeau implements Serializable {
 
         setCreator(creator);
         addCadeau(cadeau);
-	}
-	
-	//Getters - Setters
-	public int getId() {
-		if(id < 0) {
+    }
+    
+    //Getters - Setters
+    public int getId() {
+        if(id < 0) {
             throw new IllegalArgumentException("L'Id ne peut pas être plus petit que 0.");
-		}
-		
-		return id;
-	}
-	
-	public void setId(int id) {
-		this.id = id;
-	}
-	
-	public String getTitle() {
-		return title;
-	}
-	
-	public void setTitle(String title) {
-		if(title == null || title.isBlank()) {
+        }
+        
+        return id;
+    }
+    
+    public void setId(int id) {
+        this.id = id;
+    }
+    
+    public String getTitle() {
+        return title;
+    }
+    
+    public void setTitle(String title) {
+        if(title == null || title.isBlank()) {
             throw new IllegalArgumentException("Le titre ne peut pas être vide.");
-		}
-		
-		if(title.length() > 150) {
+        }
+        
+        if(title.length() > 150) {
             throw new IllegalArgumentException("Le titre dépasse 150 caractères.");
-		}
-		
-		this.title = title;
-	}
-	
-	public String getEvenement() {
-		return evenement;
-	}
-	
-	public void setEvenement(String evenement) {
-		if(evenement == null || evenement.isBlank()) {
+        }
+        
+        this.title = title;
+    }
+    
+    public String getEvenement() {
+        return evenement;
+    }
+    
+    public void setEvenement(String evenement) {
+        if(evenement == null || evenement.isBlank()) {
             throw new IllegalArgumentException("L'événement ne peut pas être vide.");
-		}
-		
-		this.evenement = evenement;
-	}
-	
-	public LocalDate getCreationDate() {
-		return creationDate;
-	}
-	
-	public void setCreationDate(LocalDate creationDate) {
-	    if (this.creationDate != null) {
-	        throw new IllegalStateException("La date de création ne peut pas être modifiée.");
-	    }
-	    
-	    this.creationDate = creationDate;
-	}
+        }
+        
+        this.evenement = evenement;
+    }
+    
+    public LocalDate getCreationDate() {
+        return creationDate;
+    }
+    
+    public void setCreationDate(LocalDate creationDate) {
+        if (this.creationDate != null) {
+            throw new IllegalStateException("La date de création ne peut pas être modifiée.");
+        }
+        
+        this.creationDate = creationDate;
+    }
 
-	
-	public LocalDate getExpirationDate() {
-		return expirationDate;
-	}
-	
-	public void setExpirationDate(LocalDate expirationDate) {
-		if(expirationDate == null) {
+    
+    public LocalDate getExpirationDate() {
+        return expirationDate;
+    }
+    
+    public void setExpirationDate(LocalDate expirationDate) {
+        if(expirationDate == null) {
             throw new IllegalArgumentException("La date d'expiration est obligatoire.");
-		}
-		
+        }
+        
         if(creationDate != null && expirationDate.isBefore(creationDate)) {
             throw new IllegalArgumentException("La date d'expiration ne peut pas être avant la date de création.");
         }
         
-		this.expirationDate = expirationDate;
-	}
-	
-	public boolean isStatut() {
-		return Statut;
-	}
-	public void setStatut(boolean statut) {
-		Statut = statut;
-	}
-	
-	public String getShareLink() {
-		return shareLink;
-	}
-	
-	public void setShareLink(String shareLink) {
-		if(shareLink == null || shareLink.isBlank()) {
+        this.expirationDate = expirationDate;
+    }
+    
+    public boolean isStatut() {
+        return Statut;
+    }
+    public void setStatut(boolean statut) {
+        Statut = statut;
+    }
+    
+    public String getShareLink() {
+        return shareLink;
+    }
+    
+    public void setShareLink(String shareLink) {
+        if(shareLink == null || shareLink.isBlank()) {
             throw new IllegalArgumentException("Le lien de partage ne peut pas être vide.");
-		}
-		
+        }
+        
         if(!shareLink.startsWith("http://") && !shareLink.startsWith("https://")) {
             throw new IllegalArgumentException("Le lien de partage doit être une URL valide.");
         }
         
-		this.shareLink = shareLink;
-	}
+        this.shareLink = shareLink;
+    }
 
-	//Getters - Setters - Relations
-	public Personne getCreator() {
-		return creator;
-	}
+    //Getters - Setters - Relations
+    public Personne getCreator() {
+        return creator;
+    }
 
     public void setCreator(Personne creator) {
         if (this.creator == creator) {
@@ -166,31 +169,31 @@ public class ListeCadeau implements Serializable {
         }
     }
 
-	public List<Personne> getInvites() {
-		return invites;
-	}
+    public List<Personne> getInvites() {
+        return invites;
+    }
 
-	public void setInvites(List<Personne> invites) {
-		if (invites == null) {
+    public void setInvites(List<Personne> invites) {
+        if (invites == null) {
             throw new IllegalArgumentException("La liste des invités ne peut pas être null.");
-		}
+        }
         
-		this.invites = invites;
-	}
+        this.invites = invites;
+    }
 
-	public List<Cadeau> getCadeaux() {
-		return cadeaux;
-	}
+    public List<Cadeau> getCadeaux() {
+        return cadeaux;
+    }
 
-	public void setCadeaux(List<Cadeau> cadeaux) {
-		 if (cadeaux == null) {
-	            throw new IllegalArgumentException("La liste des cadeaux ne peut pas être null.");
-		 }
-	        
-		this.cadeaux = cadeaux;
-	}
-	
-	//Méthodes
+    public void setCadeaux(List<Cadeau> cadeaux) {
+         if (cadeaux == null) {
+                throw new IllegalArgumentException("La liste des cadeaux ne peut pas être null.");
+         }
+            
+        this.cadeaux = cadeaux;
+    }
+    
+    //Méthodes
     public void addInvite(Personne p) {
         if (p == null) {
             throw new IllegalArgumentException("L'invité ne peut pas être null.");
@@ -287,5 +290,34 @@ public class ListeCadeau implements Serializable {
                lc.getExpirationDate().equals(this.expirationDate) &&
                lc.isStatut() == this.Statut &&
                lc.getShareLink().equals(this.shareLink);
+    }
+    
+    public int create(DAO<ListeCadeau> dao) {
+        int id = dao.create(this);
+        this.setId(id);
+        return id;
+    }
+    
+    public static ListeCadeau findById(int id, DAO<ListeCadeau> dao) {
+    	return dao.find(id);
+    }
+    
+    public static ListeCadeau findById(int id, ListeCadeauDAO dao, boolean loadCreator, boolean loadInvites, boolean loadCadeaux) {
+    	return dao.find(id, loadCreator, loadInvites, loadCadeaux);
+    }
+    
+    public static List<ListeCadeau> findAll(DAO<ListeCadeau> dao){
+    	return dao.findAll();
+    }
+    public static List<ListeCadeau> findAll(ListeCadeauDAO dao, boolean loadCreator, boolean loadInvites, boolean loadCadeaux){
+    	return dao.findAll(loadCreator, loadInvites, loadCadeaux);
+    }
+    
+    public static boolean delete(ListeCadeau l, DAO<ListeCadeau> dao) {
+    	return dao.delete(l);
+    }
+    
+    public boolean update(DAO<ListeCadeau> dao) {
+    	return dao.update(this);
     }
 }

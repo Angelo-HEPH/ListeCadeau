@@ -7,7 +7,7 @@ import java.util.List;
 import be.couderiannello.enumeration.StatutPriorite;
 import be.couderiannello.models.*;
 
-public class CadeauDAO extends DAO<Cadeau> {
+public class CadeauDAO extends JdbcDAO<Cadeau> {
 
     public CadeauDAO(Connection conn) {
         super(conn);
@@ -52,14 +52,15 @@ public class CadeauDAO extends DAO<Cadeau> {
     @Override
     public boolean delete(Cadeau c) {
 
-        final String SQL_DEL_RESA = "DELETE FROM Reservation WHERE CadeauId=?";
+        final String SQL_DEL_RES = "DELETE FROM Reservation WHERE CadeauId=?";
         final String SQL_DELETE   = "DELETE FROM Cadeau WHERE Id=?";
 
-        try (PreparedStatement st = connect.prepareStatement(SQL_DEL_RESA)) {
+        try (PreparedStatement st = connect.prepareStatement(SQL_DEL_RES)) {
             st.setInt(1, c.getId());
             st.executeUpdate();
+            
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur CadeauDAO.delete() - réservations", e);
+            throw new RuntimeException("Erreur CadeauDAO.delete() (réservations)", e);
         }
 
         try (PreparedStatement st = connect.prepareStatement(SQL_DELETE)) {
@@ -88,13 +89,13 @@ public class CadeauDAO extends DAO<Cadeau> {
             st.setString(5, c.getLinkSite());
             st.setString(6, c.getPriorite().name());
 
-            if (c.getListeCadeau() != null)
+            if (c.getListeCadeau() != null) {
                 st.setInt(7, c.getListeCadeau().getId());
-            else
+            } else {
                 st.setNull(7, Types.INTEGER);
-
+            }
+            
             st.setInt(8, c.getId());
-
             return st.executeUpdate() > 0;
 
         } catch (SQLException e) {
@@ -104,6 +105,10 @@ public class CadeauDAO extends DAO<Cadeau> {
 
     @Override
     public Cadeau find(int id) {
+        return find(id, true, true);
+    }
+    
+    public Cadeau find(int id, boolean loadListeCadeau, boolean loadReservations) {
 
         final String SQL = "SELECT * FROM Cadeau WHERE Id=?";
 
@@ -112,7 +117,9 @@ public class CadeauDAO extends DAO<Cadeau> {
             st.setInt(1, id);
 
             try (ResultSet rs = st.executeQuery()) {
-                if (!rs.next()) return null;
+                if (!rs.next()) {
+                	return null;
+                }
 
                 Cadeau c = new Cadeau(
                     rs.getInt("Id"),
@@ -124,8 +131,13 @@ public class CadeauDAO extends DAO<Cadeau> {
                     StatutPriorite.valueOf(rs.getString("Priorite"))
                 );
 
-                loadListeCadeau(c);
-                loadReservations(c);
+                if (loadListeCadeau) {
+                    loadListeCadeau(c);
+                }
+                
+                if (loadReservations) {
+                    loadReservations(c);
+                }
 
                 return c;
             }
@@ -137,6 +149,10 @@ public class CadeauDAO extends DAO<Cadeau> {
 
     @Override
     public List<Cadeau> findAll() {
+        return findAll(true, true);
+    }
+    
+    public List<Cadeau> findAll(boolean loadListeCadeau, boolean loadReservations) {
 
         final String SQL = "SELECT * FROM Cadeau ORDER BY Nom";
 
@@ -157,8 +173,13 @@ public class CadeauDAO extends DAO<Cadeau> {
                     StatutPriorite.valueOf(rs.getString("Priorite"))
                 );
 
-                loadListeCadeau(c);
-                loadReservations(c);
+                if (loadListeCadeau) {
+                    loadListeCadeau(c);
+                }
+                
+                if (loadReservations) {
+                    loadReservations(c);
+                }
 
                 list.add(c);
             }
@@ -197,10 +218,13 @@ public class CadeauDAO extends DAO<Cadeau> {
                     l.setStatut(rs.getInt("Statut") == 1);
 
                     String share = rs.getString("ShareLink");
-                    if (share != null && !share.isBlank())
+                    if (share != null && !share.isBlank()) {
                         l.setShareLink(share);
-                    else
+
+                    }
+                    else {
                         l.setShareLink("https://default"); 
+                    }
                    
                     c.setListeCadeau(l);
                 }
@@ -241,5 +265,4 @@ public class CadeauDAO extends DAO<Cadeau> {
 
         c.setReservations(list);
     }
-
 }

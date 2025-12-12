@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import be.couderiannello.dao.CadeauDAO;
+import be.couderiannello.dao.DAO;
 import be.couderiannello.enumeration.StatutPriorite;
 
 public class Cadeau implements Serializable {
@@ -217,4 +219,36 @@ public class Cadeau implements Serializable {
 	           c.getLinkSite().equals(this.getLinkSite()) &&
 	           c.getPriorite() == this.getPriorite();
 	}
+	
+	
+	//DAO
+    public int create(DAO<Cadeau> dao) {
+        int id = dao.create(this);
+        this.setId(id);
+        return id;
+    }
+    
+    public static Cadeau findById(int id, DAO<Cadeau> dao) {
+    	return dao.find(id);
+    }
+    
+    public static Cadeau findById(int id, CadeauDAO dao, boolean loadListeCadeau, boolean loadReservations) {
+    	return dao.find(id, loadListeCadeau, loadReservations);
+    }
+    
+    public static List<Cadeau> findAll(DAO<Cadeau> dao){
+    	return dao.findAll();
+    }
+    
+    public static List<Cadeau> findAll(CadeauDAO dao, boolean loadListeCadeau, boolean loadReservations){
+    	return dao.findAll(loadListeCadeau, loadReservations);
+    }
+    
+    public static boolean delete(Cadeau d, DAO<Cadeau> dao) {
+    	return dao.delete(d);
+    }
+    
+    public boolean update(DAO<Cadeau> dao) {
+    	return dao.update(this);
+    }
 }

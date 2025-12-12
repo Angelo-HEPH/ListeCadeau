@@ -1,15 +1,18 @@
 package be.couderiannello.api;
 
+import java.net.URI;
 import java.util.List;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -20,11 +23,18 @@ import org.json.JSONObject;
 
 import be.couderiannello.connection.ConnectionBdd;
 import be.couderiannello.dao.PersonneDAO;
+import be.couderiannello.models.ListeCadeau;
+import be.couderiannello.models.Notification;
 import be.couderiannello.models.Personne;
+import be.couderiannello.models.Reservation;
 
 @Path("/personne")
 public class PersonneAPI {
 
+    private PersonneDAO getDao() {
+        return new PersonneDAO(ConnectionBdd.getInstance());
+    }
+    
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -32,89 +42,60 @@ public class PersonneAPI {
         try {
             JSONObject json = new JSONObject(personneJson);
 
-            String name = json.getString("name");
-            String firstName = json.getString("firstName");
-            int age = json.getInt("age");
-            String street = json.getString("street");
-            String city = json.getString("city");
-            String streetNumber = json.getString("streetNumber");
-            int postalCode = json.getInt("postalCode");
-            String email = json.getString("email");
-            String password = json.getString("password");
-
-            PersonneDAO dao = new PersonneDAO(ConnectionBdd.getInstance());
-
             Personne p = new Personne();
-            p.setName(name);
-            p.setFirstName(firstName);
-            p.setAge(age);
-            p.setStreet(street);
-            p.setCity(city);
-            p.setStreetNumber(streetNumber);
-            p.setPostalCode(postalCode);
-            p.setEmail(email);
-            p.setPassword(password);
+            fillPersonneFromJson(p, json);
 
-            int id = Personne.create(p, dao);
-            p.setId(id);
-
-            //Réponse JSON
-            JSONObject responseJson = new JSONObject();
-            responseJson.put("id", p.getId());
-            responseJson.put("name", p.getName());
-            responseJson.put("firstName", p.getFirstName());
-            responseJson.put("email", p.getEmail());
-            responseJson.put("password", p.getPassword());
-
+            PersonneDAO dao = getDao();
+            int id = p.create(dao);
 
             return Response
                     .status(Status.CREATED)
-                    .header("Location", "personne/" + id)
-                    .entity(responseJson.toString())
+                    .location(URI.create("personne/" + id))
                     .build();
 
         } catch (JSONException e) {
-            return Response
-                    .status(Status.BAD_REQUEST)
+            return Response.status(Status.BAD_REQUEST)
                     .entity("JSON invalide ou champs manquants.")
                     .build();
         } catch (IllegalArgumentException e) {
-            return Response
-                    .status(Status.BAD_REQUEST)
+            return Response.status(Status.BAD_REQUEST)
                     .entity("Erreur : " + e.getMessage() + ".")
                     .build();
         } catch (Exception e) {
-            return Response
-                    .status(Status.BAD_REQUEST)
-                    .entity("Erreur lors de la création de la personne." + e)
+            return Response.status(Status.BAD_REQUEST)
+                    .entity("Erreur lors de la création de la personne : " + e)
                     .build();
         }
     }
-    
+
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response findById(@PathParam("id") int id) {
+    public Response findById(@PathParam("id") int id,
+                             @QueryParam("loadNotifications") @DefaultValue("false") boolean loadNotifications,
+                             @QueryParam("loadCreatedLists") @DefaultValue("false") boolean loadCreatedLists,
+                             @QueryParam("loadInvitedLists") @DefaultValue("false") boolean loadInvitedLists,
+                             @QueryParam("loadReservations") @DefaultValue("false") boolean loadReservations) {
         try {
-            PersonneDAO dao = new PersonneDAO(ConnectionBdd.getInstance());
+            PersonneDAO dao = getDao();
 
-            Personne p = Personne.findById(id, dao);
+            Personne p = Personne.findById(
+                    id, dao,
+                    loadNotifications,
+                    loadCreatedLists,
+                    loadInvitedLists,
+                    loadReservations
+            );
 
             if (p == null) {
                 return Response.status(Status.NOT_FOUND).build();
             }
 
-            JSONObject json = new JSONObject();
-            json.put("id", p.getId());
-            json.put("name", p.getName());
-            json.put("firstName", p.getFirstName());
-            json.put("age", p.getAge());
-            json.put("street", p.getStreet());
-            json.put("city", p.getCity());
-            json.put("streetNumber", p.getStreetNumber());
-            json.put("postalCode", p.getPostalCode());
-            json.put("email", p.getEmail());
-            json.put("password", p.getPassword());
+            JSONObject json = toJson(p,
+                    loadNotifications,
+                    loadCreatedLists,
+                    loadInvitedLists,
+                    loadReservations);
 
             return Response
                     .status(Status.OK)
@@ -128,50 +109,50 @@ public class PersonneAPI {
                     .build();
         }
     }
-    
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response findAll() {
+    public Response findAll(@QueryParam("loadNotifications") @DefaultValue("false") boolean loadNotifications,
+                            @QueryParam("loadCreatedLists") @DefaultValue("false") boolean loadCreatedLists,
+                            @QueryParam("loadInvitedLists") @DefaultValue("false") boolean loadInvitedLists,
+                            @QueryParam("loadReservations") @DefaultValue("false") boolean loadReservations) {
         try {
-            PersonneDAO dao = new PersonneDAO(ConnectionBdd.getInstance());
-            List<Personne> personnes = Personne.findAll(dao);
+            PersonneDAO dao = getDao();
+
+            List<Personne> personnes = Personne.findAll(
+                    dao,
+                    loadNotifications,
+                    loadCreatedLists,
+                    loadInvitedLists,
+                    loadReservations
+            );
 
             JSONArray array = new JSONArray();
-
             for (Personne p : personnes) {
-                JSONObject json = new JSONObject();
-                json.put("id", p.getId());
-                json.put("name", p.getName());
-                json.put("firstName", p.getFirstName());
-                json.put("age", p.getAge());
-                json.put("street", p.getStreet());
-                json.put("city", p.getCity());
-                json.put("streetNumber", p.getStreetNumber());
-                json.put("postalCode", p.getPostalCode());
-                json.put("email", p.getEmail());
-                json.put("password", p.getPassword());
-                array.put(json);
+                array.put(toJson(p,
+                        loadNotifications,
+                        loadCreatedLists,
+                        loadInvitedLists,
+                        loadReservations));
             }
 
-            return Response
-                    .status(Status.OK)
+            return Response.status(Status.OK)
                     .entity(array.toString())
                     .build();
 
         } catch (Exception e) {
-            return Response
-                    .status(Status.BAD_REQUEST)
+            return Response.status(Status.BAD_REQUEST)
                     .entity("Erreur lors de la récupération des personnes.")
                     .build();
         }
     }
-    
+
     @DELETE
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response deletePersonne(@PathParam("id") int id) {
         try {
-            PersonneDAO dao = new PersonneDAO(ConnectionBdd.getInstance());
+            PersonneDAO dao = getDao();
             Personne p = Personne.findById(id, dao);
 
             if (p == null) {
@@ -190,7 +171,7 @@ public class PersonneAPI {
                         .build();
             }
 
-            return Response.status(Status.OK).build();
+            return Response.status(Status.NO_CONTENT).build();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -207,123 +188,146 @@ public class PersonneAPI {
     @Produces(MediaType.APPLICATION_JSON)
     public Response updatePersonne(@PathParam("id") int id, String personneJson) {
         try {
-            PersonneDAO dao = new PersonneDAO(ConnectionBdd.getInstance());
+            PersonneDAO dao = getDao();
 
-            Personne existing = Personne.findById(id,dao);
+            Personne existing = Personne.findById(id, dao);
             if (existing == null) {
-                return Response
-                        .status(Status.NOT_FOUND)
+                return Response.status(Status.NOT_FOUND)
                         .entity("Erreur : Personne non trouvée.")
                         .build();
             }
 
             JSONObject json = new JSONObject(personneJson);
-            String name = json.getString("name");
-            String firstName = json.getString("firstName");
-            int age = json.getInt("age");
-            String street = json.getString("street");
-            String city = json.getString("city");
-            String streetNumber = json.getString("streetNumber");
-            int postalCode = json.getInt("postalCode");
-            String email = json.getString("email");
-            String password = json.getString("password");
+            fillPersonneFromJson(existing, json);
 
-            existing.setName(name);
-            existing.setFirstName(firstName);
-            existing.setAge(age);
-            existing.setStreet(street);
-            existing.setCity(city);
-            existing.setStreetNumber(streetNumber);
-            existing.setPostalCode(postalCode);
-            existing.setEmail(email);
-            existing.setPassword(password);
-
-            boolean updated = Personne.update(existing, dao);
+            boolean updated = existing.update(dao);
 
             if (!updated) {
-                return Response
-                        .status(Status.BAD_REQUEST)
+                return Response.status(Status.SERVICE_UNAVAILABLE)
                         .entity("Erreur : La mise à jour a échoué.")
                         .build();
             }
 
-            JSONObject responseJson = new JSONObject();
-            responseJson.put("id", existing.getId());
-            responseJson.put("name", existing.getName());
-            responseJson.put("firstName", existing.getFirstName());
-            responseJson.put("age", existing.getAge());
-            responseJson.put("street", existing.getStreet());
-            responseJson.put("city", existing.getCity());
-            responseJson.put("streetNumber", existing.getStreetNumber());
-            responseJson.put("postalCode", existing.getPostalCode());
-            responseJson.put("email", existing.getEmail());
-
-            return Response
-                    .status(Status.OK)
-                    .entity(responseJson.toString())
-                    .build();
+            return Response.status(Status.NO_CONTENT).build();
 
         } catch (JSONException e) {
-            return Response
-                    .status(Status.BAD_REQUEST)
+            return Response.status(Status.BAD_REQUEST)
                     .entity("Erreur : JSON invalide.")
                     .build();
+
         } catch (IllegalArgumentException e) {
-            return Response
-                    .status(Status.BAD_REQUEST)
+            return Response.status(Status.BAD_REQUEST)
                     .entity("Erreur : " + e.getMessage() + ".")
                     .build();
+
         } catch (Exception e) {
-            return Response
-                    .status(Status.BAD_REQUEST)
+            return Response.status(Status.BAD_REQUEST)
                     .entity("Erreur lors de la mise à jour de la personne.")
                     .build();
         }
     }
     
-    @POST
-    @Path("/login")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response login(String loginJson) {
-        try {
-            JSONObject json = new JSONObject(loginJson);
-
-            String email = json.getString("email");
-            String password = json.getString("password"); 
-
-            PersonneDAO dao = new PersonneDAO(ConnectionBdd.getInstance());
-            Personne p = Personne.authenticate(email, password,dao);
-
-            if (p == null) {
-                return Response
-                        .status(Status.UNAUTHORIZED)
-                        .entity("Email ou mot de passe incorrect.")
-                        .build();
-            }
-
-            JSONObject responseJson = new JSONObject();
-            responseJson.put("id", p.getId());
-            responseJson.put("name", p.getName());
-            responseJson.put("firstName", p.getFirstName());
-            responseJson.put("email", p.getEmail());
-
-            return Response
-                    .status(Status.OK)
-                    .entity(responseJson.toString())
-                    .build();
-
-        } catch (JSONException e) {
-            return Response
-                    .status(Status.BAD_REQUEST)
-                    .entity("JSON invalide.")
-                    .build();
-        } catch (Exception e) {
-            return Response
-                    .status(Status.BAD_REQUEST)
-                    .entity("Erreur lors de la connexion.")
-                    .build();
-        }
+    private void fillPersonneFromJson(Personne p, JSONObject json) {
+        p.setName(json.getString("name"));
+        p.setFirstName(json.getString("firstName"));
+        p.setAge(json.getInt("age"));
+        p.setStreet(json.getString("street"));
+        p.setCity(json.getString("city"));
+        p.setStreetNumber(json.getString("streetNumber"));
+        p.setPostalCode(json.getInt("postalCode"));
+        p.setEmail(json.getString("email"));
+        p.setPassword(json.getString("password"));
+    }
+    
+    private JSONObject toJson(Personne p) {
+        return toJson(p, false, false, false, false);
     }
 
+    private JSONObject toJson(Personne p,
+                              boolean includeNotifications,
+                              boolean includeCreatedLists,
+                              boolean includeInvitedLists,
+                              boolean includeReservations) {
+
+        JSONObject json = new JSONObject();
+
+        json.put("id", p.getId());
+        json.put("name", p.getName());
+        json.put("firstName", p.getFirstName());
+        json.put("age", p.getAge());
+        json.put("street", p.getStreet());
+        json.put("city", p.getCity());
+        json.put("streetNumber", p.getStreetNumber());
+        json.put("postalCode", p.getPostalCode());
+        json.put("email", p.getEmail());
+
+        //Relations optionnelles
+        if (includeNotifications) {
+            JSONArray array = new JSONArray();
+            for (Notification n : p.getNotifications()) {
+                array.put(NotificationtoJson(n));
+            }
+            json.put("notifications", array);
+        }
+
+        if (includeCreatedLists) {
+            JSONArray array = new JSONArray();
+            for (ListeCadeau l : p.getListeCadeauCreator()) {
+                array.put(toJsonListeCadeau(l));
+            }
+            json.put("createdLists", array);
+        }
+
+        if (includeInvitedLists) {
+            JSONArray array = new JSONArray();
+            for (ListeCadeau l : p.getListeCadeauInvitations()) {
+                array.put(toJsonListeCadeau(l));
+            }
+            json.put("invitedLists", array);
+        }
+
+        if (includeReservations) {
+            JSONArray arr = new JSONArray();
+            for (Reservation r : p.getReservations()) {
+                arr.put(toJsonReservation(r));
+            }
+            json.put("reservations", arr);
+        }
+
+        return json;
+    }
+
+    private JSONObject NotificationtoJson(Notification n) {
+        JSONObject json = new JSONObject();
+        json.put("id", n.getId());
+        json.put("message", n.getMessage());
+        json.put("sendDate", n.getSendDate().toString());
+        json.put("read", n.isRead());
+        return json;
+    }
+
+    private JSONObject toJsonListeCadeau(ListeCadeau l) {
+        JSONObject json = new JSONObject();
+        json.put("id", l.getId());
+        json.put("title", l.getTitle());
+        json.put("evenement", l.getEvenement());
+        json.put("creationDate", l.getCreationDate().toString());
+        json.put("expirationDate", l.getExpirationDate().toString());
+        json.put("statut", l.isStatut());
+        json.put("shareLink", l.getShareLink());
+        return json;
+    }
+
+    private JSONObject toJsonReservation(Reservation r) {
+        JSONObject json = new JSONObject();
+        json.put("id", r.getId());
+        json.put("amount", r.getAmount());
+        json.put("dateReservation", r.getDateReservation().toString());
+
+        if (r.getCadeau() != null) {
+            json.put("cadeauId", r.getCadeau().getId());
+        }
+
+        return json;
+    }
 }

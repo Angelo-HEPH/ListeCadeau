@@ -7,7 +7,7 @@ import java.util.List;
 import be.couderiannello.enumeration.StatutPriorite;
 import be.couderiannello.models.*;
 
-public class ListeCadeauDAO extends DAO<ListeCadeau> {
+public class ListeCadeauDAO extends JdbcDAO<ListeCadeau> {
 
     public ListeCadeauDAO(Connection conn) {
         super(conn);
@@ -18,9 +18,11 @@ public class ListeCadeauDAO extends DAO<ListeCadeau> {
 
         final String SQL_INSERT = """
             INSERT INTO ListeCadeau 
-            (Titre, Evenement, DateCreation, DateExpiration, Statut, LienPartage, CreateurId)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            (Id, Titre, Evenement, DateCreation, DateExpiration, Statut, LienPartage, CreateurId)
+            VALUES (SEQ_LISTECADEAU.NEXTVAL, ?, ?, ?, ?, ?, ?, ?)
         """;
+
+        final String SQL_GET_ID = "SELECT SEQ_LISTECADEAU.CURRVAL FROM dual";
 
         final String SQL_ADD_INVITE = """
             INSERT INTO ListeCadeau_Invites (ListeId, PersonneId)
@@ -29,7 +31,7 @@ public class ListeCadeauDAO extends DAO<ListeCadeau> {
 
         int generatedId = -1;
 
-        try (PreparedStatement st = connect.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement st = connect.prepareStatement(SQL_INSERT)) {
 
             st.setString(1, l.getTitle());
             st.setString(2, l.getEvenement());
@@ -41,10 +43,14 @@ public class ListeCadeauDAO extends DAO<ListeCadeau> {
 
             st.executeUpdate();
 
-            try (ResultSet rs = st.getGeneratedKeys()) {
+            try (PreparedStatement stId = connect.prepareStatement(SQL_GET_ID);
+                 ResultSet rs = stId.executeQuery()) {
+
                 if (rs.next()) {
                     generatedId = rs.getInt(1);
                     l.setId(generatedId);
+                } else {
+                    throw new RuntimeException("Impossible de récupérer l'ID généré pour ListeCadeau.");
                 }
             }
 
@@ -53,17 +59,20 @@ public class ListeCadeauDAO extends DAO<ListeCadeau> {
         }
 
         try (PreparedStatement st = connect.prepareStatement(SQL_ADD_INVITE)) {
+
             for (Personne p : l.getInvites()) {
                 st.setInt(1, generatedId);
                 st.setInt(2, p.getId());
                 st.executeUpdate();
             }
+
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur ListeCadeauDAO.create() - invites", e);
+            throw new RuntimeException("Erreur ListeCadeauDAO.create() (invites)", e);
         }
 
         return generatedId;
     }
+
 
 
     @Override
@@ -139,6 +148,10 @@ public class ListeCadeauDAO extends DAO<ListeCadeau> {
 
     @Override
     public ListeCadeau find(int id) {
+        return find(id, true, true, true);
+    }
+    
+    public ListeCadeau find(int id, boolean loadCreator, boolean loadInvites, boolean loadCadeaux) {
 
         final String SQL = "SELECT * FROM ListeCadeau WHERE Id=?";
 
@@ -148,8 +161,9 @@ public class ListeCadeauDAO extends DAO<ListeCadeau> {
 
             try (ResultSet rs = st.executeQuery()) {
 
-                if (!rs.next())
+                if (!rs.next()) {
                     return null;
+                }
 
                 ListeCadeau l = new ListeCadeau(); 
 
@@ -161,9 +175,18 @@ public class ListeCadeauDAO extends DAO<ListeCadeau> {
                 l.setStatut(rs.getInt("Statut") == 1);
                 l.setShareLink(rs.getString("LienPartage"));
 
-                loadCreator(l);
-                loadInvites(l);
-                loadCadeaux(l);
+
+                if (loadCreator) {
+                	loadCreator(l);
+                }
+                
+                if (loadInvites) {
+                	loadInvites(l);
+                }
+                
+                if (loadCadeaux) {
+                	loadCadeaux(l);
+                }
 
                 return l;
             }
@@ -173,8 +196,11 @@ public class ListeCadeauDAO extends DAO<ListeCadeau> {
         }
     }
 
-    @Override
     public List<ListeCadeau> findAll() {
+        return findAll(true, true, true);
+    }
+    
+    public List<ListeCadeau> findAll(boolean loadCreator, boolean loadInvites, boolean loadCadeaux) {
 
         final String SQL = "SELECT * FROM ListeCadeau ORDER BY DateCreation DESC";
 
@@ -196,9 +222,17 @@ public class ListeCadeauDAO extends DAO<ListeCadeau> {
                 l.setShareLink(rs.getString("LienPartage"));
 
 
-                loadCreator(l);
-                loadInvites(l);
-                loadCadeaux(l);
+                if (loadCreator) {
+                	loadCreator(l);
+                }
+                
+                if (loadInvites) {
+                	loadInvites(l);
+                }
+                
+                if (loadCadeaux) {
+                	loadCadeaux(l);
+                }
 
                 list.add(l);
             }

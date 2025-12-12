@@ -1,31 +1,16 @@
 package be.couderiannello.dao;
 
-import java.net.URI;
+import java.util.List;
 
-import javax.ws.rs.core.UriBuilder;
+public interface DAO<T> {
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
+    int create(T obj);
 
+    boolean delete(T obj);
 
-public class DAO {
+    boolean update(T obj);
 
-    private WebResource resource;
-    private static URI getBaseURI() {
-        return UriBuilder.fromUri("http://localhost:8080/ListeCadeauAPI/api/") //Si possible mettre dans web.xml
-                .build();
-    }
-    
-    public DAO() {
-        ClientConfig config = new DefaultClientConfig();
-        Client client = Client.create(config);
-        resource  = client.resource(getBaseURI());
-    }
-    
-    public WebResource getResource() {
-        return resource;
-    }
-    
+    T find(int id);
+
+    List<T> findAll();
 }

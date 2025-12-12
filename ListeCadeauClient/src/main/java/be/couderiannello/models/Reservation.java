@@ -5,6 +5,9 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import be.couderiannello.dao.DAO;
+import be.couderiannello.dao.ReservationDAO;
+
 public class Reservation implements Serializable {
 
 	//Attributs
@@ -173,5 +176,35 @@ public class Reservation implements Serializable {
                ((r.getCadeau() == null && this.cadeau == null) ||
                 (r.getCadeau() != null && this.cadeau != null &&
                  r.getCadeau().getId() == this.cadeau.getId()));
+    }
+    
+    public int create(DAO<Reservation> dao) {
+        int id = dao.create(this);
+        this.setId(id);
+        return id;
+    }
+    
+    public static Reservation findById(int id, DAO<Reservation> dao) {
+    	return dao.find(id);
+    }
+    
+    public static Reservation findById(int id, ReservationDAO dao, boolean loadCadeau, boolean loadPersonnes) {
+    	return dao.find(id, loadCadeau, loadPersonnes);
+    }
+    
+    public static List<Reservation> findAll(DAO<Reservation> dao){
+    	return dao.findAll();
+    }
+    
+    public static List<Reservation> findAll(ReservationDAO dao, boolean loadCadeau, boolean loadPersonnes){
+    	return dao.findAll(loadCadeau, loadPersonnes);
+    }
+	
+    public static boolean delete(Reservation r, DAO<Reservation> dao) {
+    	return dao.delete(r);
+    }
+    
+    public boolean update(DAO<Reservation> dao) {
+    	return dao.update(this);
     }
 }

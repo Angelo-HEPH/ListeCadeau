@@ -2,6 +2,10 @@ package be.couderiannello.models;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.List;
+
+import be.couderiannello.dao.DAO;
+import be.couderiannello.dao.NotificationDAO;
 
 public class Notification implements Serializable {
 
@@ -118,5 +122,36 @@ public class Notification implements Serializable {
                n.getMessage().equals(this.message) &&
                n.getSendDate().equals(this.sendDate) &&
                n.isRead() == this.read;
+    }
+    
+    //DAO
+    public int create(DAO<Notification> dao) {
+        int id = dao.create(this);
+        this.setId(id);
+        return id;
+    }
+    
+    public static Notification findById(int id, DAO<Notification> dao) {
+    	return dao.find(id);
+    }
+    
+    public static Notification findById(int id, NotificationDAO dao, boolean loadPersonne) {
+    	return dao.find(id, loadPersonne);
+    }
+    
+    public static List<Notification> findAll(DAO<Notification> dao){
+    	return dao.findAll();
+    }
+    
+    public static List<Notification> findAll(NotificationDAO dao, boolean loadPersonne){
+    	return dao.findAll(loadPersonne);
+    }
+    
+    public static boolean delete(Notification p, DAO<Notification> dao) {
+    	return dao.delete(p);
+    }
+    
+    public boolean update(DAO<Notification> dao) {
+    	return dao.update(this);
     }
 }

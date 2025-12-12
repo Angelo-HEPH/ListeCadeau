@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import be.couderiannello.dao.DAO;
 import be.couderiannello.dao.PersonneDAO;
 
 public class Personne implements Serializable {
@@ -381,32 +382,40 @@ public class Personne implements Serializable {
                p.getEmail().equals(this.email);
     }
     
-    
     //DAO
-    public static int create(Personne p, PersonneDAO dao) {
-        int id = dao.create(p);
-        p.setId(id);
+    public int create(DAO<Personne> dao) {
+        int id = dao.create(this);
+        this.setId(id);
         return id;
     }
     
-    public static Personne findById(int id, PersonneDAO dao) {
+    public static Personne findById(int id, DAO<Personne> dao) {
     	return dao.find(id);
     }
     
-    public static List<Personne> findAll(PersonneDAO dao){
+    public static Personne findById(int id, PersonneDAO dao, boolean loadNotifications, boolean loadCreatedLists, 
+    		boolean loadInvitedLists, boolean loadReservations) {
+    	return dao.find(id, loadNotifications, loadCreatedLists, loadInvitedLists, loadReservations);
+    }
+    
+    public static List<Personne> findAll(DAO<Personne> dao){
     	return dao.findAll();
     }
     
-    public static boolean delete(Personne p, PersonneDAO dao) {
+    public static List<Personne> findAll(PersonneDAO dao, boolean loadNotifications, boolean loadCreatedLists, 
+    		boolean loadInvitedLists, boolean loadReservations){
+    	return dao.findAll(loadNotifications, loadCreatedLists, loadInvitedLists, loadReservations);
+    }
+	
+    public static boolean delete(Personne p, DAO<Personne> dao) {
     	return dao.delete(p);
     }
     
-    public static boolean update(Personne p, PersonneDAO dao) {
-    	return dao.update(p);
+    public boolean update(DAO<Personne> dao) {
+    	return dao.update(this);
     }
     
     public static Personne authenticate(String email, String password, PersonneDAO dao) {
     	return dao.authenticate(email,password);
-    	
     }
 }

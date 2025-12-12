@@ -1,15 +1,8 @@
 package be.couderiannello.dao;
 
-import java.sql.Connection;
 import java.util.List;
 
-public abstract class DAO<T> {
-	
-	protected Connection connect = null;
-	
-	public DAO(Connection conn){
-		this.connect = conn;
-	}
+public interface DAO<T> {
 	
 	public abstract int create(T obj);
 	

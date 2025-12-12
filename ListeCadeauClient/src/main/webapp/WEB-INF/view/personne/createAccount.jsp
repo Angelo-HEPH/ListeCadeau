@@ -10,6 +10,15 @@
 
     <h2>Créer un compte</h2>
 
+	<p style="color:red;">
+	    ${error}
+	</p>
+	
+	<p style="color:green;">
+	    ${message}
+	</p>
+
+
 	<form action="createAccount" method="post">
 
         <label>Nom :</label><br>

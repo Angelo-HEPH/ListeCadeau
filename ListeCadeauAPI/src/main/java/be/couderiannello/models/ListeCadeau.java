@@ -5,6 +5,9 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import be.couderiannello.dao.DAO;
+import be.couderiannello.dao.ListeCadeauDAO;
+
 public class ListeCadeau implements Serializable {
 
     //Attributs
@@ -287,5 +290,35 @@ public class ListeCadeau implements Serializable {
                lc.getExpirationDate().equals(this.expirationDate) &&
                lc.isStatut() == this.Statut &&
                lc.getShareLink().equals(this.shareLink);
+    }
+    
+    //DAO
+    public int create(DAO<ListeCadeau> dao) {
+        int id = dao.create(this);
+        this.setId(id);
+        return id;
+    }
+    
+    public static ListeCadeau findById(int id, DAO<ListeCadeau> dao) {
+    	return dao.find(id);
+    }
+    
+    public static ListeCadeau findById(int id, ListeCadeauDAO dao, boolean loadCreator, boolean loadInvites, boolean loadCadeaux) {
+    	return dao.find(id, loadCreator, loadInvites, loadCadeaux);
+    }
+    
+    public static List<ListeCadeau> findAll(DAO<ListeCadeau> dao){
+    	return dao.findAll();
+    }
+    public static List<ListeCadeau> findAll(ListeCadeauDAO dao, boolean loadCreator, boolean loadInvites, boolean loadCadeaux){
+    	return dao.findAll(loadCreator, loadInvites, loadCadeaux);
+    }
+    
+    public static boolean delete(ListeCadeau l, DAO<ListeCadeau> dao) {
+    	return dao.delete(l);
+    }
+    
+    public boolean update(DAO<ListeCadeau> dao) {
+    	return dao.update(this);
     }
 }

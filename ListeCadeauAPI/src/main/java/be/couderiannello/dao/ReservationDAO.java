@@ -7,7 +7,7 @@ import java.util.List;
 import be.couderiannello.enumeration.StatutPriorite;
 import be.couderiannello.models.*;
 
-public class ReservationDAO extends DAO<Reservation> {
+public class ReservationDAO extends JdbcDAO<Reservation> {
 
     public ReservationDAO(Connection conn) {
         super(conn);
@@ -17,9 +17,11 @@ public class ReservationDAO extends DAO<Reservation> {
     public int create(Reservation r) {
 
         final String SQL_INSERT = """
-            INSERT INTO Reservation (Montant, DateReservation, CadeauId)
-            VALUES (?, ?, ?)
+            INSERT INTO Reservation (Id, Montant, DateReservation, CadeauId)
+            VALUES (SEQ_RESERVATION.NEXTVAL, ?, ?, ?)
         """;
+
+        final String SQL_GET_ID = "SELECT SEQ_RESERVATION.CURRVAL FROM dual";
 
         final String SQL_LINK = """
             INSERT INTO Personne_Reservation (PersonneId, ReservationId)
@@ -28,17 +30,22 @@ public class ReservationDAO extends DAO<Reservation> {
 
         int id = -1;
 
-        try (PreparedStatement st = connect.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement st = connect.prepareStatement(SQL_INSERT)) {
 
             st.setDouble(1, r.getAmount());
             st.setDate(2, Date.valueOf(r.getDateReservation()));
             st.setInt(3, r.getCadeau().getId());
             st.executeUpdate();
 
-            try (ResultSet rs = st.getGeneratedKeys()) {
+            try (PreparedStatement stId = connect.prepareStatement(SQL_GET_ID);
+                 ResultSet rs = stId.executeQuery()) {
+
                 if (rs.next()) {
                     id = rs.getInt(1);
                     r.setId(id);
+                } else {
+                    r.setId(-1);
+                    id = -1;
                 }
             }
 
@@ -53,11 +60,12 @@ public class ReservationDAO extends DAO<Reservation> {
                 st.executeUpdate();
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur ReservationDAO.create() - liens", e);
+            throw new RuntimeException("Erreur ReservationDAO.create()", e);
         }
 
         return id;
     }
+
 
     @Override
     public boolean delete(Reservation r) {
@@ -68,13 +76,15 @@ public class ReservationDAO extends DAO<Reservation> {
         try (PreparedStatement st = connect.prepareStatement(SQL_DELETE_LINKS)) {
             st.setInt(1, r.getId());
             st.executeUpdate();
+            
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur ReservationDAO.delete() - liens", e);
+            throw new RuntimeException("Erreur ReservationDAO.delete() (liens)", e);
         }
 
         try (PreparedStatement st = connect.prepareStatement(SQL_DELETE)) {
             st.setInt(1, r.getId());
             return st.executeUpdate() > 0;
+            
         } catch (SQLException e) {
             throw new RuntimeException("Erreur ReservationDAO.delete()", e);
         }
@@ -109,7 +119,7 @@ public class ReservationDAO extends DAO<Reservation> {
             st.setInt(1, r.getId());
             st.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur ReservationDAO.update() - delete links", e);
+            throw new RuntimeException("Erreur ReservationDAO.update()", e);
         }
 
         try (PreparedStatement st = connect.prepareStatement(SQL_INSERT_LINK)) {
@@ -119,7 +129,7 @@ public class ReservationDAO extends DAO<Reservation> {
                 st.executeUpdate();
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur ReservationDAO.update() - insert links", e);
+            throw new RuntimeException("Erreur ReservationDAO.update()", e);
         }
 
         return true;
@@ -127,6 +137,10 @@ public class ReservationDAO extends DAO<Reservation> {
 
     @Override
     public Reservation find(int id) {
+        return find(id, true, true);
+    }
+
+    public Reservation find(int id, boolean loadCadeau, boolean loadPersonnes) {
 
         final String SQL = "SELECT * FROM Reservation WHERE Id=?";
 
@@ -145,8 +159,13 @@ public class ReservationDAO extends DAO<Reservation> {
                 r.setAmount(rs.getDouble("Montant"));
                 r.setDateReservation(rs.getDate("DateReservation").toLocalDate());
 
-                r.setCadeau(loadCadeau(rs.getInt("CadeauId")));
-                r.setPersonnes(loadPersonnes(id));
+                if (loadCadeau) {
+                    r.setCadeau(loadCadeau(rs.getInt("CadeauId")));
+                }
+
+                if (loadPersonnes) {
+                    r.setPersonnes(loadPersonnes(id));
+                }
 
                 return r;
             }
@@ -158,6 +177,10 @@ public class ReservationDAO extends DAO<Reservation> {
 
     @Override
     public List<Reservation> findAll() {
+        return findAll(true, true);
+    }
+
+    public List<Reservation> findAll(boolean loadCadeau, boolean loadPersonnes) {
 
         final String SQL = "SELECT * FROM Reservation ORDER BY Id DESC";
 
@@ -174,9 +197,14 @@ public class ReservationDAO extends DAO<Reservation> {
                 r.setAmount(rs.getDouble("Montant"));
                 r.setDateReservation(rs.getDate("DateReservation").toLocalDate());
 
-                r.setCadeau(loadCadeau(rs.getInt("CadeauId")));
-                r.setPersonnes(loadPersonnes(r.getId()));
+                if (loadCadeau) {
+                    r.setCadeau(loadCadeau(rs.getInt("CadeauId")));
+                }
 
+                if (loadPersonnes) {
+                    r.setPersonnes(loadPersonnes(r.getId()));
+                }
+                
                 list.add(r);
             }
 

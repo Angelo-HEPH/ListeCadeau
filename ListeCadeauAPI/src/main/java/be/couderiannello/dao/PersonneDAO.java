@@ -6,7 +6,7 @@ import java.util.List;
 
 import be.couderiannello.models.*;
 
-public class PersonneDAO extends DAO<Personne> {
+public class PersonneDAO extends JdbcDAO<Personne> {
 
     public PersonneDAO(Connection conn) {
         super(conn);
@@ -102,6 +102,11 @@ public class PersonneDAO extends DAO<Personne> {
 
     @Override
     public Personne find(int id) {
+        return find(id, true, true, true, true);
+    }
+
+    public Personne find(int id, boolean loadNotifications, boolean loadCreatedLists, boolean loadInvitedLists, 
+    		boolean loadReservations) {
 
         final String SQL = "SELECT * FROM Personne WHERE Id=?";
 
@@ -127,10 +132,21 @@ public class PersonneDAO extends DAO<Personne> {
                     rs.getString("MotDePasse")
                 );
 
-                loadNotifications(p);
-                loadCreatedLists(p);
-                loadInvitedLists(p);
-                loadReservations(p);
+                if (loadNotifications) {
+                	loadNotifications(p);
+                }
+                
+                if (loadCreatedLists) {
+                	loadCreatedLists(p);
+                }
+                
+                if (loadInvitedLists) {
+                	loadInvitedLists(p);
+                }
+                
+                if (loadReservations) {
+                	loadReservations(p);
+                }
 
                 return p;
             }
@@ -142,6 +158,11 @@ public class PersonneDAO extends DAO<Personne> {
 
     @Override
     public List<Personne> findAll() {
+        return findAll(true, true, true, true);
+    }
+
+    public List<Personne> findAll(boolean loadNotifications, boolean loadCreatedLists, boolean loadInvitedLists, 
+    		boolean loadReservations) {
 
         final String SQL = "SELECT * FROM Personne ORDER BY Nom, Prenom";
 
@@ -165,10 +186,21 @@ public class PersonneDAO extends DAO<Personne> {
                     rs.getString("MotDePasse")
                 );
 
-                loadNotifications(p);
-                loadCreatedLists(p);
-                loadInvitedLists(p);
-                loadReservations(p);
+                if (loadNotifications) {
+                	loadNotifications(p);
+                }
+                
+                if (loadCreatedLists) {
+                	loadCreatedLists(p);
+                }
+                
+                if (loadInvitedLists) {
+                	loadInvitedLists(p);
+                }
+                
+                if (loadReservations) {
+                	loadReservations(p);
+                }
 
                 list.add(p);
             }
