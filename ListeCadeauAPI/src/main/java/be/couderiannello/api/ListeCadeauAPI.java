@@ -1,0 +1,284 @@
+package be.couderiannello.api;
+
+import java.net.URI;
+import java.time.LocalDate;
+import java.util.List;
+
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import be.couderiannello.connection.ConnectionBdd;
+import be.couderiannello.dao.ListeCadeauDAO;
+import be.couderiannello.models.Cadeau;
+import be.couderiannello.models.ListeCadeau;
+import be.couderiannello.models.Personne;
+
+@Path("/listeCadeau")
+public class ListeCadeauAPI {
+
+    private ListeCadeauDAO getDao() {
+        return new ListeCadeauDAO(ConnectionBdd.getInstance());
+    }
+
+    //CREATE
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response create(String jsonBody) {
+        try {
+            JSONObject json = new JSONObject(jsonBody);
+
+            ListeCadeau l = new ListeCadeau();
+            fillListeCadeauFromJson(l, json, true);
+
+            int id = l.create(getDao());
+
+            return Response.status(Status.CREATED)
+                    .location(URI.create("listeCadeau/" + id))
+                    .build();
+
+        } catch (JSONException e) {
+            return Response.status(Status.BAD_REQUEST)
+                    .entity("JSON invalide ou champs manquants.")
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Status.BAD_REQUEST)
+                    .entity("Erreur : " + e.getMessage() + ".")
+                    .build();
+        } catch (Exception e) {
+            return Response.status(Status.BAD_REQUEST)
+                    .entity("Erreur lors de la création de la liste.")
+                    .build();
+        }
+    }
+
+    //FIND BY ID
+    @GET
+    @Path("/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response findById(@PathParam("id") int id,
+                             @QueryParam("loadCreator") @DefaultValue("false") boolean loadCreator,
+                             @QueryParam("loadInvites") @DefaultValue("false") boolean loadInvites,
+                             @QueryParam("loadCadeaux") @DefaultValue("false") boolean loadCadeaux) {
+        try {
+            ListeCadeauDAO dao = getDao();
+
+            ListeCadeau l = ListeCadeau.findById(id, dao, loadCreator, loadInvites, loadCadeaux);
+            if (l == null) {
+                return Response.status(Status.NOT_FOUND).build();
+            }
+
+            JSONObject json = toJson(l, loadCreator, loadInvites, loadCadeaux);
+
+            return Response.status(Status.OK)
+                    .entity(json.toString())
+                    .build();
+
+        } catch (Exception e) {
+            return Response.status(Status.BAD_REQUEST)
+                    .entity("Erreur lors de la récupération de la liste.")
+                    .build();
+        }
+    }
+
+    //FIND ALL
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response findAll(@QueryParam("loadCreator") @DefaultValue("false") boolean loadCreator,
+                            @QueryParam("loadInvites") @DefaultValue("false") boolean loadInvites,
+                            @QueryParam("loadCadeaux") @DefaultValue("false") boolean loadCadeaux) {
+        try {
+            ListeCadeauDAO dao = getDao();
+
+            List<ListeCadeau> listes = ListeCadeau.findAll(dao, loadCreator, loadInvites, loadCadeaux);
+
+            JSONArray array = new JSONArray();
+            for (ListeCadeau l : listes) {
+                array.put(toJson(l, loadCreator, loadInvites, loadCadeaux));
+            }
+
+            return Response.status(Status.OK)
+                    .entity(array.toString())
+                    .build();
+
+        } catch (Exception e) {
+            return Response.status(Status.BAD_REQUEST)
+                    .entity("Erreur lors de la récupération des listes.")
+                    .build();
+        }
+    }
+
+    //UPDATE
+    @PUT
+    @Path("/{id}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response update(@PathParam("id") int id, String body) {
+        try {
+            ListeCadeauDAO dao = getDao();
+
+            ListeCadeau existing = ListeCadeau.findById(id, dao);
+            if (existing == null) {
+                return Response.status(Status.NOT_FOUND)
+                        .entity("Erreur : ListeCadeau non trouvée.")
+                        .build();
+            }
+
+            JSONObject json = new JSONObject(body);
+
+            fillListeCadeauFromJson(existing, json, false);
+
+            boolean updated = existing.update(dao);
+
+            if (!updated) {
+                return Response.status(Status.SERVICE_UNAVAILABLE)
+                        .entity("Erreur : La mise à jour a échoué.")
+                        .build();
+            }
+
+            return Response.status(Status.NO_CONTENT).build();
+
+        } catch (JSONException e) {
+            return Response.status(Status.BAD_REQUEST)
+                    .entity("Erreur : JSON invalide.")
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Status.BAD_REQUEST)
+                    .entity("Erreur : " + e.getMessage() + ".")
+                    .build();
+        } catch (Exception e) {
+            return Response.status(Status.BAD_REQUEST)
+                    .entity("Erreur lors de la mise à jour de la liste.")
+                    .build();
+        }
+    }
+
+    //DELETE
+    @DELETE
+    @Path("/{id}")
+    public Response delete(@PathParam("id") int id) {
+        try {
+            ListeCadeauDAO dao = getDao();
+            ListeCadeau l = ListeCadeau.findById(id, dao);
+
+            if (l == null) {
+                return Response.status(Status.NOT_FOUND).build();
+            }
+
+            boolean deleted = ListeCadeau.delete(l, dao);
+
+            if (!deleted) {
+                return Response.status(Status.BAD_REQUEST)
+                        .entity("Erreur : Impossible de supprimer cette liste.")
+                        .build();
+            }
+
+            return Response.status(Status.NO_CONTENT).build();
+
+        } catch (Exception e) {
+            return Response.status(Status.BAD_REQUEST)
+                    .entity("Erreur lors de la suppression.")
+                    .build();
+        }
+    }
+
+    //Méthode privé
+    private void fillListeCadeauFromJson(ListeCadeau l, JSONObject json, boolean isCreate) {
+
+        l.setTitle(json.getString("title"));
+        l.setEvenement(json.getString("evenement"));
+        l.setExpirationDate(LocalDate.parse(json.getString("expirationDate")));
+
+        if (isCreate) {
+            l.setCreationDate(LocalDate.now());
+        }
+
+        if (json.has("statut")) {
+            l.setStatut(json.getBoolean("statut"));
+        } else if (isCreate) {
+            l.setStatut(true);
+        }
+
+        l.setShareLink(json.getString("shareLink"));
+
+        if (isCreate && (!json.has("creatorId"))) {
+            throw new IllegalArgumentException("creatorId est obligatoire.");
+        }
+
+        if (json.has("creatorId")) {
+            Personne p = new Personne();
+            p.setId(json.getInt("creatorId"));
+            l.setCreator(p);
+        }
+    }
+
+    private JSONObject toJson(ListeCadeau l, boolean includeCreator, boolean includeInvites, boolean includeCadeaux) {
+
+        JSONObject json = new JSONObject();
+
+        json.put("id", l.getId());
+        json.put("title", l.getTitle());
+        json.put("evenement", l.getEvenement());
+        json.put("creationDate", l.getCreationDate());
+        json.put("expirationDate", l.getExpirationDate());
+        json.put("statut", l.isStatut());
+        json.put("shareLink", l.getShareLink());
+        json.put("creatorId", l.getCreator());
+
+        if (includeCreator && l.getCreator() != null) {
+            json.put("creator", toJsonCreator(l.getCreator()));
+        }
+
+        if (includeInvites) {
+            JSONArray array = new JSONArray();
+            for (Personne p : l.getInvites()) {
+                array.put(toJsonInvite(p));
+            }
+            json.put("invites", array);
+        }
+
+        if (includeCadeaux) {
+            JSONArray array = new JSONArray();
+            for (Cadeau c : l.getCadeaux()) {
+                array.put(toJsonCadeau(c));
+            }
+            json.put("cadeaux", array);
+        }
+
+        return json;
+    }
+
+    private JSONObject toJsonCreator(Personne p) {
+        JSONObject json = new JSONObject();
+        json.put("id", p.getId());
+        return json;
+    }
+
+    private JSONObject toJsonInvite(Personne p) {
+        JSONObject json = new JSONObject();
+        json.put("id", p.getId());
+        return json;
+    }
+
+    private JSONObject toJsonCadeau(Cadeau c) {
+        JSONObject json = new JSONObject();
+        json.put("id", c.getId());
+        if (c.getName() != null) {
+            json.put("name", c.getName());
+        }
+        return json;
+    }
+}

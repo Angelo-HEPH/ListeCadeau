@@ -37,7 +37,6 @@ public class PersonneAPI {
     
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     public Response createPersonne(String personneJson) {
         try {
             JSONObject json = new JSONObject(personneJson);
@@ -45,8 +44,7 @@ public class PersonneAPI {
             Personne p = new Personne();
             fillPersonneFromJson(p, json);
 
-            PersonneDAO dao = getDao();
-            int id = p.create(dao);
+            int id = p.create(getDao());
 
             return Response
                     .status(Status.CREATED)
@@ -158,7 +156,6 @@ public class PersonneAPI {
             if (p == null) {
                 return Response
                         .status(Status.NOT_FOUND)
-                        .entity("Erreur : Personne non trouvée.")
                         .build();
             }
 

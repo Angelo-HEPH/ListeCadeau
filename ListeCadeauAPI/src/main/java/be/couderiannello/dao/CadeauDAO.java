@@ -17,12 +17,16 @@ public class CadeauDAO extends JdbcDAO<Cadeau> {
     public int create(Cadeau c) {
 
         final String SQL_INSERT = """
-            INSERT INTO Cadeau 
-            (Nom, Description, Prix, Photo, LienSite, Priorite, ListeId)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO Cadeau
+            (Id, Nom, Description, Prix, Photo, LienSite, Priorite, ListeId)
+            VALUES (SEQ_CADEAU.NEXTVAL, ?, ?, ?, ?, ?, ?, ?)
         """;
 
-        try (PreparedStatement st = connect.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS)) {
+        final String SQL_GET_ID = "SELECT SEQ_CADEAU.CURRVAL FROM dual";
+
+        int generatedId = -1;
+
+        try (PreparedStatement st = connect.prepareStatement(SQL_INSERT)) {
 
             st.setString(1, c.getName());
             st.setString(2, c.getDescription());
@@ -34,11 +38,14 @@ public class CadeauDAO extends JdbcDAO<Cadeau> {
 
             st.executeUpdate();
 
-            try (ResultSet rs = st.getGeneratedKeys()) {
+            try (PreparedStatement stId = connect.prepareStatement(SQL_GET_ID);
+                 ResultSet rs = stId.executeQuery()) {
+
                 if (rs.next()) {
-                    int id = rs.getInt(1);
-                    c.setId(id);
-                    return id;
+                    generatedId = rs.getInt(1);
+                    c.setId(generatedId);
+                } else {
+                    throw new RuntimeException("Impossible de récupérer l'ID généré pour Cadeau.");
                 }
             }
 
@@ -46,8 +53,9 @@ public class CadeauDAO extends JdbcDAO<Cadeau> {
             throw new RuntimeException("Erreur CadeauDAO.create()", e);
         }
 
-        return -1; 
+        return generatedId;
     }
+
 
     @Override
     public boolean delete(Cadeau c) {
@@ -76,7 +84,7 @@ public class CadeauDAO extends JdbcDAO<Cadeau> {
 
         final String SQL_UPDATE = """
             UPDATE Cadeau
-            SET Nom=?, Description=?, Prix=?, Photo=?, LienSite=?, Priorite=?, ListeId=?
+            SET Nom=?, Description=?, Prix=?, Photo=?, LienSite=?, Priorite=?
             WHERE Id=?
         """;
 
@@ -88,14 +96,8 @@ public class CadeauDAO extends JdbcDAO<Cadeau> {
             st.setString(4, c.getPhoto());
             st.setString(5, c.getLinkSite());
             st.setString(6, c.getPriorite().name());
+            st.setInt(7, c.getId());
 
-            if (c.getListeCadeau() != null) {
-                st.setInt(7, c.getListeCadeau().getId());
-            } else {
-                st.setNull(7, Types.INTEGER);
-            }
-            
-            st.setInt(8, c.getId());
             return st.executeUpdate() > 0;
 
         } catch (SQLException e) {
@@ -105,7 +107,7 @@ public class CadeauDAO extends JdbcDAO<Cadeau> {
 
     @Override
     public Cadeau find(int id) {
-        return find(id, true, true);
+        return find(id, false, false);
     }
     
     public Cadeau find(int id, boolean loadListeCadeau, boolean loadReservations) {
@@ -121,6 +123,10 @@ public class CadeauDAO extends JdbcDAO<Cadeau> {
                 	return null;
                 }
 
+                int listeId = rs.getInt("ListeId");
+                ListeCadeau lc = new ListeCadeau();
+                lc.setId(listeId);
+                
                 Cadeau c = new Cadeau(
                     rs.getInt("Id"),
                     rs.getString("Nom"),
@@ -128,7 +134,8 @@ public class CadeauDAO extends JdbcDAO<Cadeau> {
                     rs.getDouble("Prix"),
                     rs.getString("Photo"),
                     rs.getString("LienSite"),
-                    StatutPriorite.valueOf(rs.getString("Priorite"))
+                    StatutPriorite.valueOf(rs.getString("Priorite")),
+                    lc
                 );
 
                 if (loadListeCadeau) {
@@ -163,6 +170,10 @@ public class CadeauDAO extends JdbcDAO<Cadeau> {
 
             while (rs.next()) {
 
+                int listeId = rs.getInt("ListeId");
+                ListeCadeau lc = new ListeCadeau();
+                lc.setId(listeId);
+                
                 Cadeau c = new Cadeau(
                     rs.getInt("Id"),
                     rs.getString("Nom"),
@@ -170,7 +181,8 @@ public class CadeauDAO extends JdbcDAO<Cadeau> {
                     rs.getDouble("Prix"),
                     rs.getString("Photo"),
                     rs.getString("LienSite"),
-                    StatutPriorite.valueOf(rs.getString("Priorite"))
+                    StatutPriorite.valueOf(rs.getString("Priorite")),
+                    lc
                 );
 
                 if (loadListeCadeau) {
@@ -200,7 +212,7 @@ public class CadeauDAO extends JdbcDAO<Cadeau> {
         """;
 
         try (PreparedStatement st = connect.prepareStatement(SQL)) {
-            st.setInt(1, c.getId());
+            st.setInt(1, c.getListeCadeau().getId());
 
             try (ResultSet rs = st.executeQuery()) {
 

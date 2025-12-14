@@ -342,10 +342,10 @@ public class ListeCadeauDAO extends JdbcDAO<ListeCadeau> {
                         rs.getDouble("Prix"),
                         rs.getString("Photo"),
                         rs.getString("LienSite"),
-                        StatutPriorite.valueOf(rs.getString("Priorite"))
+                        StatutPriorite.valueOf(rs.getString("Priorite")),
+                        l
                     );
 
-                    c.setListeCadeau(l);
                     cadeaux.add(c);
                 }
             }

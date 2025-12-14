@@ -18,7 +18,7 @@ public class ListeCadeau implements Serializable {
     private String evenement;
     private LocalDate creationDate;
     private LocalDate expirationDate;
-    private boolean Statut;
+    private boolean statut;
     private String shareLink;
     
     //Relations
@@ -38,7 +38,7 @@ public class ListeCadeau implements Serializable {
         setId(id);
         setTitle(title);
         setEvenement(evenement);
-        this.creationDate = LocalDate.now();
+        setCreationDate(LocalDate.now());
         setExpirationDate(expirationDate);
         setStatut(statut);
         setCreator(creator);
@@ -126,10 +126,10 @@ public class ListeCadeau implements Serializable {
     }
     
     public boolean isStatut() {
-        return Statut;
+        return statut;
     }
     public void setStatut(boolean statut) {
-        Statut = statut;
+        this.statut = statut;
     }
     
     public String getShareLink() {
@@ -263,7 +263,7 @@ public class ListeCadeau implements Serializable {
                 ", evenement='" + evenement + '\'' +
                 ", creationDate=" + creationDate +
                 ", expirationDate=" + expirationDate +
-                ", statut=" + Statut +
+                ", statut=" + statut +
                 ", shareLink='" + shareLink + '\'' +
                 ", creatorId=" + (creator != null ? creator.getId() : null) +
                 ", invitesCount=" + invites.size() +
@@ -288,7 +288,7 @@ public class ListeCadeau implements Serializable {
                lc.getEvenement().equals(this.evenement) &&
                lc.getCreationDate().equals(this.creationDate) &&
                lc.getExpirationDate().equals(this.expirationDate) &&
-               lc.isStatut() == this.Statut &&
+               lc.isStatut() == this.statut &&
                lc.getShareLink().equals(this.shareLink);
     }
     

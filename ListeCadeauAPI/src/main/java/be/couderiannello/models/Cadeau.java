@@ -31,7 +31,7 @@ public class Cadeau implements Serializable {
 	}
 	
 	public Cadeau(int id, String name, String description, double price, String photo,String linkSite,
-			StatutPriorite priorite) {
+			StatutPriorite priorite, ListeCadeau listeCadeau) {
 		this();
 		setId(id);
 		setName(name);
@@ -40,6 +40,7 @@ public class Cadeau implements Serializable {
 		setPhoto(photo);
 		setLinkSite(linkSite);
 		setPriorite(priorite);
+		setListeCadeau(listeCadeau);
 	}
 	
 	//Getters - Setters

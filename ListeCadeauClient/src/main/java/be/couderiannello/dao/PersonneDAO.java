@@ -33,7 +33,7 @@ public class PersonneDAO extends RestDAO<Personne> {
         return instance;
     }
 
-    // CREATE
+    //CREATE
     @Override
     public int create(Personne p) {
 
@@ -68,7 +68,7 @@ public class PersonneDAO extends RestDAO<Personne> {
         throw new RuntimeException("Erreur API création personne : " + response.getStatus());
     }
 
-    // FIND (par défaut : aucune relation)
+    //FIND
     @Override
     public Personne find(int id) {
         return find(id, false, false, false, false);
@@ -97,7 +97,7 @@ public class PersonneDAO extends RestDAO<Personne> {
         JSONObject json = new JSONObject(response.getEntity(String.class));
         Personne p = fromJsonPersonne(json);
 
-        // Relations optionnelles
+        //Relations optionnelles
         if (loadNotifications && json.has("notifications")) {
             p.setNotifications(parseNotifications(json.getJSONArray("notifications")));
         }
@@ -117,7 +117,7 @@ public class PersonneDAO extends RestDAO<Personne> {
         return p;
     }
 
-    // FINDALL
+    //FINDALL
     @Override
     public List<Personne> findAll() {
         return findAll(false, false, false, false);
@@ -150,7 +150,7 @@ public class PersonneDAO extends RestDAO<Personne> {
 
             Personne p = fromJsonPersonne(json);
 
-            // Relations optionnelles
+            //Relations optionnelles
             if (loadNotifications && json.has("notifications")) {
                 p.setNotifications(parseNotifications(json.getJSONArray("notifications")));
             }
