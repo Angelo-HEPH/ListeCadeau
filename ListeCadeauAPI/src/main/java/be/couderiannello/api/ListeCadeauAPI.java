@@ -236,7 +236,7 @@ public class ListeCadeauAPI {
         json.put("expirationDate", l.getExpirationDate());
         json.put("statut", l.isStatut());
         json.put("shareLink", l.getShareLink());
-        json.put("creatorId", l.getCreator());
+        json.put("creatorId", l.getCreator().getId());
 
         if (includeCreator && l.getCreator() != null) {
             json.put("creator", toJsonCreator(l.getCreator()));
@@ -276,9 +276,14 @@ public class ListeCadeauAPI {
     private JSONObject toJsonCadeau(Cadeau c) {
         JSONObject json = new JSONObject();
         json.put("id", c.getId());
-        if (c.getName() != null) {
-            json.put("name", c.getName());
-        }
+        json.put("name", c.getName());
+        json.put("description", c.getDescription());
+        json.put("price", c.getPrice());
+        json.put("photo", c.getPhoto());
+        json.put("linkSite", c.getLinkSite());
+        json.put("priorite", c.getPriorite().name());
+        json.put("listeCadeauId", c.getListeCadeau().getId());
         return json;
     }
+
 }

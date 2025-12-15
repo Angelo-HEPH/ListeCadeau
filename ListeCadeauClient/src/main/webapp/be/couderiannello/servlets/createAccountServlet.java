@@ -54,15 +54,17 @@ public class createAccountServlet extends HttpServlet {
 
             PersonneDAO dao = PersonneDAO.getInstance();
             int id = p.create(dao);
+
             p.setId(id);
 
-            request.getSession().setAttribute("successMessage", "Compte créé avec succès. Vous pouvez maintenant vous connecter.");
+            request.setAttribute("personne", p);
+            request.setAttribute("message", "Compte créé avec succès !");
 
-            response.sendRedirect(request.getContextPath() + "/login");
-            
+            request.getRequestDispatcher("/WEB-INF/view/accountSuccess.jsp")
+                   .forward(request, response);
 
         } catch (Exception e) {
-            e.printStackTrace();
+        	e.printStackTrace();
             request.setAttribute("error", "Erreur lors de la création : " + e.getMessage());
             request.getRequestDispatcher("/WEB-INF/view/personne/createAccount.jsp")
                    .forward(request, response);

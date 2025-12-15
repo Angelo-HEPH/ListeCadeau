@@ -1,5 +1,4 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html>
 <head>
@@ -8,22 +7,43 @@
 </head>
 <body>
 
+<jsp:include page="/WEB-INF/view/includes/header.jsp" />
+
+<div class="container">
+
     <h2>Connexion</h2>
 
-    <form action="login" method="post">
+    <% 
+        String success = (String) session.getAttribute("successMessage");
+        if (success != null) {
+    %>
+        <p class="text-success fw-bold"><%= success %></p>
+    <%
+            session.removeAttribute("successMessage");
+        }
+    %>
 
-        <label>Email :</label><br>
-        <input type="email" name="email" required><br><br>
+    <% 
+        String error = (String) request.getAttribute("error");
+        if (error != null) {
+    %>
+        <p class="text-danger fw-bold"><%= error %></p>
+    <%
+        }
+    %>
 
-        <label>Mot de passe :</label><br>
-        <input type="password" name="password" required><br><br>
+    <form action="login" method="post" class="mb-3">
 
-        <button type="submit">Se connecter</button>
+        <label>Email :</label>
+        <input type="email" class="form-control" name="email" required>
+
+        <label class="mt-2">Mot de passe :</label>
+        <input type="password" class="form-control" name="password" required>
+
+        <button type="submit" class="btn btn-primary mt-3">Se connecter</button>
     </form>
 
-    <p style="color:red;">
-        ${error}
-    </p>
+</div>
 
 </body>
 </html>

@@ -46,9 +46,6 @@ public class CadeauDAO extends RestDAO<Cadeau> {
         json.put("priorite", c.getPriorite().name());
         json.put("listeCadeauId", c.getListeCadeau().getId());
 
-        System.out.println("JSON envoyé à l'API : " + json.toString());
-
-        
         ClientResponse response = getResource()
                 .path("cadeau")
                 .type(MediaType.APPLICATION_JSON)

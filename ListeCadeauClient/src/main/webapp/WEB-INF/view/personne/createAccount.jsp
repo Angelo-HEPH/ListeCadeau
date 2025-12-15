@@ -8,48 +8,75 @@
 </head>
 <body>
 
-    <h2>Créer un compte</h2>
+<jsp:include page="/WEB-INF/view/includes/header.jsp" />
 
-	<p style="color:red;">
-	    ${error}
-	</p>
-	
-	<p style="color:green;">
-	    ${message}
-	</p>
+<div class="container mt-4">
 
+    <h2 class="mb-4">Créer un compte</h2>
 
-	<form action="createAccount" method="post">
+    <c:if test="${not empty error}">
+        <p class="text-danger fw-bold">${error}</p>
+    </c:if>
 
-        <label>Nom :</label><br>
-        <input type="text" name="name" required><br><br>
+    <c:if test="${not empty message}">
+        <p class="text-success fw-bold">${message}</p>
+    </c:if>
 
-        <label>Prénom :</label><br>
-        <input type="text" name="firstName" required><br><br>
+    <form action="createAccount" method="post" class="row g-3">
 
-        <label>Âge :</label><br>
-        <input type="number" name="age" required><br><br>
+        <div class="col-md-6">
+            <label class="form-label">Nom :</label>
+            <input type="text" class="form-control" name="name" required>
+        </div>
 
-        <label>Rue :</label><br>
-        <input type="text" name="street" required><br><br>
+        <div class="col-md-6">
+            <label class="form-label">Prénom :</label>
+            <input type="text" class="form-control" name="firstName" required>
+        </div>
 
-        <label>Ville :</label><br>
-        <input type="text" name="city" required><br><br>
+        <div class="col-md-4">
+            <label class="form-label">Âge :</label>
+            <input type="number" class="form-control" name="age" required>
+        </div>
 
-        <label>Numéro :</label><br>
-        <input type="text" name="streetNumber" required><br><br>
+        <div class="col-md-8">
+            <label class="form-label">Rue :</label>
+            <input type="text" class="form-control" name="street" required>
+        </div>
 
-        <label>Code postal :</label><br>
-        <input type="number" name="postalCode" required><br><br>
+        <div class="col-md-6">
+            <label class="form-label">Ville :</label>
+            <input type="text" class="form-control" name="city" required>
+        </div>
 
-        <label>Email :</label><br>
-        <input type="email" name="email" required><br><br>
+        <div class="col-md-3">
+            <label class="form-label">Numéro :</label>
+            <input type="text" class="form-control" name="streetNumber" required>
+        </div>
 
-        <label>Mot de passe :</label><br>
-        <input type="password" name="password" required><br><br>
+        <div class="col-md-3">
+            <label class="form-label">Code postal :</label>
+            <input type="number" class="form-control" name="postalCode" required>
+        </div>
 
-        <button type="submit">Créer le compte</button>
+        <div class="col-md-6">
+            <label class="form-label">Email :</label>
+            <input type="email" class="form-control" name="email" required>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Mot de passe :</label>
+            <input type="password" class="form-control" name="password" required>
+        </div>
+
+        <div class="col-12 mt-3">
+            <button type="submit" class="btn btn-primary">Créer le compte</button>
+            <a href="login" class="btn btn-secondary ms-2">Retour</a>
+        </div>
+
     </form>
+
+</div>
 
 </body>
 </html>

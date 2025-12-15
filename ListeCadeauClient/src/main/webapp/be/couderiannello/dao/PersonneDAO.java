@@ -285,24 +285,12 @@ public class PersonneDAO extends RestDAO<Personne> {
             l.setCreationDate(LocalDate.parse(json.getString("creationDate")));
             l.setExpirationDate(LocalDate.parse(json.getString("expirationDate")));
             l.setStatut(json.getBoolean("statut"));
-
-            if(json.has("shareLink") && !json.isNull("shareLink")) {
-                l.setShareLink(json.getString("shareLink"));
-            } else {
-                l.setShareLink("https://default");
-            }
-
-            if (json.has("creatorId") && !json.isNull("creatorId")) {
-                Personne creator = new Personne();
-                creator.setId(json.getInt("creatorId"));
-                l.setCreator(creator);
-            }
+            l.setShareLink(json.getString("shareLink"));
 
             list.add(l);
         }
         return list;
     }
-
 
     private List<Reservation> parseReservations(JSONArray arr) {
         List<Reservation> list = new ArrayList<>();

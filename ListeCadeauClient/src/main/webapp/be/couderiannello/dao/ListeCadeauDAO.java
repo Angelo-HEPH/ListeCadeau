@@ -12,7 +12,6 @@ import org.json.JSONObject;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.ClientResponse.Status;
 
-import be.couderiannello.enumeration.StatutPriorite;
 import be.couderiannello.models.Cadeau;
 import be.couderiannello.models.ListeCadeau;
 import be.couderiannello.models.Personne;
@@ -247,26 +246,19 @@ public class ListeCadeauDAO extends RestDAO<ListeCadeau> {
 
     private List<Cadeau> parseCadeaux(JSONArray array, ListeCadeau owner) {
         List<Cadeau> list = new ArrayList<>();
-
         for (int i = 0; i < array.length(); i++) {
-
             JSONObject json = array.getJSONObject(i);
 
             Cadeau c = new Cadeau();
             c.setId(json.getInt("id"));
-            c.setName(json.getString("name"));
-            c.setDescription(json.getString("description"));
-            c.setPrice(json.getDouble("price"));
-            c.setPhoto(json.getString("photo"));
-            c.setLinkSite(json.getString("linkSite"));
-            c.setPriorite(StatutPriorite.valueOf(json.getString("priorite")));
+
+            if (json.has("name") && !json.isNull("name")) {
+                c.setName(json.getString("name"));
+            }
 
             c.setListeCadeau(owner);
-
             list.add(c);
         }
-
         return list;
     }
-
 }
