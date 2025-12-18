@@ -24,13 +24,13 @@ public class Reservation implements Serializable {
 	//Constructeur
 	public Reservation() {
 		personnes = new ArrayList<Personne>();
+		setDateReservation(LocalDate.now());
 	}
 	
-	public Reservation(int id, double amount, LocalDate dateReservation, Cadeau cadeau, Personne personne) {
+	public Reservation(int id, double amount, Cadeau cadeau, Personne personne) {
 		this();
 		setId(id);
 		setAmount(amount);
-	    this.dateReservation = LocalDate.now();
 		
         if (cadeau == null) {
             throw new IllegalArgumentException("Cadeau ne peut pas être null.");

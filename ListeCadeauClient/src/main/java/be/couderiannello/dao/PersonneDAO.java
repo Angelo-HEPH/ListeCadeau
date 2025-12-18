@@ -33,7 +33,7 @@ public class PersonneDAO extends RestDAO<Personne> {
         return instance;
     }
 
-    //CREATE
+    //Create
     @Override
     public int create(Personne p) {
 
@@ -68,7 +68,7 @@ public class PersonneDAO extends RestDAO<Personne> {
         throw new RuntimeException("Erreur API création personne : " + response.getStatus());
     }
 
-    //FIND
+    //Find
     @Override
     public Personne find(int id) {
         return find(id, false, false, false, false);
@@ -117,7 +117,7 @@ public class PersonneDAO extends RestDAO<Personne> {
         return p;
     }
 
-    //FINDALL
+    //FindAll
     @Override
     public List<Personne> findAll() {
         return findAll(false, false, false, false);
@@ -173,7 +173,7 @@ public class PersonneDAO extends RestDAO<Personne> {
         return list;
     }
 
-    //UPDATE
+    //Update
     @Override
     public boolean update(Personne p) {
 
@@ -200,7 +200,7 @@ public class PersonneDAO extends RestDAO<Personne> {
         return response.getStatus() == Status.NO_CONTENT.getStatusCode();
     }
 
-    //DELETE
+    //Delete
     @Override
     public boolean delete(Personne p) {
 
@@ -282,7 +282,7 @@ public class PersonneDAO extends RestDAO<Personne> {
             l.setId(json.getInt("id"));
             l.setTitle(json.getString("title"));
             l.setEvenement(json.getString("evenement"));
-            l.setCreationDate(LocalDate.parse(json.getString("creationDate")));
+            l.initCreationDate(LocalDate.parse(json.getString("creationDate")));
             l.setExpirationDate(LocalDate.parse(json.getString("expirationDate")));
             l.setStatut(json.getBoolean("statut"));
 

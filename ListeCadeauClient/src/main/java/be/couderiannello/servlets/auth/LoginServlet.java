@@ -1,9 +1,8 @@
-package be.couderiannello.servlets;
+package be.couderiannello.servlets.auth;
 
 import java.io.IOException;
 
 import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -11,11 +10,11 @@ import javax.servlet.http.HttpServletResponse;
 import be.couderiannello.dao.PersonneDAO;
 import be.couderiannello.models.Personne;
 
-@WebServlet("/login")
-public class loginServlet extends HttpServlet {
+
+public class LoginServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
-    public loginServlet() {
+    public LoginServlet() {
         super();
     }
 
@@ -23,8 +22,12 @@ public class loginServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        request.getRequestDispatcher("/WEB-INF/view/personne/login.jsp")
-               .forward(request, response);
+    	var session = request.getSession(false);
+    	if (session != null && session.getAttribute("userId") != null) {
+    	    response.sendRedirect(request.getContextPath() + "/liste/all");
+    	    return;
+    	}
+    	request.getRequestDispatcher("/WEB-INF/view/personne/login.jsp").forward(request, response);
     }
 
     @Override
@@ -41,14 +44,17 @@ public class loginServlet extends HttpServlet {
             if (p == null) {
                 request.setAttribute("error", "Email ou mot de passe incorrect.");
                 request.getRequestDispatcher("/WEB-INF/view/personne/login.jsp")
-                       .forward(request, response);
+                	.forward(request, response);
+                
                 return;
             }
 
-            request.getSession().setAttribute("user", p);
+            var session = request.getSession(true);
+            session.setAttribute("userId", p.getId());
+            session.setAttribute("firstName", p.getFirstName());
 
-            request.getRequestDispatcher("/WEB-INF/view/home/home.jsp")
-                   .forward(request, response);
+            response.sendRedirect(request.getContextPath() + "/home");
+
 
         } catch (Exception e) {
             e.printStackTrace();

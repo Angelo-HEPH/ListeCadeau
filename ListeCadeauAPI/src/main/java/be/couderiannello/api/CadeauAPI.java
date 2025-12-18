@@ -35,7 +35,7 @@ public class CadeauAPI {
         return new CadeauDAO(ConnectionBdd.getInstance());
     }
 
-    //CREATE
+    //Create
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response create(String jsonBody) {
@@ -96,7 +96,7 @@ public class CadeauAPI {
         }
     }
 
-    //FINDALL
+    //FindAll
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response findAll(@QueryParam("loadListeCadeau") @DefaultValue("false") boolean loadListeCadeau,
@@ -122,7 +122,7 @@ public class CadeauAPI {
         }
     }
 
-    //UPDATE
+    //Update
     @PUT
     @Path("/{id}")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -171,7 +171,7 @@ public class CadeauAPI {
         }
     }
 
-    //DELETE
+    //Delete
     @DELETE
     @Path("/{id}")
     public Response delete(@PathParam("id") int id) {
@@ -248,11 +248,26 @@ public class CadeauAPI {
     }
 
     private JSONObject toJsonListeCadeau(ListeCadeau l) {
+
         JSONObject json = new JSONObject();
+
         json.put("id", l.getId());
-        if (l.getTitle() != null) {
-            json.put("title", l.getTitle());
+        json.put("title", l.getTitle());
+        json.put("evenement", l.getEvenement());
+        json.put("statut", l.isStatut());
+
+        if (l.getCreationDate() != null) {
+            json.put("creationDate", l.getCreationDate().toString());
         }
+
+        if (l.getExpirationDate() != null) {
+            json.put("expirationDate", l.getExpirationDate().toString());
+        }
+
+        if (l.getShareLink() != null && !l.getShareLink().isBlank()) {
+            json.put("shareLink", l.getShareLink());
+        }
+
         return json;
     }
 

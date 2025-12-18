@@ -22,15 +22,14 @@ public class Notification implements Serializable {
 	
 	//Constructeurs
 	public Notification() {
-		
+		setSendDate(LocalDate.now());
+		setRead(false);
 	}
 	
-	public Notification(int id, String message, LocalDate sendDate, Personne personne) {
+	public Notification(int id, String message, Personne personne) {
 		this();
 		setId(id);
 		setMessage(message);
-	    this.sendDate = LocalDate.now();
-		setRead(false);
 		setPersonne(personne);
 	}
 	

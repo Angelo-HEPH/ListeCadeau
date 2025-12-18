@@ -1,8 +1,7 @@
-package be.couderiannello.servlets;
+package be.couderiannello.servlets.cadeau;
 
 import java.io.IOException;
 import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -12,21 +11,30 @@ import be.couderiannello.models.Cadeau;
 import be.couderiannello.models.ListeCadeau;
 import be.couderiannello.enumeration.StatutPriorite;
 
-@WebServlet("/cadeau/create")
+
 public class CreateCadeauServlet extends HttpServlet {
 
 	private static final long serialVersionUID = 1L;
 
 	@Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+	        throws ServletException, IOException {
 
-        int listeId = Integer.parseInt(req.getParameter("listeId"));
-        req.setAttribute("listeId", listeId);
+	    String listeIdParam = req.getParameter("listeId");
+	    if (listeIdParam == null) {
+	        resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Paramètre listeId manquant");
+	        return;
+	    }
 
-        req.getRequestDispatcher("/WEB-INF/view/cadeau/addCadeau.jsp")
-           .forward(req, resp);
-    }
+	    try {
+	        int listeId = Integer.parseInt(listeIdParam);
+	        req.setAttribute("listeId", listeId);
+	        req.getRequestDispatcher("/WEB-INF/view/cadeau/addCadeau.jsp").forward(req, resp);
+	    } catch (NumberFormatException ex) {
+	        resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Paramètre listeId invalide");
+	    }
+	}
+
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)

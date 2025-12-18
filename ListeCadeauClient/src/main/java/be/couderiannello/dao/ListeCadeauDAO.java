@@ -1,4 +1,4 @@
-package be.couderiannello.dao;
+	package be.couderiannello.dao;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -32,7 +32,7 @@ public class ListeCadeauDAO extends RestDAO<ListeCadeau> {
         return instance;
     }
 
-    // CREATE
+    //Create
     @Override
     public int create(ListeCadeau l) {
 
@@ -68,7 +68,7 @@ public class ListeCadeauDAO extends RestDAO<ListeCadeau> {
         throw new RuntimeException("Erreur API création listeCadeau : " + response.getStatus());
     }
 
-    //FIND
+    //Find
     @Override
     public ListeCadeau find(int id) {
         return find(id, false, false, false);
@@ -107,7 +107,7 @@ public class ListeCadeauDAO extends RestDAO<ListeCadeau> {
         return l;
     }
 
-    //FINDALL
+    //FindAll
     @Override
     public List<ListeCadeau> findAll() {
         return findAll(false, false, false);
@@ -154,7 +154,7 @@ public class ListeCadeauDAO extends RestDAO<ListeCadeau> {
         return list;
     }
 
-    //UPDATE
+    //Update
     @Override
     public boolean update(ListeCadeau l) {
 
@@ -174,7 +174,7 @@ public class ListeCadeauDAO extends RestDAO<ListeCadeau> {
         return response.getStatus() == Status.NO_CONTENT.getStatusCode();
     }
 
-    //DELETE
+    //Delete
     @Override
     public boolean delete(ListeCadeau l) {
 
@@ -197,7 +197,7 @@ public class ListeCadeauDAO extends RestDAO<ListeCadeau> {
         l.setEvenement(json.getString("evenement"));
 
         if (json.has("creationDate") && !json.isNull("creationDate")) {
-            l.setCreationDate(LocalDate.parse(json.getString("creationDate")));
+            l.initCreationDate(LocalDate.parse(json.getString("creationDate")));
         }
 
         if (json.has("expirationDate") && !json.isNull("expirationDate")) {
@@ -211,16 +211,6 @@ public class ListeCadeauDAO extends RestDAO<ListeCadeau> {
             l.setShareLink(share);
         } else {
             l.setShareLink("https://default");
-        }
-
-        if (!json.has("creatorId")) {
-            throw new RuntimeException("Réponse API invalide : creatorId manquant pour la liste " + l.getId());
-        }
-
-        if (!json.isNull("creatorId")) {
-            Personne p = new Personne();
-            p.setId(json.getInt("creatorId"));
-            l.setCreator(p);
         }
 
         return l;

@@ -35,7 +35,7 @@ public class ListeCadeauAPI {
         return new ListeCadeauDAO(ConnectionBdd.getInstance());
     }
 
-    //CREATE
+    //Create
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response create(String jsonBody) {
@@ -66,7 +66,7 @@ public class ListeCadeauAPI {
         }
     }
 
-    //FIND BY ID
+    //FindById
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -95,7 +95,7 @@ public class ListeCadeauAPI {
         }
     }
 
-    //FIND ALL
+    //FindAll
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response findAll(@QueryParam("loadCreator") @DefaultValue("false") boolean loadCreator,
@@ -122,7 +122,7 @@ public class ListeCadeauAPI {
         }
     }
 
-    //UPDATE
+    //Update
     @PUT
     @Path("/{id}")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -166,7 +166,7 @@ public class ListeCadeauAPI {
         }
     }
 
-    //DELETE
+    //Delete
     @DELETE
     @Path("/{id}")
     public Response delete(@PathParam("id") int id) {
@@ -236,16 +236,15 @@ public class ListeCadeauAPI {
         json.put("expirationDate", l.getExpirationDate());
         json.put("statut", l.isStatut());
         json.put("shareLink", l.getShareLink());
-        json.put("creatorId", l.getCreator().getId());
 
         if (includeCreator && l.getCreator() != null) {
-            json.put("creator", toJsonCreator(l.getCreator()));
+            json.put("creator", toJsonCreatorAndInvite(l.getCreator()));
         }
 
         if (includeInvites) {
             JSONArray array = new JSONArray();
             for (Personne p : l.getInvites()) {
-                array.put(toJsonInvite(p));
+                array.put(toJsonCreatorAndInvite(p));
             }
             json.put("invites", array);
         }
@@ -261,15 +260,20 @@ public class ListeCadeauAPI {
         return json;
     }
 
-    private JSONObject toJsonCreator(Personne p) {
-        JSONObject json = new JSONObject();
-        json.put("id", p.getId());
-        return json;
-    }
+    private JSONObject toJsonCreatorAndInvite(Personne p) {
 
-    private JSONObject toJsonInvite(Personne p) {
         JSONObject json = new JSONObject();
+
         json.put("id", p.getId());
+        json.put("name", p.getName());
+        json.put("firstName", p.getFirstName());
+        json.put("age", p.getAge());
+        json.put("street", p.getStreet());
+        json.put("city", p.getCity());
+        json.put("streetNumber", p.getStreetNumber());
+        json.put("postalCode", p.getPostalCode());
+        json.put("email", p.getEmail());
+
         return json;
     }
 
@@ -285,5 +289,4 @@ public class ListeCadeauAPI {
         json.put("listeCadeauId", c.getListeCadeau().getId());
         return json;
     }
-
 }

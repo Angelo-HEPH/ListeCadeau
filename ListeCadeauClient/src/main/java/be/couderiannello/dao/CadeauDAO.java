@@ -32,7 +32,7 @@ public class CadeauDAO extends RestDAO<Cadeau> {
         return instance;
     }
 
-    //CREATE
+    //Create
     @Override
     public int create(Cadeau c) {
 
@@ -46,7 +46,6 @@ public class CadeauDAO extends RestDAO<Cadeau> {
         json.put("priorite", c.getPriorite().name());
         json.put("listeCadeauId", c.getListeCadeau().getId());
 
-        System.out.println("JSON envoyé à l'API : " + json.toString());
 
         
         ClientResponse response = getResource()
@@ -69,7 +68,7 @@ public class CadeauDAO extends RestDAO<Cadeau> {
         throw new RuntimeException("Erreur API création cadeau : " + response.getStatus());
     }
 
-    //FIND
+    //Find
     @Override
     public Cadeau find(int id) {
         return find(id, false, false);
@@ -103,7 +102,7 @@ public class CadeauDAO extends RestDAO<Cadeau> {
         return c;
     }
 
-    //FINDALL
+    //FindAll
     @Override
     public List<Cadeau> findAll() {
         return findAll(false, false);
@@ -145,7 +144,7 @@ public class CadeauDAO extends RestDAO<Cadeau> {
         return list;
     }
 
-    //UPDATE
+    //Update
     @Override
     public boolean update(Cadeau c) {
 
@@ -166,7 +165,7 @@ public class CadeauDAO extends RestDAO<Cadeau> {
         return response.getStatus() == Status.NO_CONTENT.getStatusCode();
     }
 
-    // DELETE
+    //Delete
     @Override
     public boolean delete(Cadeau c) {
 
@@ -178,7 +177,7 @@ public class CadeauDAO extends RestDAO<Cadeau> {
         return response.getStatus() == Status.NO_CONTENT.getStatusCode();
     }
 
-    // JSON -> Model
+    //JSON -> Model
     private Cadeau fromJsonCadeau(JSONObject json) {
 
         Cadeau c = new Cadeau();

@@ -112,6 +112,11 @@ public class NotificationDAO extends JdbcDAO<Notification> {
                 n.setSendDate(rs.getDate("DateEnvoie").toLocalDate());
                 n.setRead(rs.getInt("Lu") == 1);
                 
+                int personneId = rs.getInt("PersonneId");
+                Personne stub = new Personne();
+                stub.setId(personneId);
+                n.setPersonne(stub);
+                
                 if (loadPersonne) {
                     Personne p = loadPersonne(rs.getInt("PersonneId"));
                     n.setPersonne(p);
@@ -148,6 +153,11 @@ public class NotificationDAO extends JdbcDAO<Notification> {
                 n.setSendDate(rs.getDate("DateEnvoie").toLocalDate());
                 n.setRead(rs.getInt("Lu") == 1);
 
+                int personneId = rs.getInt("PersonneId");
+                Personne stub = new Personne();
+                stub.setId(personneId);
+                n.setPersonne(stub);
+                
                 if (loadPersonne) {
                     Personne p = loadPersonne(rs.getInt("PersonneId"));
                     n.setPersonne(p);

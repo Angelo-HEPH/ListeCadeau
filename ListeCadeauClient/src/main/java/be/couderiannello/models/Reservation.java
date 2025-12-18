@@ -26,7 +26,7 @@ public class Reservation implements Serializable {
 		personnes = new ArrayList<Personne>();
 	}
 	
-	public Reservation(int id, double amount, LocalDate dateReservation, Cadeau cadeau, Personne personne) {
+	public Reservation(int id, double amount, Cadeau cadeau, Personne personne) {
 		this();
 		setId(id);
 		setAmount(amount);

@@ -33,7 +33,7 @@ public class ListeCadeau implements Serializable {
     }
     
     public ListeCadeau(int id, String title, String evenement, LocalDate creationDate, LocalDate expirationDate,
-            boolean statut, Personne creator, Cadeau cadeau) {
+            boolean statut, Personne creator) {
         this();
         setId(id);
         setTitle(title);
@@ -46,13 +46,8 @@ public class ListeCadeau implements Serializable {
         if (creator == null) {
             throw new IllegalArgumentException("Le créateur ne peut pas être null.");
         }
-        
-        if (cadeau == null) {
-            throw new IllegalArgumentException("Le cadeau ne peut pas être null.");
-        }
 
         setCreator(creator);
-        addCadeau(cadeau);
     }
     
     //Getters - Setters
@@ -108,6 +103,9 @@ public class ListeCadeau implements Serializable {
         this.creationDate = creationDate;
     }
 
+    public void initCreationDate(LocalDate creationDate) {
+        this.creationDate = creationDate;
+    }
     
     public LocalDate getExpirationDate() {
         return expirationDate;

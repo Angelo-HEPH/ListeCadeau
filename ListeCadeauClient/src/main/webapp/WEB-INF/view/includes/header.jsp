@@ -4,8 +4,9 @@
       rel="stylesheet">
 
 <%
-    be.couderiannello.models.Personne user =
-        (be.couderiannello.models.Personne) session.getAttribute("user");
+
+	Integer userId = (Integer) session.getAttribute("userId");
+	String userName = (String) session.getAttribute("firstName");
 %>
 
 <nav class="navbar navbar-light bg-light px-3 mb-4">
@@ -14,7 +15,7 @@
 
     <div class="d-flex align-items-center gap-2">
 
-        <% if (user == null) { %>
+        <% if (userId == null) { %>
 
             <a href="<%= request.getContextPath() %>/login" 
                class="btn btn-outline-primary btn-sm">Connexion</a>
@@ -24,7 +25,7 @@
 
         <% } else { %>
 
-            <span class="me-2">Bonjour, <b><%= user.getFirstName() %></b></span>
+            <span class="me-2">Bonjour, <b><%= userName %></b></span>
 
             <a href="<%= request.getContextPath() %>/logout" 
                class="btn btn-danger btn-sm">Déconnexion</a>

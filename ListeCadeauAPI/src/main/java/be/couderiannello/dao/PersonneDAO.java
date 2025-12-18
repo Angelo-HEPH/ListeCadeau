@@ -233,10 +233,10 @@ public class PersonneDAO extends JdbcDAO<Personne> {
                     Notification n = new Notification(
                         rs.getInt("Id"),
                         rs.getString("Message"),
-                        rs.getDate("DateEnvoie").toLocalDate(),
                         p
                     );
-
+                    
+                    n.setSendDate(rs.getDate("DateEnvoie").toLocalDate());
                     n.setRead(rs.getInt("Lu") == 1);
                     list.add(n);
                 }

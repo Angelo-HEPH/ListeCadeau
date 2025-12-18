@@ -27,11 +27,6 @@
             📋 Voir mes listes
         </a>
 
-        <a href="${pageContext.request.contextPath}/logout"
-           class="list-group-item list-group-item-action text-danger">
-            🚪 Se déconnecter
-        </a>
-
     </div>
 
 </div>

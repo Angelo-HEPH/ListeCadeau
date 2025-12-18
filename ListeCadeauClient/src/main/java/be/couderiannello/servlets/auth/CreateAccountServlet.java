@@ -1,8 +1,7 @@
-package be.couderiannello.servlets;
+package be.couderiannello.servlets.auth;
 
 import java.io.IOException;
 import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -10,11 +9,11 @@ import javax.servlet.http.HttpServletResponse;
 import be.couderiannello.dao.PersonneDAO;
 import be.couderiannello.models.Personne;
 
-@WebServlet("/createAccount")
-public class createAccountServlet extends HttpServlet {
+
+public class CreateAccountServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
-    public createAccountServlet() {
+    public CreateAccountServlet() {
         super();
     }
 
@@ -54,9 +53,6 @@ public class createAccountServlet extends HttpServlet {
 
             PersonneDAO dao = PersonneDAO.getInstance();
             int id = p.create(dao);
-            p.setId(id);
-
-            request.getSession().setAttribute("successMessage", "Compte créé avec succès. Vous pouvez maintenant vous connecter.");
 
             response.sendRedirect(request.getContextPath() + "/login");
             

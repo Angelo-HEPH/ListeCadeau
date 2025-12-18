@@ -35,6 +35,7 @@ public class PersonneAPI {
         return new PersonneDAO(ConnectionBdd.getInstance());
     }
     
+    //Create
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createPersonne(String personneJson) {
@@ -66,6 +67,7 @@ public class PersonneAPI {
         }
     }
 
+    //FindById
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -101,13 +103,15 @@ public class PersonneAPI {
                     .build();
 
         } catch (Exception e) {
-            return Response
+        	e.printStackTrace();
+        	return Response
                     .status(Status.BAD_REQUEST)
                     .entity("Erreur lors de la récupération de la personne.")
                     .build();
         }
     }
 
+    //FindAll
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response findAll(@QueryParam("loadNotifications") @DefaultValue("false") boolean loadNotifications,
@@ -139,12 +143,14 @@ public class PersonneAPI {
                     .build();
 
         } catch (Exception e) {
+        	e.printStackTrace();
             return Response.status(Status.BAD_REQUEST)
                     .entity("Erreur lors de la récupération des personnes.")
                     .build();
         }
     }
 
+    //Delete
     @DELETE
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -179,6 +185,7 @@ public class PersonneAPI {
         }
     }
 
+    //Update
     @PUT
     @Path("/{id}")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -236,10 +243,6 @@ public class PersonneAPI {
         p.setPassword(json.getString("password"));
     }
     
-    private JSONObject toJson(Personne p) {
-        return toJson(p, false, false, false, false);
-    }
-
     private JSONObject toJson(Personne p,
                               boolean includeNotifications,
                               boolean includeCreatedLists,
@@ -269,8 +272,10 @@ public class PersonneAPI {
 
         if (includeCreatedLists) {
             JSONArray array = new JSONArray();
-            for (ListeCadeau l : p.getListeCadeauCreator()) {
-                array.put(toJsonListeCadeau(l));
+            if (p.getListeCadeauCreator() != null) {
+                for (ListeCadeau l : p.getListeCadeauCreator()) {
+                    array.put(toJsonListeCadeau(l));
+                }
             }
             json.put("createdLists", array);
         }
