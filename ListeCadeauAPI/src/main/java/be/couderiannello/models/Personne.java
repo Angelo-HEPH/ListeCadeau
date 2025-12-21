@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.json.JSONObject;
+
 import be.couderiannello.dao.DAO;
 import be.couderiannello.dao.PersonneDAO;
 
@@ -418,4 +420,34 @@ public class Personne implements Serializable {
     public static Personne authenticate(String email, String password, PersonneDAO dao) {
     	return dao.authenticate(email,password);
     }
+    
+    //JSON -> Model
+    public void parse(JSONObject json) {
+        setName(json.getString("name"));
+        setFirstName(json.getString("firstName"));
+        setAge(json.getInt("age"));
+        setStreet(json.getString("street"));
+        setCity(json.getString("city"));
+        setStreetNumber(json.getString("streetNumber"));
+        setPostalCode(json.getInt("postalCode"));
+        setEmail(json.getString("email"));
+        setPassword(json.getString("password"));
+    }
+    
+    //Model -> JSON
+    public JSONObject unparse() {
+        JSONObject json = new JSONObject();
+        json.put("id", getId());
+        json.put("name", getName());
+        json.put("firstName", getFirstName());
+        json.put("age", getAge());
+        json.put("street", getStreet());
+        json.put("city", getCity());
+        json.put("streetNumber", getStreetNumber());
+        json.put("postalCode", getPostalCode());
+        json.put("email", getEmail());
+        
+        return json;
+    }
+
 }

@@ -5,6 +5,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.json.JSONObject;
+
 import be.couderiannello.dao.DAO;
 import be.couderiannello.dao.ListeCadeauDAO;
 
@@ -30,6 +32,7 @@ public class ListeCadeau implements Serializable {
     public ListeCadeau() {
         invites = new ArrayList<Personne>();
         cadeaux = new ArrayList<Cadeau>();
+        setCreationDate(LocalDate.now());
     }
     
     public ListeCadeau(int id, String title, String evenement, LocalDate creationDate, LocalDate expirationDate,
@@ -38,7 +41,6 @@ public class ListeCadeau implements Serializable {
         setId(id);
         setTitle(title);
         setEvenement(evenement);
-        setCreationDate(LocalDate.now());
         setExpirationDate(expirationDate);
         setStatut(statut);
         setCreator(creator);
@@ -318,5 +320,35 @@ public class ListeCadeau implements Serializable {
     
     public boolean update(DAO<ListeCadeau> dao) {
     	return dao.update(this);
+    }
+    
+    //JSON -> Model
+    public void parse(JSONObject json) {
+
+        setTitle(json.getString("title"));
+        setEvenement(json.getString("evenement"));
+        setExpirationDate(LocalDate.parse(json.getString("expirationDate")));
+        setStatut(json.getBoolean("statut"));
+        setShareLink(json.getString("shareLink"));
+
+        Personne p = new Personne();
+        p.setId(json.getInt("creatorId"));
+         setCreator(p);
+    }
+    
+    //Model -> JSON
+    public JSONObject unparse() {
+
+	    JSONObject json = new JSONObject();
+	
+	    json.put("id", getId());
+	    json.put("title", getTitle());
+	    json.put("evenement", getEvenement());
+	    json.put("creationDate", getCreationDate());
+	    json.put("expirationDate", getExpirationDate());
+	    json.put("statut", isStatut());
+	    json.put("shareLink", getShareLink());
+	
+	    return json;
     }
 }

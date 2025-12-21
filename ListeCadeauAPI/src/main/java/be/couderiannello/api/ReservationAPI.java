@@ -42,8 +42,7 @@ public class ReservationAPI {
             JSONObject json = new JSONObject(jsonBody);
 
             Reservation r = new Reservation();
-            fillReservationFromJson(r, json);
-
+            r.parse(json);
 
             int id = r.create(getDao());
 
@@ -140,27 +139,11 @@ public class ReservationAPI {
 
             JSONObject json = new JSONObject(body);
 
-            if (json.has("dateReservation")) {
-                return Response.status(Status.BAD_REQUEST)
-                        .entity("Erreur : La date de réservation ne peut pas être modifiée.")
-                        .build();
-            }
+            existing.setAmount(json.getDouble("amount"));
 
-            if (json.has("personneId")) {
-                return Response.status(Status.BAD_REQUEST)
-                        .entity("Erreur : Les personnes d'une réservation ne peuvent pas être modifiées. Supprimez la réservation pour retirer la personne.")
-                        .build();
-            }
-
-            if (json.has("amount")) {
-                existing.setAmount(json.getDouble("amount"));
-            }
-
-            if (json.has("cadeauId")) {
-                Cadeau c = new Cadeau();
-                c.setId(json.getInt("cadeauId"));
-                existing.setCadeau(c);
-            }
+            Cadeau c = new Cadeau();
+            c.setId(json.getInt("cadeauId"));
+            existing.setCadeau(c);
 
             boolean updated = existing.update(dao);
 
@@ -218,93 +201,22 @@ public class ReservationAPI {
         }
     }
 
-    //Méthode privé
-    private void fillReservationFromJson(Reservation r, JSONObject json) {
-
-        if (!json.has("cadeauId") || json.isNull("cadeauId")) {
-            throw new IllegalArgumentException("cadeauId est obligatoire.");
-        }
-
-        if (!json.has("personneId") || json.isNull("personneId")) {
-            throw new IllegalArgumentException("personneId est obligatoire.");
-        }
-
-        r.setAmount(json.getDouble("amount"));
-
-        Cadeau c = new Cadeau();
-        c.setId(json.getInt("cadeauId"));
-        r.setCadeau(c);
-
-        Personne p = new Personne();
-        p.setId(json.getInt("personneId"));
-
-        r.getPersonnes().clear();
-        r.addPersonne(p);
-    }
-
     private JSONObject toJson(Reservation r, boolean includeCadeau, boolean includePersonnes) {
 
-        JSONObject json = new JSONObject();
-
-        json.put("id", r.getId());
-        json.put("amount", r.getAmount());
-
-        if (r.getDateReservation() != null) {
-            json.put("dateReservation", r.getDateReservation().toString());
-        }
-
-        if (r.getCadeau() != null) {
-            json.put("cadeauId", r.getCadeau().getId());
-        }
+        JSONObject json = r.unparse();
 
         if (includeCadeau && r.getCadeau() != null) {
-            json.put("cadeau", toJsonCadeau(r.getCadeau()));
+            json.put("cadeau", r.getCadeau().unparse());
         }
 
         if (includePersonnes) {
             JSONArray array = new JSONArray();
             for (Personne p : r.getPersonnes()) {
-                array.put(toJsonPersonne(p));
+                array.put(p.unparse());
             }
             json.put("personnes", array);
         }
 
         return json;
     }
-
-    private JSONObject toJsonCadeau(Cadeau c) {
-
-        JSONObject json = new JSONObject();
-
-        json.put("id", c.getId());
-        json.put("name", c.getName());
-        json.put("description", c.getDescription());
-        json.put("price", c.getPrice());
-        json.put("photo", c.getPhoto());
-        json.put("linkSite", c.getLinkSite());
-
-        if (c.getPriorite() != null) {
-            json.put("priorite", c.getPriorite().name());
-        }
-
-        return json;
-    }
-
-    private JSONObject toJsonPersonne(Personne p) {
-
-        JSONObject json = new JSONObject();
-
-        json.put("id", p.getId());
-        json.put("name", p.getName());
-        json.put("firstName", p.getFirstName());
-        json.put("email", p.getEmail());
-        json.put("age", p.getAge());
-        json.put("street", p.getStreet());
-        json.put("city", p.getCity());
-        json.put("streetNumber", p.getStreetNumber());
-        json.put("postalCode", p.getPostalCode());
-
-        return json;
-    }
-
 }

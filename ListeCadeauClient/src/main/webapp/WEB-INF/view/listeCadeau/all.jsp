@@ -45,12 +45,7 @@
             }
         }
     %>
-
-    <a href="<%= request.getContextPath() %>/liste/create"
-       class="btn btn-success mt-3">
-        + Créer une nouvelle liste
-    </a>
-
+    
 </div>
 
 </body>

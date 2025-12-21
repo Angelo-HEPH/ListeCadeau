@@ -1,7 +1,6 @@
 package be.couderiannello.api;
 
 import java.net.URI;
-import java.time.LocalDate;
 import java.util.List;
 
 import javax.ws.rs.Consumes;
@@ -25,7 +24,6 @@ import org.json.JSONObject;
 import be.couderiannello.connection.ConnectionBdd;
 import be.couderiannello.dao.NotificationDAO;
 import be.couderiannello.models.Notification;
-import be.couderiannello.models.Personne;
 
 @Path("/notification")
 public class NotificationAPI {
@@ -42,7 +40,7 @@ public class NotificationAPI {
             JSONObject json = new JSONObject(jsonBody);
 
             Notification n = new Notification();
-            fillNotificationFromJson(n, json, true);
+            n.parse(json, true);
 
             int id = n.create(getDao());
 
@@ -136,7 +134,19 @@ public class NotificationAPI {
             }
 
             JSONObject json = new JSONObject(body);
-            fillNotificationFromJson(existing, json, false);
+
+            if (json.has("sendDate")) {
+                return Response.status(Status.BAD_REQUEST)
+                        .entity("Erreur : La date d'envoi ne peut pas être modifiée.")
+                        .build();
+            }
+            if (json.has("personneId")) {
+                return Response.status(Status.BAD_REQUEST)
+                        .entity("Erreur : La personne d'une notification ne peut pas être modifiée.")
+                        .build();
+            }
+
+            existing.parse(json, false);
 
             boolean updated = existing.update(dao);
 
@@ -194,63 +204,13 @@ public class NotificationAPI {
         }
     }
 
-    //Méthodes privés.
-    private void fillNotificationFromJson(Notification n, JSONObject json, boolean isCreate) {
-
-        if (json.has("message")) {
-            n.setMessage(json.getString("message"));
-        } else if (isCreate) {
-            throw new IllegalArgumentException("message est obligatoire.");
-        }
-
-        if (isCreate) {
-            n.setRead(false);
-            n.setSendDate(LocalDate.now());
-
-            if (!json.has("personneId") || json.isNull("personneId")) {
-                throw new IllegalArgumentException("personneId est obligatoire.");
-            }
-            Personne p = new Personne();
-            p.setId(json.getInt("personneId"));
-            n.setPersonne(p);
-
-        } else {
-            if (json.has("read")) {
-                n.setRead(json.getBoolean("read"));
-            }
-        }
-    }
-
     private JSONObject toJson(Notification n, boolean includePersonne) {
-        JSONObject json = new JSONObject();
 
-        json.put("id", n.getId());
-        json.put("message", n.getMessage());
-        json.put("sendDate", n.getSendDate() != null ? n.getSendDate().toString() : JSONObject.NULL);
-        json.put("read", n.isRead());
+        JSONObject json = n.unparse();
 
-        if (n.getPersonne() != null) {
-            json.put("personneId", n.getPersonne().getId());
-            if (includePersonne) {
-                json.put("personne", toJsonPersonne(n.getPersonne()));
-            }
+        if (includePersonne && n.getPersonne() != null) {
+            json.put("personne", n.getPersonne().unparse());
         }
-
-        return json;
-    }
-
-    private JSONObject toJsonPersonne(Personne p) {
-        JSONObject json = new JSONObject();
-
-        json.put("id", p.getId());
-        json.put("name", p.getName());
-        json.put("firstName", p.getFirstName());
-        json.put("age", p.getAge());
-        json.put("street", p.getStreet());
-        json.put("city", p.getCity());
-        json.put("streetNumber", p.getStreetNumber());
-        json.put("postalCode", p.getPostalCode());
-        json.put("email", p.getEmail());
 
         return json;
     }

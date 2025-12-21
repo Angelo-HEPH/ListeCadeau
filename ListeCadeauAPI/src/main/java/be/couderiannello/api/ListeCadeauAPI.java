@@ -1,7 +1,6 @@
 package be.couderiannello.api;
 
 import java.net.URI;
-import java.time.LocalDate;
 import java.util.List;
 
 import javax.ws.rs.Consumes;
@@ -43,7 +42,7 @@ public class ListeCadeauAPI {
             JSONObject json = new JSONObject(jsonBody);
 
             ListeCadeau l = new ListeCadeau();
-            fillListeCadeauFromJson(l, json, true);
+            l.parse(json);
 
             int id = l.create(getDao());
 
@@ -139,7 +138,13 @@ public class ListeCadeauAPI {
 
             JSONObject json = new JSONObject(body);
 
-            fillListeCadeauFromJson(existing, json, false);
+            if (json.has("creationDate")) {
+                return Response.status(Status.BAD_REQUEST)
+                        .entity("Erreur : La date de création ne peut pas être modifiée.")
+                        .build();
+            }
+
+            existing.parse(json);
 
             boolean updated = existing.update(dao);
 
@@ -195,56 +200,18 @@ public class ListeCadeauAPI {
         }
     }
 
-    //Méthode privé
-    private void fillListeCadeauFromJson(ListeCadeau l, JSONObject json, boolean isCreate) {
-
-        l.setTitle(json.getString("title"));
-        l.setEvenement(json.getString("evenement"));
-        l.setExpirationDate(LocalDate.parse(json.getString("expirationDate")));
-
-        if (isCreate) {
-            l.setCreationDate(LocalDate.now());
-        }
-
-        if (json.has("statut")) {
-            l.setStatut(json.getBoolean("statut"));
-        } else if (isCreate) {
-            l.setStatut(true);
-        }
-
-        l.setShareLink(json.getString("shareLink"));
-
-        if (isCreate && (!json.has("creatorId"))) {
-            throw new IllegalArgumentException("creatorId est obligatoire.");
-        }
-
-        if (json.has("creatorId")) {
-            Personne p = new Personne();
-            p.setId(json.getInt("creatorId"));
-            l.setCreator(p);
-        }
-    }
-
     private JSONObject toJson(ListeCadeau l, boolean includeCreator, boolean includeInvites, boolean includeCadeaux) {
 
-        JSONObject json = new JSONObject();
-
-        json.put("id", l.getId());
-        json.put("title", l.getTitle());
-        json.put("evenement", l.getEvenement());
-        json.put("creationDate", l.getCreationDate());
-        json.put("expirationDate", l.getExpirationDate());
-        json.put("statut", l.isStatut());
-        json.put("shareLink", l.getShareLink());
+        JSONObject json = l.unparse();
 
         if (includeCreator && l.getCreator() != null) {
-            json.put("creator", toJsonCreatorAndInvite(l.getCreator()));
+            json.put("creator", l.getCreator().unparse());
         }
 
         if (includeInvites) {
             JSONArray array = new JSONArray();
             for (Personne p : l.getInvites()) {
-                array.put(toJsonCreatorAndInvite(p));
+                array.put(p.unparse());
             }
             json.put("invites", array);
         }
@@ -252,41 +219,11 @@ public class ListeCadeauAPI {
         if (includeCadeaux) {
             JSONArray array = new JSONArray();
             for (Cadeau c : l.getCadeaux()) {
-                array.put(toJsonCadeau(c));
+                array.put(c.unparse());
             }
             json.put("cadeaux", array);
         }
 
-        return json;
-    }
-
-    private JSONObject toJsonCreatorAndInvite(Personne p) {
-
-        JSONObject json = new JSONObject();
-
-        json.put("id", p.getId());
-        json.put("name", p.getName());
-        json.put("firstName", p.getFirstName());
-        json.put("age", p.getAge());
-        json.put("street", p.getStreet());
-        json.put("city", p.getCity());
-        json.put("streetNumber", p.getStreetNumber());
-        json.put("postalCode", p.getPostalCode());
-        json.put("email", p.getEmail());
-
-        return json;
-    }
-
-    private JSONObject toJsonCadeau(Cadeau c) {
-        JSONObject json = new JSONObject();
-        json.put("id", c.getId());
-        json.put("name", c.getName());
-        json.put("description", c.getDescription());
-        json.put("price", c.getPrice());
-        json.put("photo", c.getPhoto());
-        json.put("linkSite", c.getLinkSite());
-        json.put("priorite", c.getPriorite().name());
-        json.put("listeCadeauId", c.getListeCadeau().getId());
         return json;
     }
 }

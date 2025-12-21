@@ -5,6 +5,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.json.JSONObject;
+
 import be.couderiannello.dao.DAO;
 import be.couderiannello.dao.ListeCadeauDAO;
 
@@ -18,7 +20,7 @@ public class ListeCadeau implements Serializable {
     private String evenement;
     private LocalDate creationDate;
     private LocalDate expirationDate;
-    private boolean Statut;
+    private boolean statut;
     private String shareLink;
     
     //Relations
@@ -30,7 +32,7 @@ public class ListeCadeau implements Serializable {
     public ListeCadeau() {
         invites = new ArrayList<Personne>();
         cadeaux = new ArrayList<Cadeau>();
-        this.creationDate = LocalDate.now();
+        setCreationDate(LocalDate.now());
     }
     
     public ListeCadeau(int id, String title, String evenement, LocalDate creationDate, LocalDate expirationDate,
@@ -39,7 +41,6 @@ public class ListeCadeau implements Serializable {
         setId(id);
         setTitle(title);
         setEvenement(evenement);
-        this.creationDate = LocalDate.now();
         setExpirationDate(expirationDate);
         setStatut(statut);
         setCreator(creator);
@@ -103,7 +104,7 @@ public class ListeCadeau implements Serializable {
         
         this.creationDate = creationDate;
     }
-    
+
     public void initCreationDate(LocalDate creationDate) {
         this.creationDate = creationDate;
     }
@@ -125,10 +126,10 @@ public class ListeCadeau implements Serializable {
     }
     
     public boolean isStatut() {
-        return Statut;
+        return statut;
     }
     public void setStatut(boolean statut) {
-        Statut = statut;
+        this.statut = statut;
     }
     
     public String getShareLink() {
@@ -262,7 +263,7 @@ public class ListeCadeau implements Serializable {
                 ", evenement='" + evenement + '\'' +
                 ", creationDate=" + creationDate +
                 ", expirationDate=" + expirationDate +
-                ", statut=" + Statut +
+                ", statut=" + statut +
                 ", shareLink='" + shareLink + '\'' +
                 ", creatorId=" + (creator != null ? creator.getId() : null) +
                 ", invitesCount=" + invites.size() +
@@ -287,10 +288,11 @@ public class ListeCadeau implements Serializable {
                lc.getEvenement().equals(this.evenement) &&
                lc.getCreationDate().equals(this.creationDate) &&
                lc.getExpirationDate().equals(this.expirationDate) &&
-               lc.isStatut() == this.Statut &&
+               lc.isStatut() == this.statut &&
                lc.getShareLink().equals(this.shareLink);
     }
     
+    //DAO
     public int create(DAO<ListeCadeau> dao) {
         int id = dao.create(this);
         this.setId(id);
@@ -318,5 +320,35 @@ public class ListeCadeau implements Serializable {
     
     public boolean update(DAO<ListeCadeau> dao) {
     	return dao.update(this);
+    }
+    
+    //JSON -> Model
+    public void parse(JSONObject json) {
+
+        setTitle(json.getString("title"));
+        setEvenement(json.getString("evenement"));
+        setExpirationDate(LocalDate.parse(json.getString("expirationDate")));
+        setStatut(json.getBoolean("statut"));
+        setShareLink(json.getString("shareLink"));
+
+        Personne p = new Personne();
+        p.setId(json.getInt("creatorId"));
+         setCreator(p);
+    }
+    
+    //Model -> JSON
+    public JSONObject unparse() {
+
+	    JSONObject json = new JSONObject();
+	
+	    json.put("id", getId());
+	    json.put("title", getTitle());
+	    json.put("evenement", getEvenement());
+	    json.put("creationDate", getCreationDate());
+	    json.put("expirationDate", getExpirationDate());
+	    json.put("statut", isStatut());
+	    json.put("shareLink", getShareLink());
+	
+	    return json;
     }
 }

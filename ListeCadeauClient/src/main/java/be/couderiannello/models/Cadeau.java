@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.json.JSONObject;
+
 import be.couderiannello.dao.CadeauDAO;
 import be.couderiannello.dao.DAO;
 import be.couderiannello.enumeration.StatutPriorite;
@@ -125,10 +127,6 @@ public class Cadeau implements Serializable {
 		return listeCadeau;
 	}
     public void setListeCadeau(ListeCadeau listeCadeau) {
-    	if (listeCadeau == null) {
-            throw new IllegalArgumentException("Un cadeau doit appartenir à une liste cadeau.");
-        }
-    	
         if (this.listeCadeau == listeCadeau) {
             return;
         }
@@ -225,6 +223,8 @@ public class Cadeau implements Serializable {
 	           c.getPriorite() == this.getPriorite();
 	}
 	
+	
+	//DAO
     public int create(DAO<Cadeau> dao) {
         int id = dao.create(this);
         this.setId(id);
@@ -253,5 +253,37 @@ public class Cadeau implements Serializable {
     
     public boolean update(DAO<Cadeau> dao) {
     	return dao.update(this);
+    }
+    
+    //JSON -> Model
+    public void parse(JSONObject json) {
+
+        setName(json.getString("name"));
+        setDescription(json.getString("description"));
+        setPrice(json.getDouble("price"));
+        setPhoto(json.getString("photo"));
+        setLinkSite(json.getString("linkSite"));
+        setPriorite(StatutPriorite.valueOf(json.getString("priorite")));
+
+        ListeCadeau l = new ListeCadeau();
+        l.setId(json.getInt("listeCadeauId"));
+        setListeCadeau(l);
+    }
+
+    //Model -> JSON
+    public JSONObject unparse() {
+
+        JSONObject json = new JSONObject();
+
+        json.put("id", getId());
+        json.put("name", getName());
+        json.put("description", getDescription());
+        json.put("price", getPrice());
+        json.put("photo", getPhoto());
+        json.put("linkSite", getLinkSite());
+        json.put("priorite", getPriorite().name());
+        json.put("listeCadeauId", getListeCadeau().getId());
+
+        return json;
     }
 }

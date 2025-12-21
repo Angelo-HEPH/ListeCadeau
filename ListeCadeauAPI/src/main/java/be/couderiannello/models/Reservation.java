@@ -5,6 +5,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.json.JSONObject;
+
 import be.couderiannello.dao.DAO;
 import be.couderiannello.dao.ReservationDAO;
 
@@ -207,5 +209,33 @@ public class Reservation implements Serializable {
     
     public boolean update(DAO<Reservation> dao) {
     	return dao.update(this);
+    }
+    
+    //JSON -> Model
+    public void parse(JSONObject json) {
+
+        setAmount(json.getDouble("amount"));
+
+        Cadeau c = new Cadeau();
+        c.setId(json.getInt("cadeauId"));
+        setCadeau(c);
+
+        Personne p = new Personne();
+        p.setId(json.getInt("personneId"));
+
+        getPersonnes().clear();
+        addPersonne(p);
+    }
+    
+    //Model -> JSON
+    public JSONObject unparse() {
+
+        JSONObject json = new JSONObject();
+        json.put("id", getId());
+        json.put("amount", getAmount());
+        json.put("dateReservation", getDateReservation().toString());
+        json.put("cadeauId", getCadeau().getId());
+
+        return json;
     }
 }

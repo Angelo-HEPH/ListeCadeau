@@ -170,7 +170,7 @@ public class ListeCadeauDAO extends JdbcDAO<ListeCadeau> {
                 l.setId(rs.getInt("Id"));
                 l.setTitle(rs.getString("Titre"));
                 l.setEvenement(rs.getString("Evenement"));
-                l.setCreationDate(rs.getDate("DateCreation").toLocalDate());
+                l.initCreationDate(rs.getDate("DateCreation").toLocalDate());
                 l.setExpirationDate(rs.getDate("DateExpiration").toLocalDate());
                 l.setStatut(rs.getInt("Statut") == 1);
                 l.setShareLink(rs.getString("LienPartage"));
@@ -216,8 +216,7 @@ public class ListeCadeauDAO extends JdbcDAO<ListeCadeau> {
                 l.setId(rs.getInt("Id"));
                 l.setTitle(rs.getString("Titre"));
                 l.setEvenement(rs.getString("Evenement"));
-                l.setCreationDate(rs.getDate("DateCreation").toLocalDate());
-                l.setExpirationDate(rs.getDate("DateExpiration").toLocalDate());
+                l.initCreationDate(rs.getDate("DateCreation").toLocalDate()); // ✅
                 l.setStatut(rs.getInt("Statut") == 1);                
                 l.setShareLink(rs.getString("LienPartage"));
 

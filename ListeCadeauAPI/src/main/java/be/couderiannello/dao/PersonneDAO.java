@@ -311,7 +311,7 @@ public class PersonneDAO extends JdbcDAO<Personne> {
                     l.setId(rs.getInt("Id"));
                     l.setTitle(rs.getString("Titre"));
                     l.setEvenement(rs.getString("Evenement"));
-                    l.setCreationDate(rs.getDate("DateCreation").toLocalDate());
+                    l.initCreationDate(rs.getDate("DateCreation").toLocalDate());
                     l.setExpirationDate(rs.getDate("DateExpiration").toLocalDate());
                     l.setStatut(rs.getInt("Statut") == 1);
                     l.setCreator(p); 
@@ -351,7 +351,7 @@ public class PersonneDAO extends JdbcDAO<Personne> {
                     l.setId(rs.getInt("Id"));
                     l.setTitle(rs.getString("Titre"));
                     l.setEvenement(rs.getString("Evenement"));
-                    l.setCreationDate(rs.getDate("DateCreation").toLocalDate());
+                    l.initCreationDate(rs.getDate("DateCreation").toLocalDate());
                     l.setExpirationDate(rs.getDate("DateExpiration").toLocalDate());
                     l.setStatut(rs.getInt("Statut") == 1);
                     l.getInvites().add(p);       

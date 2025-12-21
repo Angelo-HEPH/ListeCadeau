@@ -34,7 +34,7 @@ public class PersonneAPI {
     private PersonneDAO getDao() {
         return new PersonneDAO(ConnectionBdd.getInstance());
     }
-    
+
     //Create
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
@@ -43,7 +43,7 @@ public class PersonneAPI {
             JSONObject json = new JSONObject(personneJson);
 
             Personne p = new Personne();
-            fillPersonneFromJson(p, json);
+            p.parse(json);
 
             int id = p.create(getDao());
 
@@ -103,8 +103,8 @@ public class PersonneAPI {
                     .build();
 
         } catch (Exception e) {
-        	e.printStackTrace();
-        	return Response
+            e.printStackTrace();
+            return Response
                     .status(Status.BAD_REQUEST)
                     .entity("Erreur lors de la récupération de la personne.")
                     .build();
@@ -143,7 +143,7 @@ public class PersonneAPI {
                     .build();
 
         } catch (Exception e) {
-        	e.printStackTrace();
+            e.printStackTrace();
             return Response.status(Status.BAD_REQUEST)
                     .entity("Erreur lors de la récupération des personnes.")
                     .build();
@@ -202,7 +202,7 @@ public class PersonneAPI {
             }
 
             JSONObject json = new JSONObject(personneJson);
-            fillPersonneFromJson(existing, json);
+            existing.parse(json);
 
             boolean updated = existing.update(dao);
 
@@ -230,42 +230,20 @@ public class PersonneAPI {
                     .build();
         }
     }
-    
-    private void fillPersonneFromJson(Personne p, JSONObject json) {
-        p.setName(json.getString("name"));
-        p.setFirstName(json.getString("firstName"));
-        p.setAge(json.getInt("age"));
-        p.setStreet(json.getString("street"));
-        p.setCity(json.getString("city"));
-        p.setStreetNumber(json.getString("streetNumber"));
-        p.setPostalCode(json.getInt("postalCode"));
-        p.setEmail(json.getString("email"));
-        p.setPassword(json.getString("password"));
-    }
-    
+
     private JSONObject toJson(Personne p,
                               boolean includeNotifications,
                               boolean includeCreatedLists,
                               boolean includeInvitedLists,
                               boolean includeReservations) {
 
-        JSONObject json = new JSONObject();
-
-        json.put("id", p.getId());
-        json.put("name", p.getName());
-        json.put("firstName", p.getFirstName());
-        json.put("age", p.getAge());
-        json.put("street", p.getStreet());
-        json.put("city", p.getCity());
-        json.put("streetNumber", p.getStreetNumber());
-        json.put("postalCode", p.getPostalCode());
-        json.put("email", p.getEmail());
+        JSONObject json = p.unparse();
 
         //Relations optionnelles
         if (includeNotifications) {
             JSONArray array = new JSONArray();
             for (Notification n : p.getNotifications()) {
-                array.put(NotificationtoJson(n));
+                array.put(n.unparse());
             }
             json.put("notifications", array);
         }
@@ -274,7 +252,7 @@ public class PersonneAPI {
             JSONArray array = new JSONArray();
             if (p.getListeCadeauCreator() != null) {
                 for (ListeCadeau l : p.getListeCadeauCreator()) {
-                    array.put(toJsonListeCadeau(l));
+                    array.put(l.unparse());
                 }
             }
             json.put("createdLists", array);
@@ -283,51 +261,17 @@ public class PersonneAPI {
         if (includeInvitedLists) {
             JSONArray array = new JSONArray();
             for (ListeCadeau l : p.getListeCadeauInvitations()) {
-                array.put(toJsonListeCadeau(l));
+                array.put(l.unparse());
             }
             json.put("invitedLists", array);
         }
 
         if (includeReservations) {
-            JSONArray arr = new JSONArray();
+            JSONArray array = new JSONArray();
             for (Reservation r : p.getReservations()) {
-                arr.put(toJsonReservation(r));
+                array.put(r.unparse());
             }
-            json.put("reservations", arr);
-        }
-
-        return json;
-    }
-
-    private JSONObject NotificationtoJson(Notification n) {
-        JSONObject json = new JSONObject();
-        json.put("id", n.getId());
-        json.put("message", n.getMessage());
-        json.put("sendDate", n.getSendDate().toString());
-        json.put("read", n.isRead());
-        return json;
-    }
-
-    private JSONObject toJsonListeCadeau(ListeCadeau l) {
-        JSONObject json = new JSONObject();
-        json.put("id", l.getId());
-        json.put("title", l.getTitle());
-        json.put("evenement", l.getEvenement());
-        json.put("creationDate", l.getCreationDate().toString());
-        json.put("expirationDate", l.getExpirationDate().toString());
-        json.put("statut", l.isStatut());
-        json.put("shareLink", l.getShareLink());
-        return json;
-    }
-
-    private JSONObject toJsonReservation(Reservation r) {
-        JSONObject json = new JSONObject();
-        json.put("id", r.getId());
-        json.put("amount", r.getAmount());
-        json.put("dateReservation", r.getDateReservation().toString());
-
-        if (r.getCadeau() != null) {
-            json.put("cadeauId", r.getCadeau().getId());
+            json.put("reservations", array);
         }
 
         return json;

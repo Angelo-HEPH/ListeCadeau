@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.json.JSONObject;
+
 import be.couderiannello.dao.DAO;
 import be.couderiannello.dao.NotificationDAO;
 
@@ -152,5 +154,34 @@ public class Notification implements Serializable {
     
     public boolean update(DAO<Notification> dao) {
     	return dao.update(this);
+    }
+    
+    //JSON -> Model
+    public void parse(JSONObject json, boolean isCreate) {
+
+        if (isCreate) {
+            setMessage(json.getString("message"));
+
+            Personne p = new Personne();
+            p.setId(json.getInt("personneId"));
+            setPersonne(p);
+
+        } else {
+            setMessage(json.getString("message"));
+            setRead(json.getBoolean("read"));
+        }
+    }
+
+    //Model -> JSON
+    public JSONObject unparse() {
+        JSONObject json = new JSONObject();
+
+        json.put("id", getId());
+        json.put("message", getMessage());
+        json.put("sendDate", getSendDate().toString());
+        json.put("read", isRead());
+        json.put("personneId", getPersonne().getId());
+
+        return json;
     }
 }

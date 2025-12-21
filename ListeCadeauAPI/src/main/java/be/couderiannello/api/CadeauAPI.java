@@ -25,7 +25,6 @@ import be.couderiannello.connection.ConnectionBdd;
 import be.couderiannello.dao.CadeauDAO;
 import be.couderiannello.enumeration.StatutPriorite;
 import be.couderiannello.models.Cadeau;
-import be.couderiannello.models.ListeCadeau;
 import be.couderiannello.models.Reservation;
 
 @Path("/cadeau")
@@ -44,7 +43,7 @@ public class CadeauAPI {
 
             
             Cadeau c = new Cadeau();
-            fillCadeauFromJson(c, json);
+            c.parse(json);
             
             int id = c.create(getDao());
             
@@ -80,7 +79,8 @@ public class CadeauAPI {
 
             Cadeau c = Cadeau.findById(id, dao, loadListeCadeau, loadReservations);
             if (c == null) {
-                return Response.status(Status.NOT_FOUND).build();
+                return Response.status(Status.NOT_FOUND)
+                		.build();
             }
 
             JSONObject json = toJson(c, loadListeCadeau, loadReservations);
@@ -201,81 +201,22 @@ public class CadeauAPI {
     }
 
     //Méthode privé
-    private void fillCadeauFromJson(Cadeau c, JSONObject json) {
-
-        if (!json.has("listeCadeauId") || json.isNull("listeCadeauId")) {
-            throw new IllegalArgumentException("listeCadeauId est obligatoire.");
-        }
-
-        c.setName(json.getString("name"));
-        c.setDescription(json.getString("description"));
-        c.setPrice(json.getDouble("price"));
-        c.setPhoto(json.getString("photo"));
-        c.setLinkSite(json.getString("linkSite"));
-        c.setPriorite(StatutPriorite.valueOf(json.getString("priorite")));
-
-        ListeCadeau l = new ListeCadeau();
-        l.setId(json.getInt("listeCadeauId"));
-        c.setListeCadeau(l);
-    }
-
     private JSONObject toJson(Cadeau c, boolean includeListeCadeau, boolean includeReservations) {
 
-        JSONObject json = new JSONObject();
-
-        json.put("id", c.getId());
-        json.put("name", c.getName());
-        json.put("description", c.getDescription());
-        json.put("price", c.getPrice());
-        json.put("photo", c.getPhoto());
-        json.put("linkSite", c.getLinkSite());
-        json.put("priorite", c.getPriorite().name());
-        json.put("listeCadeauId", c.getListeCadeau().getId());
+        JSONObject json = c.unparse();
 
         if (includeListeCadeau) {
-            json.put("listeCadeau", toJsonListeCadeau(c.getListeCadeau()));
+            json.put("listeCadeau", c.getListeCadeau().unparse());
         }
 
         if (includeReservations) {
             JSONArray array = new JSONArray();
             for (Reservation r : c.getReservations()) {
-                array.put(toJsonReservation(r));
+                array.put(r.unparse());
             }
             json.put("reservations", array);
         }
 
-        return json;
-    }
-
-    private JSONObject toJsonListeCadeau(ListeCadeau l) {
-
-        JSONObject json = new JSONObject();
-
-        json.put("id", l.getId());
-        json.put("title", l.getTitle());
-        json.put("evenement", l.getEvenement());
-        json.put("statut", l.isStatut());
-
-        if (l.getCreationDate() != null) {
-            json.put("creationDate", l.getCreationDate().toString());
-        }
-
-        if (l.getExpirationDate() != null) {
-            json.put("expirationDate", l.getExpirationDate().toString());
-        }
-
-        if (l.getShareLink() != null && !l.getShareLink().isBlank()) {
-            json.put("shareLink", l.getShareLink());
-        }
-
-        return json;
-    }
-
-    private JSONObject toJsonReservation(Reservation r) {
-        JSONObject json = new JSONObject();
-        json.put("id", r.getId());
-        json.put("amount", r.getAmount());
-        json.put("dateReservation", r.getDateReservation().toString());
         return json;
     }
 }
