@@ -214,17 +214,23 @@ public class Reservation implements Serializable {
     //JSON -> Model
     public void parse(JSONObject json) {
 
+        if (json.has("id") && !json.isNull("id")) {
+            setId(json.getInt("id"));
+        }
+        
         setAmount(json.getDouble("amount"));
 
         Cadeau c = new Cadeau();
         c.setId(json.getInt("cadeauId"));
         setCadeau(c);
 
-        Personne p = new Personne();
-        p.setId(json.getInt("personneId"));
+        if (json.has("personneId") && !json.isNull("personneId")) {
+            Personne p = new Personne();
+            p.setId(json.getInt("personneId"));
 
-        getPersonnes().clear();
-        addPersonne(p);
+            getPersonnes().clear();
+            addPersonne(p);
+        }
     }
     
     //Model -> JSON
@@ -236,6 +242,11 @@ public class Reservation implements Serializable {
         json.put("dateReservation", getDateReservation().toString());
         json.put("cadeauId", getCadeau().getId());
 
+        if (getPersonnes() != null && !getPersonnes().isEmpty()) {
+            json.put("personneId", getPersonnes().get(0).getId());
+        }
+
         return json;
     }
+
 }

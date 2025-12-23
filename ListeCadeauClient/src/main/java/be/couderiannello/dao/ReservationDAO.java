@@ -21,9 +21,7 @@ public class ReservationDAO extends RestDAO<Reservation> {
 
     private static ReservationDAO instance = null;
 
-    private ReservationDAO() {
-        super();
-    }
+    private ReservationDAO() { }
 
     public static ReservationDAO getInstance() {
         if (instance == null) {
@@ -54,18 +52,15 @@ public class ReservationDAO extends RestDAO<Reservation> {
                 .type(MediaType.APPLICATION_JSON)
                 .post(ClientResponse.class, json.toString());
 
-        if (response.getStatus() == Status.CREATED.getStatusCode()) {
-            String location = response.getHeaders().getFirst("Location");
-            if (location == null || location.isBlank()) {
-                throw new RuntimeException("Réponse création réservation sans header Location");
-            }
-
-            String[] parts = location.split("/");
-            String last = parts[parts.length - 1];
-            return Integer.parseInt(last);
+        if (response.getStatus() != Status.CREATED.getStatusCode()) {
+            throw new RuntimeException(
+                    "Erreur API création réservation (status=" 
+                    		+ response.getStatus() + ", body=" 
+                    		+ readBody(response) + ")"
+            );
         }
 
-        throw new RuntimeException("Erreur API création réservation : " + response.getStatus());
+        return extractIdFromLocation(response, "reservation");
     }
 
     //Find
@@ -79,16 +74,24 @@ public class ReservationDAO extends RestDAO<Reservation> {
         ClientResponse response = getResource()
                 .path("reservation")
                 .path(String.valueOf(id))
-                .queryParam("loadCadeau", String.valueOf(loadCadeau))
+                .queryParam("loadCadeau", String.valueOf(loadPersonnes))
                 .queryParam("loadPersonnes", String.valueOf(loadPersonnes))
                 .accept(MediaType.APPLICATION_JSON)
                 .get(ClientResponse.class);
 
-        if (response.getStatus() != Status.OK.getStatusCode()) {
+        if (response.getStatus() == Status.NOT_FOUND.getStatusCode()) {
             return null;
         }
 
-        JSONObject json = new JSONObject(response.getEntity(String.class));
+        if (response.getStatus() != Status.OK.getStatusCode()) {
+            throw new RuntimeException(
+                    "Erreur API find réservation (status=" 
+                    		+ response.getStatus() + ", body=" 
+                    		+ readBody(response) + ")"
+            );
+        }
+
+        JSONObject json = new JSONObject(readBody(response));
         Reservation r = fromJsonReservation(json);
 
         if (loadCadeau && json.has("cadeau") && !json.isNull("cadeau")) {
@@ -110,20 +113,23 @@ public class ReservationDAO extends RestDAO<Reservation> {
 
     public List<Reservation> findAll(boolean loadCadeau, boolean loadPersonnes) {
 
-        ArrayList<Reservation> list = new ArrayList<>();
-
         ClientResponse response = getResource()
                 .path("reservation")
-                .queryParam("loadCadeau", String.valueOf(loadCadeau))
+                .queryParam("loadCadeau", String.valueOf(loadPersonnes))
                 .queryParam("loadPersonnes", String.valueOf(loadPersonnes))
                 .accept(MediaType.APPLICATION_JSON)
                 .get(ClientResponse.class);
 
         if (response.getStatus() != Status.OK.getStatusCode()) {
-            return list;
+            throw new RuntimeException(
+                    "Erreur API findAll réservation (status=" 
+                    		+ response.getStatus() + ", body=" 
+                    		+ readBody(response) + ")"
+            );
         }
 
-        JSONArray array = new JSONArray(response.getEntity(String.class));
+        JSONArray array = new JSONArray(readBody(response));
+        ArrayList<Reservation> list = new ArrayList<>();
 
         for (int i = 0; i < array.length(); i++) {
             JSONObject json = array.getJSONObject(i);
@@ -149,7 +155,6 @@ public class ReservationDAO extends RestDAO<Reservation> {
     public boolean update(Reservation r) {
 
         JSONObject json = new JSONObject();
-
         json.put("amount", r.getAmount());
         json.put("cadeauId", r.getCadeau().getId());
 
@@ -159,7 +164,15 @@ public class ReservationDAO extends RestDAO<Reservation> {
                 .type(MediaType.APPLICATION_JSON)
                 .put(ClientResponse.class, json.toString());
 
-        return response.getStatus() == Status.NO_CONTENT.getStatusCode();
+        if (response.getStatus() != Status.NO_CONTENT.getStatusCode()) {
+            throw new RuntimeException(
+                    "Erreur API update réservation (status=" 
+                    		+ response.getStatus() + ", body=" 
+                    		+ readBody(response) + ")"
+            );
+        }
+
+        return true;
     }
 
     //Delete
@@ -171,10 +184,18 @@ public class ReservationDAO extends RestDAO<Reservation> {
                 .path(String.valueOf(r.getId()))
                 .delete(ClientResponse.class);
 
-        return response.getStatus() == Status.NO_CONTENT.getStatusCode();
+        if (response.getStatus() != Status.NO_CONTENT.getStatusCode()) {
+            throw new RuntimeException(
+                    "Erreur API delete réservation (status=" 
+                    		+ response.getStatus() + ", body=" 
+                    		+ readBody(response) + ")"
+            );
+        }
+
+        return true;
     }
 
-    //JSON -> Model
+    // JSON -> Model
     private Reservation fromJsonReservation(JSONObject json) {
 
         Reservation r = new Reservation();
@@ -198,12 +219,12 @@ public class ReservationDAO extends RestDAO<Reservation> {
         Cadeau c = new Cadeau();
         c.setId(json.getInt("id"));
 
-            c.setName(json.getString("name"));
-            c.setDescription(json.getString("description"));
-            c.setPrice(json.getDouble("price"));
-            c.setPhoto(json.getString("photo"));
-            c.setLinkSite(json.getString("linkSite"));
-            c.setPriorite(StatutPriorite.valueOf(json.getString("priorite")));
+        c.setName(json.getString("name"));
+        c.setDescription(json.getString("description"));
+        c.setPrice(json.getDouble("price"));
+        c.setPhoto(json.getString("photo"));
+        c.setLinkSite(json.getString("linkSite"));
+        c.setPriorite(StatutPriorite.valueOf(json.getString("priorite")));
 
         return c;
     }
@@ -216,14 +237,14 @@ public class ReservationDAO extends RestDAO<Reservation> {
             Personne p = new Personne();
             p.setId(json.getInt("id"));
 
-                p.setName(json.getString("name"));
-                p.setFirstName(json.getString("firstName"));
-                p.setEmail(json.getString("email"));
-                p.setAge(json.getInt("age"));
-                p.setStreet(json.getString("street"));
-                p.setCity(json.getString("city"));
-                p.setStreetNumber(json.getString("streetNumber"));
-                p.setPostalCode(json.getInt("postalCode"));
+            p.setName(json.getString("name"));
+            p.setFirstName(json.getString("firstName"));
+            p.setEmail(json.getString("email"));
+            p.setAge(json.getInt("age"));
+            p.setStreet(json.getString("street"));
+            p.setCity(json.getString("city"));
+            p.setStreetNumber(json.getString("streetNumber"));
+            p.setPostalCode(json.getInt("postalCode"));
 
             list.add(p);
         }

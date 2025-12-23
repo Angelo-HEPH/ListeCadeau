@@ -156,21 +156,34 @@ public class Notification implements Serializable {
     	return dao.update(this);
     }
     
-    //JSON -> Model
     public void parse(JSONObject json, boolean isCreate) {
+
+        if (json.has("id") && !json.isNull("id")) {
+            setId(json.getInt("id"));
+        }
 
         if (isCreate) {
             setMessage(json.getString("message"));
+        } else if (json.has("message") && !json.isNull("message")) {
+            setMessage(json.getString("message"));
+        }
 
+        if (json.has("sendDate") && !json.isNull("sendDate")) {
+            setSendDate(LocalDate.parse(json.getString("sendDate")));
+        }
+
+        if (json.has("read") && !json.isNull("read")) {
+            setRead(json.getBoolean("read"));
+        }
+
+        if (isCreate) {
             Personne p = new Personne();
             p.setId(json.getInt("personneId"));
             setPersonne(p);
-
-        } else {
-            setMessage(json.getString("message"));
-            setRead(json.getBoolean("read"));
         }
     }
+
+
 
     //Model -> JSON
     public JSONObject unparse() {

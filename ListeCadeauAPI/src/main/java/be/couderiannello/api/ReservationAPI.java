@@ -41,6 +41,7 @@ public class ReservationAPI {
         try {
             JSONObject json = new JSONObject(jsonBody);
 
+            json.remove("id");
             Reservation r = new Reservation();
             r.parse(json);
 
@@ -60,7 +61,7 @@ public class ReservationAPI {
                     .build();
         } catch (Exception e) {
             e.printStackTrace();
-            return Response.status(Status.BAD_REQUEST)
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
                     .entity("Erreur lors de la création de la réservation.")
                     .build();
         }
@@ -74,9 +75,7 @@ public class ReservationAPI {
                              @QueryParam("loadCadeau") @DefaultValue("false") boolean loadCadeau,
                              @QueryParam("loadPersonnes") @DefaultValue("false") boolean loadPersonnes) {
         try {
-            ReservationDAO dao = getDao();
-
-            Reservation r = Reservation.findById(id, dao, loadCadeau, loadPersonnes);
+            Reservation r = Reservation.findById(id, getDao(), loadCadeau, loadPersonnes);
             if (r == null) {
                 return Response.status(Status.NOT_FOUND).build();
             }
@@ -88,8 +87,7 @@ public class ReservationAPI {
                     .build();
 
         } catch (Exception e) {
-            e.printStackTrace();
-            return Response.status(Status.BAD_REQUEST)
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
                     .entity("Erreur lors de la récupération de la réservation.")
                     .build();
         }
@@ -101,9 +99,7 @@ public class ReservationAPI {
     public Response findAll(@QueryParam("loadCadeau") @DefaultValue("false") boolean loadCadeau,
                             @QueryParam("loadPersonnes") @DefaultValue("false") boolean loadPersonnes) {
         try {
-            ReservationDAO dao = getDao();
-
-            List<Reservation> reservations = Reservation.findAll(dao, loadCadeau, loadPersonnes);
+            List<Reservation> reservations = Reservation.findAll(getDao(), loadCadeau, loadPersonnes);
 
             JSONArray array = new JSONArray();
             for (Reservation r : reservations) {
@@ -115,8 +111,7 @@ public class ReservationAPI {
                     .build();
 
         } catch (Exception e) {
-            e.printStackTrace();
-            return Response.status(Status.BAD_REQUEST)
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
                     .entity("Erreur lors de la récupération des réservations.")
                     .build();
         }
@@ -128,9 +123,7 @@ public class ReservationAPI {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response update(@PathParam("id") int id, String body) {
         try {
-            ReservationDAO dao = getDao();
-
-            Reservation existing = Reservation.findById(id, dao, true, true);
+            Reservation existing = Reservation.findById(id, getDao(), true, true);
             if (existing == null) {
                 return Response.status(Status.NOT_FOUND)
                         .entity("Erreur : Réservation non trouvée.")
@@ -138,22 +131,18 @@ public class ReservationAPI {
             }
 
             JSONObject json = new JSONObject(body);
+            json.put("id", id);
+            existing.parse(json);
 
-            existing.setAmount(json.getDouble("amount"));
-
-            Cadeau c = new Cadeau();
-            c.setId(json.getInt("cadeauId"));
-            existing.setCadeau(c);
-
-            boolean updated = existing.update(dao);
-
+            boolean updated = existing.update(getDao());
             if (!updated) {
                 return Response.status(Status.SERVICE_UNAVAILABLE)
                         .entity("Erreur : La mise à jour a échoué.")
                         .build();
             }
 
-            return Response.status(Status.NO_CONTENT).build();
+            return Response.status(Status.NO_CONTENT)
+            		.build();
 
         } catch (JSONException e) {
             return Response.status(Status.BAD_REQUEST)
@@ -164,8 +153,7 @@ public class ReservationAPI {
                     .entity("Erreur : " + e.getMessage() + ".")
                     .build();
         } catch (Exception e) {
-            e.printStackTrace();
-            return Response.status(Status.BAD_REQUEST)
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
                     .entity("Erreur lors de la mise à jour de la réservation.")
                     .build();
         }
@@ -176,14 +164,13 @@ public class ReservationAPI {
     @Path("/{id}")
     public Response delete(@PathParam("id") int id) {
         try {
-            ReservationDAO dao = getDao();
-            Reservation r = Reservation.findById(id, dao);
+            Reservation r = Reservation.findById(id, getDao());
 
             if (r == null) {
                 return Response.status(Status.NOT_FOUND).build();
             }
 
-            boolean deleted = Reservation.delete(r, dao);
+            boolean deleted = Reservation.delete(r, getDao());
 
             if (!deleted) {
                 return Response.status(Status.BAD_REQUEST)
@@ -191,11 +178,12 @@ public class ReservationAPI {
                         .build();
             }
 
-            return Response.status(Status.NO_CONTENT).build();
+            return Response.status(Status.NO_CONTENT)
+            		.build();
 
         } catch (Exception e) {
             e.printStackTrace();
-            return Response.status(Status.BAD_REQUEST)
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
                     .entity("Erreur lors de la suppression.")
                     .build();
         }
@@ -206,7 +194,22 @@ public class ReservationAPI {
         JSONObject json = r.unparse();
 
         if (includeCadeau && r.getCadeau() != null) {
-            json.put("cadeau", r.getCadeau().unparse());
+            Cadeau c = r.getCadeau();
+
+            JSONObject cadeauJson = new JSONObject();
+            cadeauJson.put("id", c.getId());
+            cadeauJson.put("name", c.getName());
+            cadeauJson.put("description", c.getDescription());
+            cadeauJson.put("price", c.getPrice());
+            cadeauJson.put("photo", c.getPhoto());
+            cadeauJson.put("linkSite", c.getLinkSite());
+            cadeauJson.put("priorite", c.getPriorite().name());
+
+            if (c.getListeCadeau() != null) {
+                cadeauJson.put("listeCadeauId", c.getListeCadeau().getId());
+            }
+
+            json.put("cadeau", cadeauJson);
         }
 
         if (includePersonnes) {
@@ -219,4 +222,5 @@ public class ReservationAPI {
 
         return json;
     }
+
 }

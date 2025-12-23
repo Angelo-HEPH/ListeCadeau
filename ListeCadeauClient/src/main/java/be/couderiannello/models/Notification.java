@@ -157,20 +157,33 @@ public class Notification implements Serializable {
     }
     
     //JSON -> Model
+ // JSON -> Model
     public void parse(JSONObject json, boolean isCreate) {
 
-        if (isCreate) {
-            setMessage(json.getString("message"));
+        if (json.has("id") && !json.isNull("id")) {
+            setId(json.getInt("id"));
+        }
 
-            Personne p = new Personne();
-            p.setId(json.getInt("personneId"));
-            setPersonne(p);
+        setMessage(json.getString("message"));
+        setSendDate(LocalDate.parse(json.getString("sendDate")));
+
+        if (isCreate) {
+                Personne p = new Personne();
+                p.setId(json.getInt("personneId"));
+                setPersonne(p);
+                setRead(json.getBoolean("read"));
 
         } else {
-            setMessage(json.getString("message"));
-            setRead(json.getBoolean("read"));
+                setRead(json.getBoolean("read"));
+
+            if (json.has("personneId") && !json.isNull("personneId")) {
+                Personne p = new Personne();
+                p.setId(json.getInt("personneId"));
+                setPersonne(p);
+            }
         }
     }
+
 
     //Model -> JSON
     public JSONObject unparse() {

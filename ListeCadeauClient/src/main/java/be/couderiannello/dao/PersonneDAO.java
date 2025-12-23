@@ -22,9 +22,7 @@ public class PersonneDAO extends RestDAO<Personne> {
 
     private static PersonneDAO instance = null;
 
-    private PersonneDAO() {
-        super();
-    }
+    private PersonneDAO() { }
 
     public static PersonneDAO getInstance() {
         if (instance == null) {
@@ -53,19 +51,15 @@ public class PersonneDAO extends RestDAO<Personne> {
                 .type(MediaType.APPLICATION_JSON)
                 .post(ClientResponse.class, json.toString());
 
-        if (response.getStatus() == Status.CREATED.getStatusCode()) {
-
-            String location = response.getHeaders().getFirst("Location");
-            if (location == null || location.isBlank()) {
-                throw new RuntimeException("Réponse création personne sans header Location");
-            }
-
-            String[] parts = location.split("/");
-            String last = parts[parts.length - 1];
-            return Integer.parseInt(last);
+        if (response.getStatus() != Status.CREATED.getStatusCode()) {
+            throw new RuntimeException(
+                    "Erreur API création personne (status=" 
+                    		+ response.getStatus() + ", body=" 
+                    		+ readBody(response) + ")"
+            );
         }
 
-        throw new RuntimeException("Erreur API création personne : " + response.getStatus());
+        return extractIdFromLocation(response, "personne");
     }
 
     //Find
@@ -90,14 +84,21 @@ public class PersonneDAO extends RestDAO<Personne> {
                 .accept(MediaType.APPLICATION_JSON)
                 .get(ClientResponse.class);
 
-        if (response.getStatus() != Status.OK.getStatusCode()) {
+        if (response.getStatus() == Status.NOT_FOUND.getStatusCode()) {
             return null;
         }
 
-        JSONObject json = new JSONObject(response.getEntity(String.class));
+        if (response.getStatus() != Status.OK.getStatusCode()) {
+            throw new RuntimeException(
+                    "Erreur API find personne (status=" 
+                    		+ response.getStatus() + ", body=" 
+                    		+ readBody(response) + ")"
+            );
+        }
+
+        JSONObject json = new JSONObject(readBody(response));
         Personne p = fromJsonPersonne(json);
 
-        //Relations optionnelles
         if (loadNotifications && json.has("notifications")) {
             p.setNotifications(parseNotifications(json.getJSONArray("notifications")));
         }
@@ -117,6 +118,30 @@ public class PersonneDAO extends RestDAO<Personne> {
         return p;
     }
 
+    public Personne findByEmail(String email) {
+
+        ClientResponse response = getResource()
+                .path("personne")
+                .path("byEmail")
+                .queryParam("email", email)
+                .accept(MediaType.APPLICATION_JSON)
+                .get(ClientResponse.class);
+
+        if (response.getStatus() == Status.NOT_FOUND.getStatusCode()) {
+            return null;
+        }
+
+        if (response.getStatus() != Status.OK.getStatusCode()) {
+            throw new RuntimeException(
+                    "Erreur API findByEmail (status=" + response.getStatus() +
+                    ", body=" + readBody(response) + ")"
+            );
+        }
+
+        JSONObject json = new JSONObject(readBody(response));
+        return fromJsonPersonne(json);
+    }
+
     //FindAll
     @Override
     public List<Personne> findAll() {
@@ -128,8 +153,6 @@ public class PersonneDAO extends RestDAO<Personne> {
                                   boolean loadInvitedLists,
                                   boolean loadReservations) {
 
-        ArrayList<Personne> list = new ArrayList<>();
-
         ClientResponse response = getResource()
                 .path("personne")
                 .queryParam("loadNotifications", String.valueOf(loadNotifications))
@@ -140,17 +163,22 @@ public class PersonneDAO extends RestDAO<Personne> {
                 .get(ClientResponse.class);
 
         if (response.getStatus() != Status.OK.getStatusCode()) {
-            return list;
+            throw new RuntimeException(
+                    "Erreur API findAll personne (status=" 
+                    		+ response.getStatus() + ", body=" 
+                    		+ readBody(response) + ")"
+            );
         }
 
-        JSONArray array = new JSONArray(response.getEntity(String.class));
+        JSONArray array = new JSONArray(readBody(response));
+
+        ArrayList<Personne> list = new ArrayList<>();
 
         for (int i = 0; i < array.length(); i++) {
             JSONObject json = array.getJSONObject(i);
 
             Personne p = fromJsonPersonne(json);
 
-            //Relations optionnelles
             if (loadNotifications && json.has("notifications")) {
                 p.setNotifications(parseNotifications(json.getJSONArray("notifications")));
             }
@@ -197,7 +225,15 @@ public class PersonneDAO extends RestDAO<Personne> {
                 .type(MediaType.APPLICATION_JSON)
                 .put(ClientResponse.class, json.toString());
 
-        return response.getStatus() == Status.NO_CONTENT.getStatusCode();
+        if (response.getStatus() != Status.NO_CONTENT.getStatusCode()) {
+            throw new RuntimeException(
+                    "Erreur API update personne (status=" 
+                    		+ response.getStatus() + ", body=" 
+                    		+ readBody(response) + ")"
+            );
+        }
+
+        return true;
     }
 
     //Delete
@@ -209,9 +245,17 @@ public class PersonneDAO extends RestDAO<Personne> {
                 .path(String.valueOf(p.getId()))
                 .delete(ClientResponse.class);
 
-        return response.getStatus() == Status.NO_CONTENT.getStatusCode();
+        if (response.getStatus() != Status.NO_CONTENT.getStatusCode()) {
+            throw new RuntimeException(
+                    "Erreur API delete personne (status=" 
+                    		+ response.getStatus() + ", body=" 
+                    		+ readBody(response) + ")"
+            );
+        }
+
+        return true;
     }
-    
+
     public Personne authenticate(String email, String password) {
 
         JSONObject request = new JSONObject();
@@ -229,10 +273,14 @@ public class PersonneDAO extends RestDAO<Personne> {
         }
 
         if (response.getStatus() != Status.CREATED.getStatusCode()) {
-            throw new RuntimeException("Erreur API login : " + response.getStatus());
+            throw new RuntimeException(
+                    "Erreur API login (status=" 
+                    		+ response.getStatus() + ", body=" 
+                    		+ readBody(response) + ")"
+            );
         }
 
-        JSONObject body = new JSONObject(response.getEntity(String.class));
+        JSONObject body = new JSONObject(readBody(response));
 
         Personne p = new Personne();
         p.setId(body.getInt("id"));
@@ -241,7 +289,7 @@ public class PersonneDAO extends RestDAO<Personne> {
         p.setEmail(body.getString("email"));
         return p;
     }
-    
+
     //JSON -> Model
     private Personne fromJsonPersonne(JSONObject json) {
         Personne p = new Personne();
@@ -286,7 +334,7 @@ public class PersonneDAO extends RestDAO<Personne> {
             l.setExpirationDate(LocalDate.parse(json.getString("expirationDate")));
             l.setStatut(json.getBoolean("statut"));
 
-            if(json.has("shareLink") && !json.isNull("shareLink")) {
+            if (json.has("shareLink") && !json.isNull("shareLink")) {
                 l.setShareLink(json.getString("shareLink"));
             } else {
                 l.setShareLink("https://default");
@@ -303,7 +351,6 @@ public class PersonneDAO extends RestDAO<Personne> {
         return list;
     }
 
-
     private List<Reservation> parseReservations(JSONArray arr) {
         List<Reservation> list = new ArrayList<>();
         for (int i = 0; i < arr.length(); i++) {
@@ -315,9 +362,8 @@ public class PersonneDAO extends RestDAO<Personne> {
             r.setDateReservation(LocalDate.parse(json.getString("dateReservation")));
 
             if (json.has("cadeauId") && !json.isNull("cadeauId")) {
-                int cadeauId = json.getInt("cadeauId");
                 Cadeau c = new Cadeau();
-                c.setId(cadeauId);
+                c.setId(json.getInt("cadeauId"));
                 r.setCadeau(c);
             }
 

@@ -212,32 +212,32 @@ public class CadeauDAO extends JdbcDAO<Cadeau> {
         """;
 
         try (PreparedStatement st = connect.prepareStatement(SQL)) {
-            st.setInt(1, c.getListeCadeau().getId());
+
+            // ✅ le ? correspond à Cadeau.Id
+            st.setInt(1, c.getId());
 
             try (ResultSet rs = st.executeQuery()) {
 
                 if (rs.next()) {
 
-                    ListeCadeau l = new ListeCadeau(); 
+                    ListeCadeau l = new ListeCadeau();
 
-                    l.setId(rs.getInt("Id"));
-                    l.setTitle(rs.getString("Titre"));
-                    l.setEvenement(rs.getString("Evenement"));
+                    l.setId(rs.getInt("ID"));
+                    l.setTitle(rs.getString("TITRE"));
+                    l.setEvenement(rs.getString("EVENEMENT"));
 
-                    l.initCreationDate(rs.getDate("DateCreation").toLocalDate());
-                    l.setExpirationDate(rs.getDate("DateExpiration").toLocalDate());
+                    l.initCreationDate(rs.getDate("DATECREATION").toLocalDate());
+                    l.setExpirationDate(rs.getDate("DATEEXPIRATION").toLocalDate());
 
-                    l.setStatut(rs.getInt("Statut") == 1);
+                    l.setStatut(rs.getInt("STATUT") == 1);
 
-                    String share = rs.getString("ShareLink");
-                    if (share != null && !share.isBlank()) {
-                        l.setShareLink(share);
+                    String share = rs.getString("LIENPARTAGE");
+                    l.setShareLink((share != null && !share.isBlank()) ? share : "https://default");
 
-                    }
-                    else {
-                        l.setShareLink("https://default"); 
-                    }
-                   
+                    Personne creator = new Personne();
+                    creator.setId(rs.getInt("CREATEURID"));
+                    l.setCreator(creator);
+
                     c.setListeCadeau(l);
                 }
             }
@@ -246,6 +246,7 @@ public class CadeauDAO extends JdbcDAO<Cadeau> {
             throw new RuntimeException("Erreur loadListeCadeau()", e);
         }
     }
+
 
     private void loadReservations(Cadeau c) {
 

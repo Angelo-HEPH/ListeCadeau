@@ -42,6 +42,7 @@ public class PersonneAPI {
         try {
             JSONObject json = new JSONObject(personneJson);
 
+            json.remove("id");
             Personne p = new Personne();
             p.parse(json);
 
@@ -61,8 +62,9 @@ public class PersonneAPI {
                     .entity("Erreur : " + e.getMessage() + ".")
                     .build();
         } catch (Exception e) {
-            return Response.status(Status.BAD_REQUEST)
-                    .entity("Erreur lors de la création de la personne : " + e)
+            e.printStackTrace();
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
+                    .entity("Erreur lors de la création de la personne.")
                     .build();
         }
     }
@@ -77,10 +79,8 @@ public class PersonneAPI {
                              @QueryParam("loadInvitedLists") @DefaultValue("false") boolean loadInvitedLists,
                              @QueryParam("loadReservations") @DefaultValue("false") boolean loadReservations) {
         try {
-            PersonneDAO dao = getDao();
-
             Personne p = Personne.findById(
-                    id, dao,
+                    id, getDao(),
                     loadNotifications,
                     loadCreatedLists,
                     loadInvitedLists,
@@ -103,10 +103,32 @@ public class PersonneAPI {
                     .build();
 
         } catch (Exception e) {
-            e.printStackTrace();
-            return Response
-                    .status(Status.BAD_REQUEST)
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
                     .entity("Erreur lors de la récupération de la personne.")
+                    .build();
+        }
+    }
+
+    //FindByEmail
+    @GET
+    @Path("/byEmail")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response findByEmail(@QueryParam("email") String email) {
+        try {
+            Personne p = Personne.findByEmail(email.trim().toLowerCase(), getDao());
+            if (p == null) {
+                return Response.status(Status.NOT_FOUND).build();
+            }
+
+            JSONObject json = toJson(p, false, false, false, false);
+
+            return Response.status(Status.OK)
+                    .entity(json.toString())
+                    .build();
+
+        } catch (Exception e) {
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
+                    .entity("Erreur lors de la récupération de la personne par email.")
                     .build();
         }
     }
@@ -119,10 +141,8 @@ public class PersonneAPI {
                             @QueryParam("loadInvitedLists") @DefaultValue("false") boolean loadInvitedLists,
                             @QueryParam("loadReservations") @DefaultValue("false") boolean loadReservations) {
         try {
-            PersonneDAO dao = getDao();
-
             List<Personne> personnes = Personne.findAll(
-                    dao,
+            		getDao(),
                     loadNotifications,
                     loadCreatedLists,
                     loadInvitedLists,
@@ -144,7 +164,7 @@ public class PersonneAPI {
 
         } catch (Exception e) {
             e.printStackTrace();
-            return Response.status(Status.BAD_REQUEST)
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
                     .entity("Erreur lors de la récupération des personnes.")
                     .build();
         }
@@ -156,20 +176,16 @@ public class PersonneAPI {
     @Produces(MediaType.APPLICATION_JSON)
     public Response deletePersonne(@PathParam("id") int id) {
         try {
-            PersonneDAO dao = getDao();
-            Personne p = Personne.findById(id, dao);
+            Personne p = Personne.findById(id, getDao());
 
             if (p == null) {
-                return Response
-                        .status(Status.NOT_FOUND)
-                        .build();
+                return Response.status(Status.NOT_FOUND).build();
             }
 
-            boolean deleted = Personne.delete(p, dao);
+            boolean deleted = Personne.delete(p, getDao());
 
             if (!deleted) {
-                return Response
-                        .status(Status.BAD_REQUEST)
+                return Response.status(Status.BAD_REQUEST)
                         .entity("Erreur : Impossible de supprimer cette personne.")
                         .build();
             }
@@ -178,8 +194,7 @@ public class PersonneAPI {
 
         } catch (Exception e) {
             e.printStackTrace();
-            return Response
-                    .status(Status.BAD_REQUEST)
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
                     .entity("Erreur lors de la suppression.")
                     .build();
         }
@@ -192,9 +207,7 @@ public class PersonneAPI {
     @Produces(MediaType.APPLICATION_JSON)
     public Response updatePersonne(@PathParam("id") int id, String personneJson) {
         try {
-            PersonneDAO dao = getDao();
-
-            Personne existing = Personne.findById(id, dao);
+            Personne existing = Personne.findById(id, getDao());
             if (existing == null) {
                 return Response.status(Status.NOT_FOUND)
                         .entity("Erreur : Personne non trouvée.")
@@ -202,30 +215,29 @@ public class PersonneAPI {
             }
 
             JSONObject json = new JSONObject(personneJson);
+            json.put("id", id);
             existing.parse(json);
 
-            boolean updated = existing.update(dao);
-
+            boolean updated = existing.update(getDao());
             if (!updated) {
                 return Response.status(Status.SERVICE_UNAVAILABLE)
                         .entity("Erreur : La mise à jour a échoué.")
                         .build();
             }
 
-            return Response.status(Status.NO_CONTENT).build();
+            return Response.status(Status.NO_CONTENT)
+            		.build();
 
         } catch (JSONException e) {
             return Response.status(Status.BAD_REQUEST)
                     .entity("Erreur : JSON invalide.")
                     .build();
-
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST)
                     .entity("Erreur : " + e.getMessage() + ".")
                     .build();
-
         } catch (Exception e) {
-            return Response.status(Status.BAD_REQUEST)
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
                     .entity("Erreur lors de la mise à jour de la personne.")
                     .build();
         }
@@ -239,7 +251,6 @@ public class PersonneAPI {
 
         JSONObject json = p.unparse();
 
-        //Relations optionnelles
         if (includeNotifications) {
             JSONArray array = new JSONArray();
             for (Notification n : p.getNotifications()) {

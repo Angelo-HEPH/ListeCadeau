@@ -175,6 +175,9 @@ public class ListeCadeauDAO extends JdbcDAO<ListeCadeau> {
                 l.setStatut(rs.getInt("Statut") == 1);
                 l.setShareLink(rs.getString("LienPartage"));
 
+                Personne creator = new Personne();
+                creator.setId(rs.getInt("CreateurId"));
+                l.setCreator(creator);
 
                 if (loadCreator) {
                 	loadCreator(l);
@@ -216,11 +219,16 @@ public class ListeCadeauDAO extends JdbcDAO<ListeCadeau> {
                 l.setId(rs.getInt("Id"));
                 l.setTitle(rs.getString("Titre"));
                 l.setEvenement(rs.getString("Evenement"));
-                l.initCreationDate(rs.getDate("DateCreation").toLocalDate()); // ✅
+                l.initCreationDate(rs.getDate("DateCreation").toLocalDate());
+                l.setExpirationDate(rs.getDate("DateExpiration").toLocalDate());
                 l.setStatut(rs.getInt("Statut") == 1);                
                 l.setShareLink(rs.getString("LienPartage"));
 
+                Personne creator = new Personne();
+                creator.setId(rs.getInt("CreateurId"));
+                l.setCreator(creator);
 
+                
                 if (loadCreator) {
                 	loadCreator(l);
                 }
@@ -355,4 +363,41 @@ public class ListeCadeauDAO extends JdbcDAO<ListeCadeau> {
 
         l.setCadeaux(cadeaux);
     }
+    
+    public boolean addInvite(int listeId, int personneId) {
+
+        final String SQL = """
+            INSERT INTO listecadeau_invites (listeId, personneId)
+            VALUES (?, ?)
+        """;
+
+        try (PreparedStatement st = connect.prepareStatement(SQL)) {
+            st.setInt(1, listeId);
+            st.setInt(2, personneId);
+            
+            return st.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur ListeCadeauDAO.insertInvite()", e);
+        }
+    }
+
+    public boolean removeInvite(int listeId, int personneId) {
+
+        final String SQL = """
+            DELETE FROM listecadeau_invites
+            WHERE listeId = ? AND personneId = ?
+        """;
+
+        try (PreparedStatement st = connect.prepareStatement(SQL)) {
+            st.setInt(1, listeId);
+            st.setInt(2, personneId);
+            
+            return st.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur ListeCadeauDAO.removeInvite()", e);
+        }
+    }
+
 }

@@ -2,6 +2,7 @@ package be.couderiannello.api;
 
 import java.net.URI;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -41,6 +42,7 @@ public class ListeCadeauAPI {
         try {
             JSONObject json = new JSONObject(jsonBody);
 
+            json.remove("id");
             ListeCadeau l = new ListeCadeau();
             l.parse(json);
 
@@ -65,6 +67,83 @@ public class ListeCadeauAPI {
         }
     }
 
+    @POST
+    @Path("/{id}/invites")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response addInvite(@PathParam("id") int listeId, String body) {
+        try {
+            ListeCadeau l = ListeCadeau.findById(listeId, getDao(), true, true, false);
+            if (l == null) {
+                return Response.status(Status.NOT_FOUND).build();
+            }
+
+            JSONObject json = new JSONObject(body);
+            int personneId = json.getInt("personneId");
+
+            //S'inviter sois-même
+            if (l.getCreator() != null && l.getCreator().getId() == personneId) {
+                return Response.status(Status.BAD_REQUEST).build();
+            }
+
+            //Personne déja invité
+            if (l.getInvites() != null && l.getInvites().stream().anyMatch(x -> x.getId() == personneId)) {
+                return Response.status(Status.CONFLICT).build();
+            }
+
+            Personne p = new Personne();
+            p.setId(personneId);
+
+            l.addInvite(p, getDao());
+
+            return Response.status(Status.CREATED).
+            		build();
+
+        } catch (JSONException e) {
+            return Response.status(Status.BAD_REQUEST)
+            		.build();
+
+        } catch (IllegalArgumentException e) {
+            return Response.status(Status.BAD_REQUEST)
+            		.build();
+
+        } catch (IllegalStateException e) {
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
+            		.build();
+
+        } catch (Exception e) {
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
+            		.build();
+        }
+    }
+
+    @DELETE
+    @Path("/{id}/invites/{personneId}")
+    public Response removeInvite(@PathParam("id") int listeId,
+                                 @PathParam("personneId") int personneId) {
+        try {
+            ListeCadeau l = ListeCadeau.findById(listeId, getDao(), false, false, false);
+            if (l == null) {
+                return Response.status(Status.NOT_FOUND).build();
+            }
+
+            l.removeInvite(personneId, getDao());
+
+            return Response.status(Status.NO_CONTENT)
+            		.build();
+        } catch (NoSuchElementException e) {
+            return Response.status(Status.NOT_FOUND)
+            		.build();
+
+        } catch (IllegalArgumentException e) {
+            return Response.status(Status.BAD_REQUEST)
+            		.build();
+
+        } catch (Exception e) {
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
+            		.build();
+        }
+    }
+
     //FindById
     @GET
     @Path("/{id}")
@@ -74,9 +153,7 @@ public class ListeCadeauAPI {
                              @QueryParam("loadInvites") @DefaultValue("false") boolean loadInvites,
                              @QueryParam("loadCadeaux") @DefaultValue("false") boolean loadCadeaux) {
         try {
-            ListeCadeauDAO dao = getDao();
-
-            ListeCadeau l = ListeCadeau.findById(id, dao, loadCreator, loadInvites, loadCadeaux);
+            ListeCadeau l = ListeCadeau.findById(id, getDao(), loadCreator, loadInvites, loadCadeaux);
             if (l == null) {
                 return Response.status(Status.NOT_FOUND).build();
             }
@@ -101,9 +178,7 @@ public class ListeCadeauAPI {
                             @QueryParam("loadInvites") @DefaultValue("false") boolean loadInvites,
                             @QueryParam("loadCadeaux") @DefaultValue("false") boolean loadCadeaux) {
         try {
-            ListeCadeauDAO dao = getDao();
-
-            List<ListeCadeau> listes = ListeCadeau.findAll(dao, loadCreator, loadInvites, loadCadeaux);
+            List<ListeCadeau> listes = ListeCadeau.findAll(getDao(), loadCreator, loadInvites, loadCadeaux);
 
             JSONArray array = new JSONArray();
             for (ListeCadeau l : listes) {
@@ -127,9 +202,7 @@ public class ListeCadeauAPI {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response update(@PathParam("id") int id, String body) {
         try {
-            ListeCadeauDAO dao = getDao();
-
-            ListeCadeau existing = ListeCadeau.findById(id, dao);
+            ListeCadeau existing = ListeCadeau.findById(id, getDao());
             if (existing == null) {
                 return Response.status(Status.NOT_FOUND)
                         .entity("Erreur : ListeCadeau non trouvée.")
@@ -146,7 +219,7 @@ public class ListeCadeauAPI {
 
             existing.parse(json);
 
-            boolean updated = existing.update(dao);
+            boolean updated = existing.update(getDao());
 
             if (!updated) {
                 return Response.status(Status.SERVICE_UNAVAILABLE)
@@ -176,14 +249,13 @@ public class ListeCadeauAPI {
     @Path("/{id}")
     public Response delete(@PathParam("id") int id) {
         try {
-            ListeCadeauDAO dao = getDao();
-            ListeCadeau l = ListeCadeau.findById(id, dao);
+            ListeCadeau l = ListeCadeau.findById(id, getDao());
 
             if (l == null) {
                 return Response.status(Status.NOT_FOUND).build();
             }
 
-            boolean deleted = ListeCadeau.delete(l, dao);
+            boolean deleted = ListeCadeau.delete(l, getDao());
 
             if (!deleted) {
                 return Response.status(Status.BAD_REQUEST)
@@ -191,7 +263,8 @@ public class ListeCadeauAPI {
                         .build();
             }
 
-            return Response.status(Status.NO_CONTENT).build();
+            return Response.status(Status.NO_CONTENT)
+            		.build();
 
         } catch (Exception e) {
             return Response.status(Status.BAD_REQUEST)

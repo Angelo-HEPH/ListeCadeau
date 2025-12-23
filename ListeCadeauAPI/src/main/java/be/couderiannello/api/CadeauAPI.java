@@ -23,8 +23,8 @@ import org.json.JSONObject;
 
 import be.couderiannello.connection.ConnectionBdd;
 import be.couderiannello.dao.CadeauDAO;
-import be.couderiannello.enumeration.StatutPriorite;
 import be.couderiannello.models.Cadeau;
+import be.couderiannello.models.ListeCadeau;
 import be.couderiannello.models.Reservation;
 
 @Path("/cadeau")
@@ -40,14 +40,13 @@ public class CadeauAPI {
     public Response create(String jsonBody) {
         try {
             JSONObject json = new JSONObject(jsonBody);
-
+            json.remove("id"); 
             
             Cadeau c = new Cadeau();
             c.parse(json);
             
             int id = c.create(getDao());
             
-
             return Response.status(Status.CREATED)
                     .location(URI.create("cadeau/" + id))
                     .build();
@@ -61,7 +60,7 @@ public class CadeauAPI {
                     .entity("Erreur : " + e.getMessage() + ".")
                     .build();
         } catch (Exception e) {
-            return Response.status(Status.BAD_REQUEST)
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
                     .entity("Erreur lors de la création du cadeau.")
                     .build();
         }
@@ -75,9 +74,8 @@ public class CadeauAPI {
                              @QueryParam("loadListeCadeau") @DefaultValue("false") boolean loadListeCadeau,
                              @QueryParam("loadReservations") @DefaultValue("false") boolean loadReservations) {
         try {
-            CadeauDAO dao = getDao();
 
-            Cadeau c = Cadeau.findById(id, dao, loadListeCadeau, loadReservations);
+            Cadeau c = Cadeau.findById(id, getDao(), loadListeCadeau, loadReservations);
             if (c == null) {
                 return Response.status(Status.NOT_FOUND)
                 		.build();
@@ -90,7 +88,7 @@ public class CadeauAPI {
                     .build();
 
         } catch (Exception e) {
-            return Response.status(Status.BAD_REQUEST)
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
                     .entity("Erreur lors de la récupération du cadeau.")
                     .build();
         }
@@ -102,9 +100,7 @@ public class CadeauAPI {
     public Response findAll(@QueryParam("loadListeCadeau") @DefaultValue("false") boolean loadListeCadeau,
                             @QueryParam("loadReservations") @DefaultValue("false") boolean loadReservations) {
         try {
-            CadeauDAO dao = getDao();
-
-            List<Cadeau> cadeaux = Cadeau.findAll(dao, loadListeCadeau, loadReservations);
+            List<Cadeau> cadeaux = Cadeau.findAll(getDao(), loadListeCadeau, loadReservations);
 
             JSONArray array = new JSONArray();
             for (Cadeau c : cadeaux) {
@@ -116,7 +112,7 @@ public class CadeauAPI {
                     .build();
 
         } catch (Exception e) {
-            return Response.status(Status.BAD_REQUEST)
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
                     .entity("Erreur lors de la récupération des cadeaux.")
                     .build();
         }
@@ -128,9 +124,7 @@ public class CadeauAPI {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response update(@PathParam("id") int id, String body) {
         try {
-            CadeauDAO dao = getDao();
-
-            Cadeau existing = Cadeau.findById(id, dao);
+            Cadeau existing = Cadeau.findById(id, getDao());
             if (existing == null) {
                 return Response.status(Status.NOT_FOUND)
                         .entity("Erreur : Cadeau non trouvé.")
@@ -139,14 +133,12 @@ public class CadeauAPI {
 
             JSONObject json = new JSONObject(body);
 
-            existing.setName(json.getString("name"));
-            existing.setDescription(json.getString("description"));
-            existing.setPrice(json.getDouble("price"));
-            existing.setPhoto(json.getString("photo"));
-            existing.setLinkSite(json.getString("linkSite"));
-            existing.setPriorite(StatutPriorite.valueOf(json.getString("priorite")));
+            json.put("id", id);
+            json.remove("listeCadeauId");
 
-            boolean updated = existing.update(dao);
+            existing.parse(json);
+
+            boolean updated = existing.update(getDao());
 
             if (!updated) {
                 return Response.status(Status.SERVICE_UNAVAILABLE)
@@ -165,7 +157,7 @@ public class CadeauAPI {
                     .entity("Erreur : " + e.getMessage() + ".")
                     .build();
         } catch (Exception e) {
-            return Response.status(Status.BAD_REQUEST)
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
                     .entity("Erreur lors de la mise à jour du cadeau.")
                     .build();
         }
@@ -176,14 +168,13 @@ public class CadeauAPI {
     @Path("/{id}")
     public Response delete(@PathParam("id") int id) {
         try {
-            CadeauDAO dao = getDao();
-            Cadeau c = Cadeau.findById(id, dao);
+            Cadeau c = Cadeau.findById(id, getDao());
 
             if (c == null) {
                 return Response.status(Status.NOT_FOUND).build();
             }
 
-            boolean deleted = Cadeau.delete(c, dao);
+            boolean deleted = Cadeau.delete(c, getDao());
 
             if (!deleted) {
                 return Response.status(Status.BAD_REQUEST)
@@ -194,7 +185,7 @@ public class CadeauAPI {
             return Response.status(Status.NO_CONTENT).build();
 
         } catch (Exception e) {
-            return Response.status(Status.BAD_REQUEST)
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
                     .entity("Erreur lors de la suppression.")
                     .build();
         }
@@ -205,8 +196,24 @@ public class CadeauAPI {
 
         JSONObject json = c.unparse();
 
-        if (includeListeCadeau) {
-            json.put("listeCadeau", c.getListeCadeau().unparse());
+        if (includeListeCadeau && c.getListeCadeau() != null) {
+
+            ListeCadeau l = c.getListeCadeau();
+
+            JSONObject lcJson = new JSONObject();
+            lcJson.put("id", l.getId());
+            lcJson.put("title", l.getTitle());
+            lcJson.put("evenement", l.getEvenement());
+            lcJson.put("creationDate", l.getCreationDate());
+            lcJson.put("expirationDate", l.getExpirationDate());
+            lcJson.put("statut", l.isStatut());
+            lcJson.put("shareLink", l.getShareLink());
+
+            if (l.getCreator() != null) {
+                lcJson.put("creatorId", l.getCreator().getId());
+            }
+
+            json.put("listeCadeau", lcJson);
         }
 
         if (includeReservations) {

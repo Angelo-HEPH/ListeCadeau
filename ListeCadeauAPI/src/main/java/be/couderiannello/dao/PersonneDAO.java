@@ -314,6 +314,7 @@ public class PersonneDAO extends JdbcDAO<Personne> {
                     l.initCreationDate(rs.getDate("DateCreation").toLocalDate());
                     l.setExpirationDate(rs.getDate("DateExpiration").toLocalDate());
                     l.setStatut(rs.getInt("Statut") == 1);
+                    l.setShareLink(rs.getString("LienPartage"));
                     l.setCreator(p); 
 
                     list.add(l);
@@ -330,7 +331,7 @@ public class PersonneDAO extends JdbcDAO<Personne> {
     private void loadInvitedLists(Personne p) {
 
         final String SQL = """
-            SELECT lc.* 
+            SELECT lc.*
             FROM ListeCadeau_Invites li
             JOIN ListeCadeau lc ON lc.Id = li.ListeId
             WHERE li.PersonneId=?
@@ -346,16 +347,26 @@ public class PersonneDAO extends JdbcDAO<Personne> {
 
                 while (rs.next()) {
 
-                    ListeCadeau l = new ListeCadeau(); 
+                    ListeCadeau l = new ListeCadeau();
 
                     l.setId(rs.getInt("Id"));
                     l.setTitle(rs.getString("Titre"));
                     l.setEvenement(rs.getString("Evenement"));
                     l.initCreationDate(rs.getDate("DateCreation").toLocalDate());
-                    l.setExpirationDate(rs.getDate("DateExpiration").toLocalDate());
+
+                    Date exp = rs.getDate("DateExpiration");
+                    if (exp != null) {
+                        l.setExpirationDate(exp.toLocalDate());
+                    }
+
                     l.setStatut(rs.getInt("Statut") == 1);
-                    l.getInvites().add(p);       
-                    p.getListeCadeauInvitations().add(l);
+                    l.setShareLink(rs.getString("LienPartage"));
+
+                    Personne creator = new Personne();
+                    creator.setId(rs.getInt("CreateurId"));
+                    l.setCreator(creator);
+
+                    l.getInvites().add(p);
 
                     list.add(l);
                 }
@@ -367,6 +378,7 @@ public class PersonneDAO extends JdbcDAO<Personne> {
 
         p.setListeCadeauInvitations(list);
     }
+
 
     private void loadReservations(Personne p) {
 
@@ -387,13 +399,17 @@ public class PersonneDAO extends JdbcDAO<Personne> {
 
                 while (rs.next()) {
 
-                    Reservation r = new Reservation(); 
+                    Reservation r = new Reservation();
 
                     r.setId(rs.getInt("Id"));
                     r.setAmount(rs.getDouble("Montant"));
                     r.setDateReservation(rs.getDate("DateReservation").toLocalDate());
-                    r.getPersonnes().add(p);         
-                    p.getReservations().add(r);      
+
+                    Cadeau c = new Cadeau();
+                    c.setId(rs.getInt("CadeauId"));
+                    r.setCadeau(c);
+
+                    r.getPersonnes().add(p);
 
                     list.add(r);
                 }
@@ -404,6 +420,40 @@ public class PersonneDAO extends JdbcDAO<Personne> {
         }
 
         p.setReservations(list);
+    }
+
+
+    public Personne findByEmail(String email) {
+
+        final String SQL = "SELECT * FROM Personne WHERE Email = ?";
+
+        try (PreparedStatement st = connect.prepareStatement(SQL)) {
+            st.setString(1, email);
+
+            try (ResultSet rs = st.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+
+                Personne p = new Personne(
+                        rs.getInt("Id"),
+                        rs.getString("Nom"),
+                        rs.getString("Prenom"),
+                        rs.getInt("Age"),
+                        rs.getString("Rue"),
+                        rs.getString("Ville"),
+                        rs.getString("Numero"),
+                        rs.getInt("CodePostal"),
+                        rs.getString("Email"),
+                        rs.getString("MotDePasse")
+                    );
+                
+                return p;
+            }
+                        
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur PersonneDAO.findByEmail()", e);
+        }
     }
 
 }

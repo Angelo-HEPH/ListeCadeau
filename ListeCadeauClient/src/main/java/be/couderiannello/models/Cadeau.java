@@ -258,6 +258,10 @@ public class Cadeau implements Serializable {
     //JSON -> Model
     public void parse(JSONObject json) {
 
+        if (json.has("id")) {
+            setId(json.getInt("id"));
+        }
+        
         setName(json.getString("name"));
         setDescription(json.getString("description"));
         setPrice(json.getDouble("price"));
@@ -265,9 +269,11 @@ public class Cadeau implements Serializable {
         setLinkSite(json.getString("linkSite"));
         setPriorite(StatutPriorite.valueOf(json.getString("priorite")));
 
-        ListeCadeau l = new ListeCadeau();
-        l.setId(json.getInt("listeCadeauId"));
-        setListeCadeau(l);
+        if (json.has("listeCadeauId")) {
+            ListeCadeau l = new ListeCadeau();
+            l.setId(json.getInt("listeCadeauId"));
+            setListeCadeau(l);
+        }
     }
 
     //Model -> JSON

@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.json.JSONObject;
 
@@ -43,12 +44,10 @@ public class ListeCadeau implements Serializable {
         setEvenement(evenement);
         setExpirationDate(expirationDate);
         setStatut(statut);
-        setCreator(creator);
         
         if (creator == null) {
             throw new IllegalArgumentException("Le créateur ne peut pas être null.");
         }
-
         setCreator(creator);
     }
     
@@ -194,34 +193,53 @@ public class ListeCadeau implements Serializable {
     }
     
     //Méthodes
-    public void addInvite(Personne p) {
+    public boolean addInvite(Personne p, ListeCadeauDAO dao) {
         if (p == null) {
-            throw new IllegalArgumentException("L'invité ne peut pas être null.");
+        	throw new IllegalArgumentException("Personne obligatoire.");
         }
         
-        if (invites.contains(p)) {
+        if (dao == null) {
+        	throw new IllegalArgumentException("DAO obligatoire.");
+        }
+
+        if (this.creator == null) {
+            throw new IllegalStateException("Créateur invalide.");
+        }
+
+        if (this.creator.getId() == p.getId()) {
+            throw new IllegalArgumentException("Le créateur ne peut pas s'inviter lui-même.");
+        }
+
+        if (this.invites != null && this.invites.stream().anyMatch(x -> x.getId() == p.getId())) {
             throw new IllegalArgumentException("Cette personne est déjà invitée.");
         }
-        
-        invites.add(p);
-        if (!p.getListeCadeauInvitations().contains(this)) {
-            p.getListeCadeauInvitations().add(this);
+
+        boolean ok = dao.addInvite(this.id, p.getId());
+        if (!ok) {
+            throw new IllegalArgumentException("Cette personne est déjà invitée.");
         }
+
+        return true;
     }
 
-    public void removeInvite(Personne p) {
-        if (p == null) {
-            throw new IllegalArgumentException("L'invité ne peut pas être null.");
+    public boolean removeInvite(int personneId, ListeCadeauDAO dao) {
+        if (dao == null) {
+            throw new IllegalArgumentException("DAO obligatoire.");
         }
-        
-        if (!invites.contains(p)) {
-            throw new IllegalArgumentException("Cette personne n'est pas invitée à cette liste.");
+        if (personneId <= 0) {
+            throw new IllegalArgumentException("Identifiant invité invalide.");
         }
-        
-        invites.remove(p);
-        if (p.getListeCadeauInvitations().contains(this)) {
-            p.getListeCadeauInvitations().remove(this);
+
+        boolean ok = dao.removeInvite(this.id, personneId);
+        if (!ok) {
+            throw new NoSuchElementException();
         }
+
+        if (this.invites != null) {
+            this.invites.removeIf(x -> x.getId() == personneId);
+        }
+
+        return true;
     }
 
     public void addCadeau(Cadeau c) {
@@ -253,7 +271,7 @@ public class ListeCadeau implements Serializable {
             c.setListeCadeau(null);
         }
     }
-    
+
     //ToString - HashCode - Equals
     @Override
     public String toString() {
@@ -325,16 +343,31 @@ public class ListeCadeau implements Serializable {
     //JSON -> Model
     public void parse(JSONObject json) {
 
+        if (json.has("id")) {
+            setId(json.getInt("id"));
+        }
+
         setTitle(json.getString("title"));
         setEvenement(json.getString("evenement"));
-        setExpirationDate(LocalDate.parse(json.getString("expirationDate")));
+
+        if (json.has("creationDate") && !json.isNull("creationDate")) {
+            initCreationDate(LocalDate.parse(json.getString("creationDate")));
+        }
+
+        if (json.has("expirationDate") && !json.isNull("expirationDate")) {
+            setExpirationDate(LocalDate.parse(json.getString("expirationDate")));
+        }
+
         setStatut(json.getBoolean("statut"));
         setShareLink(json.getString("shareLink"));
 
-        Personne p = new Personne();
-        p.setId(json.getInt("creatorId"));
-         setCreator(p);
+        if (json.has("creatorId") && !json.isNull("creatorId")) {
+            Personne p = new Personne();
+            p.setId(json.getInt("creatorId"));
+            setCreator(p);
+        }
     }
+
     
     //Model -> JSON
     public JSONObject unparse() {
@@ -348,6 +381,7 @@ public class ListeCadeau implements Serializable {
 	    json.put("expirationDate", getExpirationDate());
 	    json.put("statut", isStatut());
 	    json.put("shareLink", getShareLink());
+	    json.put("creatorId", getCreator().getId());
 	
 	    return json;
     }

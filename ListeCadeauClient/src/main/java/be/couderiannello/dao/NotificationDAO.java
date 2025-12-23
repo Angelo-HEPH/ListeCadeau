@@ -19,9 +19,7 @@ public class NotificationDAO extends RestDAO<Notification> {
 
     private static NotificationDAO instance = null;
 
-    private NotificationDAO() {
-        super();
-    }
+    private NotificationDAO() { }
 
     public static NotificationDAO getInstance() {
         if (instance == null) {
@@ -47,17 +45,15 @@ public class NotificationDAO extends RestDAO<Notification> {
                 .type(MediaType.APPLICATION_JSON)
                 .post(ClientResponse.class, json.toString());
 
-        if (response.getStatus() == Status.CREATED.getStatusCode()) {
-            String location = response.getHeaders().getFirst("Location");
-            if (location == null || location.isBlank()) {
-                throw new RuntimeException("Réponse création notification sans header Location");
-            }
-            String[] parts = location.split("/");
-            String last = parts[parts.length - 1];
-            return Integer.parseInt(last);
+        if (response.getStatus() != Status.CREATED.getStatusCode()) {
+            throw new RuntimeException(
+                    "Erreur API création notification (status=" 
+                    		+ response.getStatus() + ", body=" 
+                    		+ readBody(response) + ")"
+            );
         }
 
-        throw new RuntimeException("Erreur API création notification : " + response.getStatus());
+        return extractIdFromLocation(response, "notification");
     }
 
     //Find
@@ -75,11 +71,19 @@ public class NotificationDAO extends RestDAO<Notification> {
                 .accept(MediaType.APPLICATION_JSON)
                 .get(ClientResponse.class);
 
-        if (response.getStatus() != Status.OK.getStatusCode()) {
+        if (response.getStatus() == Status.NOT_FOUND.getStatusCode()) {
             return null;
         }
 
-        JSONObject json = new JSONObject(response.getEntity(String.class));
+        if (response.getStatus() != Status.OK.getStatusCode()) {
+            throw new RuntimeException(
+                    "Erreur API find notification (status="
+                    		+ response.getStatus() + ", body=" 
+                    		+ readBody(response) + ")"
+            );
+        }
+
+        JSONObject json = new JSONObject(readBody(response));
         return fromJsonNotification(json, loadPersonne);
     }
 
@@ -91,8 +95,6 @@ public class NotificationDAO extends RestDAO<Notification> {
 
     public List<Notification> findAll(boolean loadPersonne) {
 
-        ArrayList<Notification> list = new ArrayList<>();
-
         ClientResponse response = getResource()
                 .path("notification")
                 .queryParam("loadPersonne", String.valueOf(loadPersonne))
@@ -100,10 +102,16 @@ public class NotificationDAO extends RestDAO<Notification> {
                 .get(ClientResponse.class);
 
         if (response.getStatus() != Status.OK.getStatusCode()) {
-            return list;
+            throw new RuntimeException(
+                    "Erreur API findAll notification (status=" 
+                    		+ response.getStatus() + ", body=" 
+                    		+ readBody(response) + ")"
+            );
         }
 
-        JSONArray array = new JSONArray(response.getEntity(String.class));
+        JSONArray array = new JSONArray(readBody(response));
+
+        ArrayList<Notification> list = new ArrayList<>();
         for (int i = 0; i < array.length(); i++) {
             JSONObject json = array.getJSONObject(i);
             list.add(fromJsonNotification(json, loadPersonne));
@@ -117,7 +125,6 @@ public class NotificationDAO extends RestDAO<Notification> {
     public boolean update(Notification n) {
 
         JSONObject json = new JSONObject();
-
         json.put("read", n.isRead());
 
         ClientResponse response = getResource()
@@ -126,7 +133,14 @@ public class NotificationDAO extends RestDAO<Notification> {
                 .type(MediaType.APPLICATION_JSON)
                 .put(ClientResponse.class, json.toString());
 
-        return response.getStatus() == Status.NO_CONTENT.getStatusCode();
+        if (response.getStatus() != Status.NO_CONTENT.getStatusCode()) {
+            throw new RuntimeException(
+                    "Erreur API update notification (status=" + response.getStatus() +
+                    ", body=" + readBody(response) + ")"
+            );
+        }
+
+        return true;
     }
 
     //Delete
@@ -138,7 +152,15 @@ public class NotificationDAO extends RestDAO<Notification> {
                 .path(String.valueOf(n.getId()))
                 .delete(ClientResponse.class);
 
-        return response.getStatus() == Status.NO_CONTENT.getStatusCode();
+        if (response.getStatus() != Status.NO_CONTENT.getStatusCode()) {
+            throw new RuntimeException(
+                    "Erreur API delete notification (status=" 
+                    		+ response.getStatus() + ", body=" 
+                    		+ readBody(response) + ")"
+            );
+        }
+
+        return true;
     }
 
     //JSON -> Model
@@ -150,7 +172,6 @@ public class NotificationDAO extends RestDAO<Notification> {
         n.setSendDate(LocalDate.parse(json.getString("sendDate")));
         n.setRead(json.getBoolean("read"));
 
-        //Relation personne
         if (loadPersonne && json.has("personne") && !json.isNull("personne")) {
             n.setPersonne(parsePersonne(json.getJSONObject("personne")));
         } else if (json.has("personneId") && !json.isNull("personneId")) {
@@ -165,15 +186,14 @@ public class NotificationDAO extends RestDAO<Notification> {
     private Personne parsePersonne(JSONObject json) {
         Personne p = new Personne();
         p.setId(json.getInt("id"));
-        p.setName(json.getString("name"));        
-       	p.setFirstName(json.getString("firstName"));
-       	p.setAge(json.getInt("age"));
-       	p.setStreet(json.getString("street"));
-       	p.setCity(json.getString("city"));
-       	p.setStreetNumber(json.getString("streetNumber"));
-       	p.setPostalCode(json.getInt("postalCode"));
-       	p.setEmail(json.getString("email"));
-
+        p.setName(json.getString("name"));
+        p.setFirstName(json.getString("firstName"));
+        p.setAge(json.getInt("age"));
+        p.setStreet(json.getString("street"));
+        p.setCity(json.getString("city"));
+        p.setStreetNumber(json.getString("streetNumber"));
+        p.setPostalCode(json.getInt("postalCode"));
+        p.setEmail(json.getString("email"));
         return p;
     }
 }

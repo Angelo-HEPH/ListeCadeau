@@ -39,6 +39,8 @@ public class NotificationAPI {
         try {
             JSONObject json = new JSONObject(jsonBody);
 
+            json.remove("id");
+            
             Notification n = new Notification();
             n.parse(json, true);
 
@@ -57,7 +59,6 @@ public class NotificationAPI {
                     .entity("Erreur : " + e.getMessage() + ".")
                     .build();
         } catch (Exception e) {
-            e.printStackTrace();
             return Response.status(Status.BAD_REQUEST)
                     .entity("Erreur lors de la création de la notification.")
                     .build();
@@ -71,9 +72,7 @@ public class NotificationAPI {
     public Response findById(@PathParam("id") int id,
                              @QueryParam("loadPersonne") @DefaultValue("false") boolean loadPersonne) {
         try {
-            NotificationDAO dao = getDao();
-
-            Notification n = Notification.findById(id, dao, loadPersonne);
+            Notification n = Notification.findById(id, getDao(), loadPersonne);
             if (n == null) {
                 return Response.status(Status.NOT_FOUND).build();
             }
@@ -85,7 +84,6 @@ public class NotificationAPI {
                     .build();
 
         } catch (Exception e) {
-            e.printStackTrace();
             return Response.status(Status.BAD_REQUEST)
                     .entity("Erreur lors de la récupération de la notification.")
                     .build();
@@ -97,9 +95,7 @@ public class NotificationAPI {
     @Produces(MediaType.APPLICATION_JSON)
     public Response findAll(@QueryParam("loadPersonne") @DefaultValue("false") boolean loadPersonne) {
         try {
-            NotificationDAO dao = getDao();
-
-            List<Notification> notifications = Notification.findAll(dao, loadPersonne);
+            List<Notification> notifications = Notification.findAll(getDao(), loadPersonne);
 
             JSONArray array = new JSONArray();
             for (Notification n : notifications) {
@@ -118,15 +114,12 @@ public class NotificationAPI {
         }
     }
 
-    //Update
     @PUT
     @Path("/{id}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response update(@PathParam("id") int id, String body) {
         try {
-            NotificationDAO dao = getDao();
-
-            Notification existing = Notification.findById(id, dao, false);
+            Notification existing = Notification.findById(id, getDao(), false);
             if (existing == null) {
                 return Response.status(Status.NOT_FOUND)
                         .entity("Erreur : Notification non trouvée.")
@@ -146,17 +139,18 @@ public class NotificationAPI {
                         .build();
             }
 
+            json.put("id", id);
             existing.parse(json, false);
-
-            boolean updated = existing.update(dao);
-
+            
+            boolean updated = existing.update(getDao());
             if (!updated) {
                 return Response.status(Status.SERVICE_UNAVAILABLE)
                         .entity("Erreur : La mise à jour a échoué.")
                         .build();
             }
 
-            return Response.status(Status.NO_CONTENT).build();
+            return Response.status(Status.NO_CONTENT)
+            		.build();
 
         } catch (JSONException e) {
             return Response.status(Status.BAD_REQUEST)
@@ -168,7 +162,7 @@ public class NotificationAPI {
                     .build();
         } catch (Exception e) {
             e.printStackTrace();
-            return Response.status(Status.BAD_REQUEST)
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
                     .entity("Erreur lors de la mise à jour de la notification.")
                     .build();
         }
@@ -179,14 +173,13 @@ public class NotificationAPI {
     @Path("/{id}")
     public Response delete(@PathParam("id") int id) {
         try {
-            NotificationDAO dao = getDao();
-            Notification n = Notification.findById(id, dao, false);
+            Notification n = Notification.findById(id, getDao(), false);
 
             if (n == null) {
                 return Response.status(Status.NOT_FOUND).build();
             }
 
-            boolean deleted = Notification.delete(n, dao);
+            boolean deleted = Notification.delete(n, getDao());
 
             if (!deleted) {
                 return Response.status(Status.BAD_REQUEST)
@@ -194,10 +187,10 @@ public class NotificationAPI {
                         .build();
             }
 
-            return Response.status(Status.NO_CONTENT).build();
+            return Response.status(Status.NO_CONTENT)
+            		.build();
 
         } catch (Exception e) {
-            e.printStackTrace();
             return Response.status(Status.BAD_REQUEST)
                     .entity("Erreur lors de la suppression.")
                     .build();

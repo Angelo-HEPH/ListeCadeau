@@ -227,7 +227,7 @@ public class ReservationDAO extends JdbcDAO<Reservation> {
 
                 if (!rs.next()) return null;
 
-                Cadeau c = new Cadeau(); 
+                Cadeau c = new Cadeau();
 
                 c.setId(rs.getInt("Id"));
                 c.setName(rs.getString("Nom"));
@@ -237,6 +237,11 @@ public class ReservationDAO extends JdbcDAO<Reservation> {
                 c.setLinkSite(rs.getString("LienSite"));
                 c.setPriorite(StatutPriorite.valueOf(rs.getString("Priorite")));
 
+                int listeId = rs.getInt("ListeId");
+                ListeCadeau lc = new ListeCadeau();
+                lc.setId(listeId);
+                c.setListeCadeau(lc);
+
                 return c;
             }
 
@@ -244,6 +249,7 @@ public class ReservationDAO extends JdbcDAO<Reservation> {
             throw new RuntimeException("Erreur loadCadeau()", e);
         }
     }
+
 
     private List<Personne> loadPersonnes(int resId) {
 

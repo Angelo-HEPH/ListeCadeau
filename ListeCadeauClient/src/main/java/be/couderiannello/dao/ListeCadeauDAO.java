@@ -1,8 +1,9 @@
-	package be.couderiannello.dao;
+package be.couderiannello.dao;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import javax.ws.rs.core.MediaType;
 
@@ -21,9 +22,7 @@ public class ListeCadeauDAO extends RestDAO<ListeCadeau> {
 
     private static ListeCadeauDAO instance = null;
 
-    private ListeCadeauDAO() {
-        super();
-    }
+    private ListeCadeauDAO() { }
 
     public static ListeCadeauDAO getInstance() {
         if (instance == null) {
@@ -53,19 +52,15 @@ public class ListeCadeauDAO extends RestDAO<ListeCadeau> {
                 .type(MediaType.APPLICATION_JSON)
                 .post(ClientResponse.class, json.toString());
 
-        if (response.getStatus() == Status.CREATED.getStatusCode()) {
-
-            String location = response.getHeaders().getFirst("Location");
-            if (location == null || location.isBlank()) {
-                throw new RuntimeException("Réponse création listeCadeau sans header Location");
-            }
-
-            String[] parts = location.split("/");
-            String last = parts[parts.length - 1];
-            return Integer.parseInt(last);
+        if (response.getStatus() != Status.CREATED.getStatusCode()) {
+            throw new RuntimeException(
+                    "Erreur API création listeCadeau (status=" 
+                    		+ response.getStatus() + ", body=" 
+                    		+ readBody(response) + ")"
+            );
         }
 
-        throw new RuntimeException("Erreur API création listeCadeau : " + response.getStatus());
+        return extractIdFromLocation(response, "listeCadeau");
     }
 
     //Find
@@ -85,11 +80,19 @@ public class ListeCadeauDAO extends RestDAO<ListeCadeau> {
                 .accept(MediaType.APPLICATION_JSON)
                 .get(ClientResponse.class);
 
-        if (response.getStatus() != Status.OK.getStatusCode()) {
+        if (response.getStatus() == Status.NOT_FOUND.getStatusCode()) {
             return null;
         }
 
-        JSONObject json = new JSONObject(response.getEntity(String.class));
+        if (response.getStatus() != Status.OK.getStatusCode()) {
+            throw new RuntimeException(
+                    "Erreur API find listeCadeau (status=" 
+                    		+ response.getStatus() + ", body=" 
+                    		+ readBody(response) + ")"
+            );
+        }
+
+        JSONObject json = new JSONObject(readBody(response));
         ListeCadeau l = fromJsonListeCadeau(json);
 
         if (loadCreator && json.has("creator")) {
@@ -115,8 +118,6 @@ public class ListeCadeauDAO extends RestDAO<ListeCadeau> {
 
     public List<ListeCadeau> findAll(boolean loadCreator, boolean loadInvites, boolean loadCadeaux) {
 
-        ArrayList<ListeCadeau> list = new ArrayList<>();
-
         ClientResponse response = getResource()
                 .path("listeCadeau")
                 .queryParam("loadCreator", String.valueOf(loadCreator))
@@ -126,12 +127,18 @@ public class ListeCadeauDAO extends RestDAO<ListeCadeau> {
                 .get(ClientResponse.class);
 
         if (response.getStatus() != Status.OK.getStatusCode()) {
-            return list;
+            throw new RuntimeException(
+                    "Erreur API findAll listeCadeau (status=" 
+                    		+ response.getStatus() + ", body=" 
+                    		+ readBody(response) + ")"
+            );
         }
 
-        JSONArray array = new JSONArray(response.getEntity(String.class));
+        JSONArray array = new JSONArray(readBody(response));
 
+        ArrayList<ListeCadeau> list = new ArrayList<>();
         for (int i = 0; i < array.length(); i++) {
+
             JSONObject json = array.getJSONObject(i);
 
             ListeCadeau l = fromJsonListeCadeau(json);
@@ -171,7 +178,15 @@ public class ListeCadeauDAO extends RestDAO<ListeCadeau> {
                 .type(MediaType.APPLICATION_JSON)
                 .put(ClientResponse.class, json.toString());
 
-        return response.getStatus() == Status.NO_CONTENT.getStatusCode();
+        if (response.getStatus() != Status.NO_CONTENT.getStatusCode()) {
+            throw new RuntimeException(
+                    "Erreur API update listeCadeau (status=" 
+                    		+ response.getStatus() + ", body=" 
+                    		+ readBody(response) + ")"
+            );
+        }
+
+        return true;
     }
 
     //Delete
@@ -183,11 +198,18 @@ public class ListeCadeauDAO extends RestDAO<ListeCadeau> {
                 .path(String.valueOf(l.getId()))
                 .delete(ClientResponse.class);
 
-        return response.getStatus() == Status.NO_CONTENT.getStatusCode();
+        if (response.getStatus() != Status.NO_CONTENT.getStatusCode()) {
+            throw new RuntimeException(
+                    "Erreur API delete listeCadeau (status=" 
+                    		+ response.getStatus() + ", body=" 
+                    		+ readBody(response) + ")"
+            );
+        }
+
+        return true;
     }
 
     //JSON -> Model
-
     private ListeCadeau fromJsonListeCadeau(JSONObject json) {
 
         ListeCadeau l = new ListeCadeau();
@@ -213,24 +235,30 @@ public class ListeCadeauDAO extends RestDAO<ListeCadeau> {
             l.setShareLink("https://default");
         }
 
+        if (json.has("creatorId") && !json.isNull("creatorId")) {
+            Personne creator = new Personne();
+            creator.setId(json.getInt("creatorId"));
+            l.setCreator(creator);
+        }
+
         return l;
     }
 
-    private Personne parseCreator(JSONObject json) {
+    private Personne parsePersonne(JSONObject json) {
         Personne p = new Personne();
-        p.setId(json.getInt("id"));
+        p.parse(json);
         return p;
+    }
+
+    private Personne parseCreator(JSONObject json) {
+        return parsePersonne(json);
     }
 
     private List<Personne> parseInvites(JSONArray array) {
         List<Personne> list = new ArrayList<>();
         for (int i = 0; i < array.length(); i++) {
             JSONObject json = array.getJSONObject(i);
-
-            Personne p = new Personne();
-            p.setId(json.getInt("id"));
-
-            list.add(p);
+            list.add(parsePersonne(json));
         }
         return list;
     }
@@ -258,5 +286,63 @@ public class ListeCadeauDAO extends RestDAO<ListeCadeau> {
 
         return list;
     }
+    
+    public boolean addInvite(int listeId, int personneId) {
 
+        JSONObject json = new JSONObject();
+        json.put("personneId", personneId);
+
+        ClientResponse response = getResource()
+                .path("listeCadeau")
+                .path(String.valueOf(listeId))
+                .path("invites")
+                .type(MediaType.APPLICATION_JSON)
+                .post(ClientResponse.class, json.toString());
+
+        int status = response.getStatus();
+
+        if (status == Status.CREATED.getStatusCode()) {
+            return true;
+        }
+
+        if (status == Status.CONFLICT.getStatusCode()) {
+            throw new IllegalArgumentException("Cette personne est déjà invitée à cette liste.");
+        }
+
+        if (status == Status.BAD_REQUEST.getStatusCode()) {
+            throw new IllegalStateException("Le créateur ne peut pas s'inviter lui-même.");
+        }
+
+        if (status == Status.NOT_FOUND.getStatusCode()) {
+            throw new IllegalArgumentException("La liste de cadeaux n'existe pas.");
+        }
+
+        throw new RuntimeException("Erreur lors de l'appel à l'API (status=" + status + ")");
+    }
+
+    public boolean removeInvite(int listeId, int personneId) {
+
+        ClientResponse response = getResource()
+                .path("listeCadeau")
+                .path(String.valueOf(listeId))
+                .path("invites")
+                .path(String.valueOf(personneId))
+                .delete(ClientResponse.class);
+
+        int status = response.getStatus();
+
+        if (status == Status.NO_CONTENT.getStatusCode()) {
+            return true;
+        }
+
+        if (status == Status.NOT_FOUND.getStatusCode()) {
+            throw new NoSuchElementException();
+        }
+
+        if (status == Status.BAD_REQUEST.getStatusCode()) {
+            throw new IllegalArgumentException("Paramètres invalides.");
+        }
+
+        throw new RuntimeException("Erreur API removeInvite (status=" + status + ")");
+    }
 }

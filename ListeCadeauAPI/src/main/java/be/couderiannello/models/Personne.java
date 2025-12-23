@@ -345,6 +345,8 @@ public class Personne implements Serializable {
         }
     }
     
+    
+    
     // ToString - Equals - HashCode 
     @Override
     public String toString() {
@@ -421,8 +423,17 @@ public class Personne implements Serializable {
     	return dao.authenticate(email,password);
     }
     
+    public static Personne findByEmail(String email, PersonneDAO dao) {
+    	return dao.findByEmail(email);
+    }
+    
     //JSON -> Model
     public void parse(JSONObject json) {
+    	
+        if (json.has("id")) {
+            setId(json.getInt("id"));
+        }
+        
         setName(json.getString("name"));
         setFirstName(json.getString("firstName"));
         setAge(json.getInt("age"));
@@ -431,7 +442,6 @@ public class Personne implements Serializable {
         setStreetNumber(json.getString("streetNumber"));
         setPostalCode(json.getInt("postalCode"));
         setEmail(json.getString("email"));
-        setPassword(json.getString("password"));
     }
     
     //Model -> JSON

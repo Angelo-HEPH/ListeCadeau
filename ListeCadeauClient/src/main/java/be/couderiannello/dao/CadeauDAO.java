@@ -15,6 +15,7 @@ import com.sun.jersey.api.client.ClientResponse.Status;
 import be.couderiannello.enumeration.StatutPriorite;
 import be.couderiannello.models.Cadeau;
 import be.couderiannello.models.ListeCadeau;
+import be.couderiannello.models.Personne;
 import be.couderiannello.models.Reservation;
 
 public class CadeauDAO extends RestDAO<Cadeau> {
@@ -36,7 +37,6 @@ public class CadeauDAO extends RestDAO<Cadeau> {
     @Override
     public int create(Cadeau c) {
 
-
         JSONObject json = new JSONObject();
         json.put("name", c.getName());
         json.put("description", c.getDescription());
@@ -44,29 +44,27 @@ public class CadeauDAO extends RestDAO<Cadeau> {
         json.put("photo", c.getPhoto());
         json.put("linkSite", c.getLinkSite());
         json.put("priorite", c.getPriorite().name());
+
+        if (c.getListeCadeau() == null) {
+            throw new IllegalArgumentException("listeCadeau obligatoire pour créer un cadeau.");
+        }
         json.put("listeCadeauId", c.getListeCadeau().getId());
 
-
-        
         ClientResponse response = getResource()
                 .path("cadeau")
                 .type(MediaType.APPLICATION_JSON)
                 .post(ClientResponse.class, json.toString());
 
-        if (response.getStatus() == Status.CREATED.getStatusCode()) {
-
-            String location = response.getHeaders().getFirst("Location");
-            if (location == null || location.isBlank()) {
-                throw new RuntimeException("Réponse création cadeau sans header Location");
-            }
-
-            String[] parts = location.split("/");
-            String last = parts[parts.length - 1];
-            return Integer.parseInt(last);
+        if (response.getStatus() != Status.CREATED.getStatusCode()) {
+            throw new RuntimeException("Erreur API création cadeau (status="
+                    + response.getStatus() + ", body=" 
+            		+ readBody(response) + ")");
         }
 
-        throw new RuntimeException("Erreur API création cadeau : " + response.getStatus());
+        return extractIdFromLocation(response, "cadeau");
     }
+
+
 
     //Find
     @Override
@@ -84,11 +82,19 @@ public class CadeauDAO extends RestDAO<Cadeau> {
                 .accept(MediaType.APPLICATION_JSON)
                 .get(ClientResponse.class);
 
-        if (response.getStatus() != Status.OK.getStatusCode()) {
+        if (response.getStatus() == Status.NOT_FOUND.getStatusCode()) {
             return null;
         }
 
-        JSONObject json = new JSONObject(response.getEntity(String.class));
+        if (response.getStatus() != Status.OK.getStatusCode()) {
+            throw new RuntimeException(
+                    "Erreur API find cadeau (status=" 
+                    		+ response.getStatus() + ", body=" 
+                    		+ readBody(response) + ")"
+            );
+        }
+
+        JSONObject json = new JSONObject(readBody(response));
         Cadeau c = fromJsonCadeau(json);
 
         if (loadListeCadeau && json.has("listeCadeau")) {
@@ -110,8 +116,6 @@ public class CadeauDAO extends RestDAO<Cadeau> {
 
     public List<Cadeau> findAll(boolean loadListeCadeau, boolean loadReservations) {
 
-        ArrayList<Cadeau> list = new ArrayList<>();
-
         ClientResponse response = getResource()
                 .path("cadeau")
                 .queryParam("loadListeCadeau", String.valueOf(loadListeCadeau))
@@ -120,14 +124,19 @@ public class CadeauDAO extends RestDAO<Cadeau> {
                 .get(ClientResponse.class);
 
         if (response.getStatus() != Status.OK.getStatusCode()) {
-            return list;
+            throw new RuntimeException(
+                    "Erreur API findAll cadeau (status=" 
+                    		+ response.getStatus() + ", body=" 
+                    		+ readBody(response) + ")"
+            );
         }
 
-        JSONArray array = new JSONArray(response.getEntity(String.class));
+        JSONArray array = new JSONArray(readBody(response));
 
+        List<Cadeau> list = new ArrayList<>();
         for (int i = 0; i < array.length(); i++) {
-            JSONObject json = array.getJSONObject(i);
 
+            JSONObject json = array.getJSONObject(i);
             Cadeau c = fromJsonCadeau(json);
 
             if (loadListeCadeau && json.has("listeCadeau")) {
@@ -162,7 +171,15 @@ public class CadeauDAO extends RestDAO<Cadeau> {
                 .type(MediaType.APPLICATION_JSON)
                 .put(ClientResponse.class, json.toString());
 
-        return response.getStatus() == Status.NO_CONTENT.getStatusCode();
+        if (response.getStatus() != Status.NO_CONTENT.getStatusCode()) {
+            throw new RuntimeException(
+                    "Erreur API update cadeau (status=" 
+                    		+ response.getStatus() + ", body=" 
+                    		+ readBody(response) + ")"
+            );
+        }
+
+        return true;
     }
 
     //Delete
@@ -174,7 +191,15 @@ public class CadeauDAO extends RestDAO<Cadeau> {
                 .path(String.valueOf(c.getId()))
                 .delete(ClientResponse.class);
 
-        return response.getStatus() == Status.NO_CONTENT.getStatusCode();
+        if (response.getStatus() != Status.NO_CONTENT.getStatusCode()) {
+            throw new RuntimeException(
+                    "Erreur API delete cadeau (status=" 
+                    		+ response.getStatus() + ", body=" 
+                    		+ readBody(response) + ")"
+            );
+        }
+
+        return true;
     }
 
     //JSON -> Model
@@ -190,7 +215,8 @@ public class CadeauDAO extends RestDAO<Cadeau> {
         c.setPriorite(StatutPriorite.valueOf(json.getString("priorite")));
 
         if (!json.has("listeCadeauId")) {
-            throw new RuntimeException("Réponse API invalide : listeCadeauId manquant pour le cadeau " + c.getId());
+            throw new RuntimeException(
+                    "Réponse API invalide : listeCadeauId manquant pour le cadeau " + c.getId());
         }
 
         ListeCadeau l = new ListeCadeau();
@@ -201,16 +227,32 @@ public class CadeauDAO extends RestDAO<Cadeau> {
     }
 
     private ListeCadeau parseListeCadeau(JSONObject json) {
+
         ListeCadeau l = new ListeCadeau();
+
         l.setId(json.getInt("id"));
-        if (json.has("title") && !json.isNull("title")) {
-            l.setTitle(json.getString("title"));
+        l.setTitle(json.getString("title"));
+        l.setEvenement(json.getString("evenement"));
+
+        l.initCreationDate(LocalDate.parse(json.getString("creationDate")));
+
+        if (!json.isNull("expirationDate")) {
+            l.setExpirationDate(LocalDate.parse(json.getString("expirationDate")));
         }
+
+        l.setStatut(json.getBoolean("statut"));
+        l.setShareLink(json.getString("shareLink"));
+
+        Personne p = new Personne();
+        p.setId(json.getInt("creatorId"));
+        l.setCreator(p);
+
         return l;
     }
 
     private List<Reservation> parseReservations(JSONArray array) {
         List<Reservation> list = new ArrayList<>();
+        
         for (int i = 0; i < array.length(); i++) {
             JSONObject json = array.getJSONObject(i);
 
