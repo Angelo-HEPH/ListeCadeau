@@ -340,6 +340,36 @@ public class ListeCadeau implements Serializable {
     	return dao.update(this);
     }
     
+    public static List<ListeCadeau> getInvitedByPersonneId(
+            int personneId,
+            ListeCadeauDAO dao,
+            boolean loadCreator,
+            boolean loadInvites,
+            boolean loadCadeaux
+    ) {
+        if (personneId <= 0) {
+            throw new IllegalArgumentException("personneId invalide.");
+        }
+        if (dao == null) {
+            throw new IllegalArgumentException("DAO obligatoire.");
+        }
+
+        List<ListeCadeau> all = dao.findAll(loadCreator, true, loadCadeaux);
+
+        all.removeIf(l ->
+            l.getInvites() == null
+            || l.getInvites().stream().noneMatch(p -> p.getId() == personneId)
+        );
+
+        if (!loadInvites) {
+            for (ListeCadeau l : all) {
+                l.setInvites(new ArrayList<>());
+            }
+        }
+
+        return all;
+    }
+
     //JSON -> Model
     public void parse(JSONObject json) {
 
@@ -350,7 +380,9 @@ public class ListeCadeau implements Serializable {
         setTitle(json.getString("title"));
         setEvenement(json.getString("evenement"));
 
-        initCreationDate(LocalDate.parse(json.getString("creationDate")));
+        if (json.has("creationDate") && !json.isNull("creationDate")) {
+            initCreationDate(LocalDate.parse(json.getString("creationDate")));
+        }
 
         if (json.has("expirationDate") && !json.isNull("expirationDate")) {
             setExpirationDate(LocalDate.parse(json.getString("expirationDate")));

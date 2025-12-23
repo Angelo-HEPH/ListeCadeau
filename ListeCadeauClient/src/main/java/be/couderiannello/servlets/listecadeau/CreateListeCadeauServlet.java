@@ -35,12 +35,8 @@ public class CreateListeCadeauServlet extends HttpServlet {
             String evenement = request.getParameter("evenement");
             String expirationDate = request.getParameter("expirationDate");
 
-            var session = request.getSession(false);
-            if (session == null || session.getAttribute("userId") == null) {
-                response.sendRedirect(request.getContextPath() + "/login");
-                return;
-            }
-            int idCreator = (Integer) session.getAttribute("userId");
+            int idCreator = (Integer) request.getSession(false).getAttribute("userId");
+            
             PersonneDAO personneDAO = PersonneDAO.getInstance();
             Personne p = Personne.findById(idCreator, personneDAO);
 
@@ -58,7 +54,6 @@ public class CreateListeCadeauServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/liste/all");
 
         } catch (Exception e) {
-            e.printStackTrace();
             request.setAttribute("error", e.getMessage());
             request.getRequestDispatcher("/WEB-INF/view/listeCadeau/createListeCadeau.jsp")
                    .forward(request, response);

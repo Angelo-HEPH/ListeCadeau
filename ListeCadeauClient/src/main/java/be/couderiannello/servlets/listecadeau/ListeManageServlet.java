@@ -13,7 +13,7 @@ import be.couderiannello.dao.PersonneDAO;
 import be.couderiannello.models.ListeCadeau;
 import be.couderiannello.models.Personne;
 
-public class ListeDetailServlet extends HttpServlet {
+public class ListeManageServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
 
@@ -44,7 +44,7 @@ public class ListeDetailServlet extends HttpServlet {
         }
 
         req.setAttribute("liste", l);
-        req.getRequestDispatcher("/WEB-INF/view/listeCadeau/detail.jsp").forward(req, resp);
+        req.getRequestDispatcher("/WEB-INF/view/listeCadeau/manage.jsp").forward(req, resp);
     }
 
     @Override
@@ -108,7 +108,7 @@ public class ListeDetailServlet extends HttpServlet {
                     return;
                 }
 
-                resp.sendRedirect(req.getContextPath() + "/liste/detail?id=" + listeId);
+                resp.sendRedirect(req.getContextPath() + "/liste/manage?id=" + listeId);
                 return;
             }
 
@@ -149,7 +149,7 @@ public class ListeDetailServlet extends HttpServlet {
                     return;
                 }
 
-                resp.sendRedirect(req.getContextPath() + "/liste/detail?id=" + listeId);
+                resp.sendRedirect(req.getContextPath() + "/liste/manage?id=" + listeId);
                 return;
             }
 
@@ -171,6 +171,6 @@ public class ListeDetailServlet extends HttpServlet {
 
         req.setAttribute("error", errorMsg);
         req.setAttribute("liste", l);
-        req.getRequestDispatcher("/WEB-INF/view/listeCadeau/detail.jsp").forward(req, resp);
+        req.getRequestDispatcher("/WEB-INF/view/listeCadeau/manage.jsp").forward(req, resp);
     }
 }

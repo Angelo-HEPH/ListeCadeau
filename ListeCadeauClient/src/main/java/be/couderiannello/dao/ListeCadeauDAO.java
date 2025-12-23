@@ -345,4 +345,48 @@ public class ListeCadeauDAO extends RestDAO<ListeCadeau> {
 
         throw new RuntimeException("Erreur API removeInvite (status=" + status + ")");
     }
+    
+    public List<ListeCadeau> findAllInvited(int invitedPersonneId,
+            boolean loadCreator,
+            boolean loadInvites,
+            boolean loadCadeaux) {
+
+		ClientResponse response = getResource()
+				.path("listeCadeau")
+				.queryParam("invitedPersonneId", String.valueOf(invitedPersonneId))
+				.queryParam("loadCreator", String.valueOf(loadCreator))
+				.queryParam("loadInvites", String.valueOf(loadInvites))
+				.queryParam("loadCadeaux", String.valueOf(loadCadeaux))
+				.accept(MediaType.APPLICATION_JSON)
+				.get(ClientResponse.class);
+
+		if (response.getStatus() != Status.OK.getStatusCode()) {
+			throw new RuntimeException("Erreur API findAllInvited (status=" 
+					+ response.getStatus() + ", body=" 
+					+ readBody(response) + ")");
+		}
+
+		JSONArray array = new JSONArray(readBody(response));
+		ArrayList<ListeCadeau> list = new ArrayList<>();
+		
+		for (int i = 0; i < array.length(); i++) {
+		JSONObject json = array.getJSONObject(i);
+		
+		ListeCadeau l = fromJsonListeCadeau(json);
+		
+		if (loadCreator && json.has("creator")) {
+			l.setCreator(parseCreator(json.getJSONObject("creator")));
+		}
+		if (loadInvites && json.has("invites")) {
+			l.setInvites(parseInvites(json.getJSONArray("invites")));
+		}
+		if (loadCadeaux && json.has("cadeaux")) {
+			l.setCadeaux(parseCadeaux(json.getJSONArray("cadeaux"), l));
+		}
+		
+		list.add(l);
+		}
+		
+	return list;
+    }
 }

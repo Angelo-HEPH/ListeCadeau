@@ -27,6 +27,11 @@
             📋 Voir mes listes
         </a>
 
+        <a href="${pageContext.request.contextPath}/liste/invitations"
+           class="list-group-item list-group-item-action">
+            ✉️ Voir mes invitations
+        </a>
+
     </div>
 
 </div>

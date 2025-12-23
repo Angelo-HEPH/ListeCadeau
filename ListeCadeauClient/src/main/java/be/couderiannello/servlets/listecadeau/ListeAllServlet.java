@@ -6,6 +6,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import be.couderiannello.dao.PersonneDAO;
 import be.couderiannello.models.Personne;
@@ -19,13 +20,8 @@ public class ListeAllServlet extends HttpServlet {
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 	        throws ServletException, IOException {
 
-	    var session = req.getSession(false);
-	    if (session == null || session.getAttribute("userId") == null) {
-	        resp.sendRedirect(req.getContextPath() + "/login");
-	        return;
-	    }
-
-	    int id = (Integer) session.getAttribute("userId");
+        HttpSession session = req.getSession(false);
+        int id = (Integer) session.getAttribute("userId");
 
 	    Personne fullUser = PersonneDAO.getInstance().find(id, false, true, false, false);
 	    if (fullUser == null) {
@@ -38,4 +34,8 @@ public class ListeAllServlet extends HttpServlet {
 	    req.getRequestDispatcher("/WEB-INF/view/listeCadeau/all.jsp").forward(req, resp);
 	}
 
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) 
+			throws ServletException, IOException {
+		doGet(request, response);
+	}
 }

@@ -58,7 +58,7 @@ public class CreateCadeauServlet extends HttpServlet {
             CadeauDAO dao = CadeauDAO.getInstance();
             c.create(dao);
 
-            response.sendRedirect(request.getContextPath() + "/liste/detail?id=" + listeId);
+            response.sendRedirect(request.getContextPath() + "/liste/manage?id=" + listeId);
 
         } catch (Exception e) {
             e.printStackTrace();

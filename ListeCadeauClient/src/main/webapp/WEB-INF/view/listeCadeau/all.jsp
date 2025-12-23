@@ -34,7 +34,7 @@
                     <%= l.getEvenement() %>
                 </p>
 
-                <a href="<%= request.getContextPath() %>/liste/detail?id=<%= l.getId() %>"
+                <a href="<%= request.getContextPath() %>/liste/manage?id=<%= l.getId() %>"
                    class="btn btn-primary btn-sm">
                     Voir la liste
                 </a>

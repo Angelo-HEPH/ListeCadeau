@@ -65,7 +65,7 @@
     <% } %>
 
     <div class="mt-3">
-        <a href="<%= request.getContextPath() %>/liste/detail?id=<%= listeId %>" class="btn btn-secondary">
+        <a href="<%= request.getContextPath() %>/liste/manage?id=<%= listeId %>" class="btn btn-secondary">
             Retour à la liste
         </a>
     </div>

@@ -171,14 +171,26 @@ public class ListeCadeauAPI {
         }
     }
 
-    //FindAll
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response findAll(@QueryParam("loadCreator") @DefaultValue("false") boolean loadCreator,
                             @QueryParam("loadInvites") @DefaultValue("false") boolean loadInvites,
-                            @QueryParam("loadCadeaux") @DefaultValue("false") boolean loadCadeaux) {
+                            @QueryParam("loadCadeaux") @DefaultValue("false") boolean loadCadeaux,
+                            @QueryParam("invitedPersonneId") Integer invitedPersonneId) {
         try {
-            List<ListeCadeau> listes = ListeCadeau.findAll(getDao(), loadCreator, loadInvites, loadCadeaux);
+            List<ListeCadeau> listes;
+
+            if (invitedPersonneId != null) {
+                listes = ListeCadeau.getInvitedByPersonneId(
+                        invitedPersonneId.intValue(),
+                        getDao(),
+                        loadCreator,
+                        loadInvites,
+                        loadCadeaux
+                );
+            } else {
+                listes = ListeCadeau.findAll(getDao(), loadCreator, loadInvites, loadCadeaux);
+            }
 
             JSONArray array = new JSONArray();
             for (ListeCadeau l : listes) {
@@ -189,12 +201,16 @@ public class ListeCadeauAPI {
                     .entity(array.toString())
                     .build();
 
+        } catch (IllegalArgumentException e) {
+            return Response.status(Status.BAD_REQUEST)
+            		.build();
         } catch (Exception e) {
             return Response.status(Status.BAD_REQUEST)
                     .entity("Erreur lors de la récupération des listes.")
                     .build();
         }
     }
+
 
     //Update
     @PUT
