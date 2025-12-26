@@ -28,18 +28,37 @@
     %>
 
         <div class="card mb-3 shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title"><%= l.getTitle() %></h5>
-                <p class="card-text text-muted">
-                    <%= l.getEvenement() %>
-                </p>
+    <div class="card-body d-flex justify-content-between align-items-center">
 
-                <a href="<%= request.getContextPath() %>/liste/manage?id=<%= l.getId() %>"
-                   class="btn btn-primary btn-sm">
-                    Voir la liste
-                </a>
-            </div>
+        <div>
+            <h5 class="card-title"><%= l.getTitle() %></h5>
+            <p class="card-text text-muted">
+                <%= l.getEvenement() %>
+            </p>
         </div>
+
+        <div>
+            <a href="<%= request.getContextPath() %>/liste/manage?id=<%= l.getId() %>"
+               class="btn btn-primary btn-sm">
+                Voir la liste
+            </a>
+
+            <form action="<%= request.getContextPath() %>/liste/delete"
+                  method="post"
+                  style="display:inline;"
+                  onsubmit="return confirm('Supprimer cette liste ?');">
+
+                <input type="hidden" name="id" value="<%= l.getId() %>" />
+
+                <button type="submit" class="btn btn-danger btn-sm">
+                    Supprimer
+                </button>
+            </form>
+        </div>
+
+    </div>
+</div>
+
 
     <%
             }

@@ -112,6 +112,30 @@
 	  <servlet-name>ListeViewServlet</servlet-name>
 	  <url-pattern>/liste/view</url-pattern>
 	</servlet-mapping>
+	
+	<servlet>
+    <servlet-name>ListeDeleteServlet</servlet-name>
+    <servlet-class>
+        be.couderiannello.servlets.listecadeau.ListeDeleteServlet
+    </servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+	    <servlet-name>ListeDeleteServlet</servlet-name>
+	    <url-pattern>/liste/delete</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+	    <servlet-name>ListeEditServlet</servlet-name>
+	    <servlet-class>
+	        be.couderiannello.servlets.listecadeau.ListeEditServlet
+	    </servlet-class>
+	</servlet>
+	
+	<servlet-mapping>
+	    <servlet-name>ListeEditServlet</servlet-name>
+	    <url-pattern>/liste/edit</url-pattern>
+	</servlet-mapping>
 
 
     <!-- CADEAU -->
@@ -124,6 +148,30 @@
         <servlet-name>CreateCadeauServlet</servlet-name>
         <url-pattern>/cadeau/create</url-pattern>
     </servlet-mapping>
+    
+    <servlet>
+    <servlet-name>CadeauDeleteServlet</servlet-name>
+    <servlet-class>
+        be.couderiannello.servlets.cadeau.CadeauDeleteServlet
+    </servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+	    <servlet-name>CadeauDeleteServlet</servlet-name>
+	    <url-pattern>/cadeau/delete</url-pattern>
+	</servlet-mapping>
+	
+	<servlet>
+    <servlet-name>CadeauEditServlet</servlet-name>
+    <servlet-class>
+        be.couderiannello.servlets.cadeau.CadeauEditServlet
+    </servlet-class>
+	</servlet>
+	
+	<servlet-mapping>
+	    <servlet-name>CadeauEditServlet</servlet-name>
+	    <url-pattern>/cadeau/edit</url-pattern>
+	</servlet-mapping>
 
     <!-- WELCOME -->
 

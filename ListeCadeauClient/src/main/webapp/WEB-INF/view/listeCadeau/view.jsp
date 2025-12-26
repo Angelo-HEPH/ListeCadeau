@@ -62,7 +62,6 @@
                     Voir le produit
                 </a>
 
-                <!-- plus tard: réserver / participer -->
             </div>
         </div>
     </div>
