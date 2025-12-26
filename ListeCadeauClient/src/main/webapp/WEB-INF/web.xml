@@ -173,6 +173,33 @@
 	    <url-pattern>/cadeau/edit</url-pattern>
 	</servlet-mapping>
 
+
+	<!-- PROFIL -->
+
+	<servlet>
+	    <servlet-name>ProfileServlet</servlet-name>
+	    <servlet-class>
+	        be.couderiannello.servlets.personne.ProfileServlet
+	    </servlet-class>
+	</servlet>
+	
+	<servlet-mapping>
+	    <servlet-name>ProfileServlet</servlet-name>
+	    <url-pattern>/profile</url-pattern>
+	</servlet-mapping>
+	
+	<servlet>
+	    <servlet-name>ProfileEditServlet</servlet-name>
+	    <servlet-class>
+	        be.couderiannello.servlets.personne.ProfileEditServlet
+	    </servlet-class>
+	</servlet>
+	
+	<servlet-mapping>
+	    <servlet-name>ProfileEditServlet</servlet-name>
+	    <url-pattern>/profile/edit</url-pattern>
+	</servlet-mapping>
+
     <!-- WELCOME -->
 
     <welcome-file-list>
