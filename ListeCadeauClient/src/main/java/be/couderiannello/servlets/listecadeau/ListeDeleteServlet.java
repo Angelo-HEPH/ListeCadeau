@@ -12,54 +12,46 @@ import be.couderiannello.dao.PersonneDAO;
 import be.couderiannello.models.ListeCadeau;
 import be.couderiannello.models.Personne;
 
-
 public class ListeDeleteServlet extends HttpServlet {
-	private static final long serialVersionUID = 1L;
-       
+    private static final long serialVersionUID = 1L;
+
     public ListeDeleteServlet() {
         super();
     }
 
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		response.getWriter().append("Served at: ").append(request.getContextPath());
-	}
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        doPost(req,resp);
+    }
 
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
 
-	  @Override
-	    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-	            throws ServletException, IOException {
+        HttpSession session = req.getSession(false);
+        int userId = (Integer) session.getAttribute("userId");
 
-	        HttpSession session = req.getSession(false);
+        int listeId = Integer.parseInt(req.getParameter("id"));
+        
+        Personne fullUser = Personne.findById(userId, PersonneDAO.getInstance(), false, true, false, false);
 
-	        if (session == null || session.getAttribute("userId") == null) {
-	            resp.sendRedirect(req.getContextPath() + "/login");
-	            return;
-	        }
+        if (fullUser == null) {
+            session.invalidate();
+            resp.sendRedirect(req.getContextPath() + "/login");
+            return;
+        }
 
-	        int userId = (Integer) session.getAttribute("userId");
-	        int listeId = Integer.parseInt(req.getParameter("id"));
+        ListeCadeauDAO dao = ListeCadeauDAO.getInstance();
+        ListeCadeau liste = dao.find(listeId, true, false, false);
 
-	        Personne fullUser = PersonneDAO.getInstance()
-	                .find(userId, false, true, false, false);
+        if (liste == null || liste.getCreator() == null
+                || liste.getCreator().getId() != userId) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
 
-	        if (fullUser == null) {
-	            session.invalidate();
-	            resp.sendRedirect(req.getContextPath() + "/login");
-	            return;
-	        }
+        dao.delete(liste);
 
-	        ListeCadeauDAO dao = ListeCadeauDAO.getInstance();
-	        ListeCadeau liste = dao.find(listeId, true, false, false);
-
-	        if (liste == null || liste.getCreator() == null 
-	                || liste.getCreator().getId() != userId) {
-	            resp.sendError(HttpServletResponse.SC_FORBIDDEN);
-	            return;
-	        }
-
-	        dao.delete(liste);
-
-	        resp.sendRedirect(req.getContextPath() + "/liste/all");
-	    }
-
+        resp.sendRedirect(req.getContextPath() + "/liste/all");
+    }
 }

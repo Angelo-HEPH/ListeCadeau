@@ -32,6 +32,10 @@
             ✉️ Voir mes invitations
         </a>
 
+		<a href="${pageContext.request.contextPath}/reservation/contributions"
+		   class="list-group-item list-group-item-action">
+		    💶 Voir mes contributions
+		</a>
     </div>
 
 </div>

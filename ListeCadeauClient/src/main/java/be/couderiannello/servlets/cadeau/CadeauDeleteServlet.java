@@ -12,47 +12,41 @@ import be.couderiannello.dao.ListeCadeauDAO;
 import be.couderiannello.models.Cadeau;
 import be.couderiannello.models.ListeCadeau;
 
-
 public class CadeauDeleteServlet extends HttpServlet {
-	private static final long serialVersionUID = 1L;
-       
+    private static final long serialVersionUID = 1L;
+
     public CadeauDeleteServlet() {
         super();
     }
 
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		response.getWriter().append("Served at: ").append(request.getContextPath());
-	}
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        doPost(req,resp);
+    }
 
-	 @Override
-	    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-	            throws ServletException, IOException {
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
 
-	        HttpSession session = req.getSession(false);
-	        if (session == null || session.getAttribute("userId") == null) {
-	            resp.sendRedirect(req.getContextPath() + "/login");
-	            return;
-	        }
+        HttpSession session = req.getSession(false);
+        int userId = (Integer) session.getAttribute("userId");
 
-	        int userId = (Integer) session.getAttribute("userId");
-	        int cadeauId = Integer.parseInt(req.getParameter("cadeauId"));
-	        int listeId  = Integer.parseInt(req.getParameter("listeId"));
+        int cadeauId = Integer.parseInt(req.getParameter("cadeauId"));
+        int listeId  = Integer.parseInt(req.getParameter("listeId"));
+        
+        ListeCadeau liste = ListeCadeau.findById(listeId, ListeCadeauDAO.getInstance(), true, false, false);
 
-	        ListeCadeau liste = ListeCadeauDAO.getInstance()
-	                .find(listeId, true, false, false);
+        if (liste == null || liste.getCreator() == null
+                || liste.getCreator().getId() != userId) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
 
-	        if (liste == null || liste.getCreator() == null
-	                || liste.getCreator().getId() != userId) {
-	            resp.sendError(HttpServletResponse.SC_FORBIDDEN);
-	            return;
-	        }
+        Cadeau c = CadeauDAO.getInstance().find(cadeauId);
+        if (c != null) {
+            CadeauDAO.getInstance().delete(c);
+        }
 
-	        Cadeau c = CadeauDAO.getInstance().find(cadeauId);
-	        if (c != null) {
-	            CadeauDAO.getInstance().delete(c);
-	        }
-
-	        resp.sendRedirect(req.getContextPath() + "/liste/manage?id=" + listeId);
-	    }
-
+        resp.sendRedirect(req.getContextPath() + "/liste/manage?id=" + listeId);
+    }
 }

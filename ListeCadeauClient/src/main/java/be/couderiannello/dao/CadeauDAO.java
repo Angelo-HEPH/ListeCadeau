@@ -12,6 +12,7 @@ import org.json.JSONObject;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.ClientResponse.Status;
 
+import be.couderiannello.enumeration.StatutCadeau;
 import be.couderiannello.enumeration.StatutPriorite;
 import be.couderiannello.models.Cadeau;
 import be.couderiannello.models.ListeCadeau;
@@ -44,6 +45,7 @@ public class CadeauDAO extends RestDAO<Cadeau> {
         json.put("photo", c.getPhoto());
         json.put("linkSite", c.getLinkSite());
         json.put("priorite", c.getPriorite().name());
+        json.put("statutCadeau", c.getStatutCadeau().name());
 
         if (c.getListeCadeau() == null) {
             throw new IllegalArgumentException("listeCadeau obligatoire pour créer un cadeau.");
@@ -63,8 +65,6 @@ public class CadeauDAO extends RestDAO<Cadeau> {
 
         return extractIdFromLocation(response, "cadeau");
     }
-
-
 
     //Find
     @Override
@@ -164,6 +164,7 @@ public class CadeauDAO extends RestDAO<Cadeau> {
         json.put("photo", c.getPhoto());
         json.put("linkSite", c.getLinkSite());
         json.put("priorite", c.getPriorite().name());
+        json.put("statutCadeau", c.getStatutCadeau().name());
 
         ClientResponse response = getResource()
                 .path("cadeau")
@@ -218,6 +219,13 @@ public class CadeauDAO extends RestDAO<Cadeau> {
             throw new RuntimeException(
                     "Réponse API invalide : listeCadeauId manquant pour le cadeau " + c.getId());
         }
+        
+        if (json.has("statutCadeau") && !json.isNull("statutCadeau")) {
+            c.setStatutCadeau(StatutCadeau.valueOf(json.getString("statutCadeau")));
+        } else {
+            c.setStatutCadeau(StatutCadeau.DISPONIBLE);
+        }
+
 
         ListeCadeau l = new ListeCadeau();
         l.setId(json.getInt("listeCadeauId"));

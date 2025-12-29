@@ -22,7 +22,7 @@ public class AuthenticationFilter implements Filter {
                 path.equals("/") ||
                 path.equals("/index.jsp") ||
                 path.equals("/login") ||
-                path.equals("/createAccount");
+                path.equals("/createAccount") ||
         		path.equals("/logout");
 
 

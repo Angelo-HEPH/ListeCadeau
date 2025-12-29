@@ -74,7 +74,7 @@ public class ReservationDAO extends RestDAO<Reservation> {
         ClientResponse response = getResource()
                 .path("reservation")
                 .path(String.valueOf(id))
-                .queryParam("loadCadeau", String.valueOf(loadPersonnes))
+                .queryParam("loadCadeau", String.valueOf(loadCadeau))
                 .queryParam("loadPersonnes", String.valueOf(loadPersonnes))
                 .accept(MediaType.APPLICATION_JSON)
                 .get(ClientResponse.class);
@@ -115,7 +115,7 @@ public class ReservationDAO extends RestDAO<Reservation> {
 
         ClientResponse response = getResource()
                 .path("reservation")
-                .queryParam("loadCadeau", String.valueOf(loadPersonnes))
+                .queryParam("loadCadeau", String.valueOf(loadCadeau))
                 .queryParam("loadPersonnes", String.valueOf(loadPersonnes))
                 .accept(MediaType.APPLICATION_JSON)
                 .get(ClientResponse.class);

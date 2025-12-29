@@ -14,15 +14,26 @@
         <param-value>http://localhost:8080/ListeCadeauAPI/api/</param-value>
     </context-param> -->
     
-     <!-- FILTERS -->
-    <filter>
-  		<filter-name>AuthenticationFilter</filter-name>
-  		<filter-class>be.couderiannello.filters.AuthenticationFilter</filter-class>
-	</filter>
 
+	<!-- FILTERS -->
+	<filter>
+	    <filter-name>CharacterEncodingFilter</filter-name>
+	    <filter-class>be.couderiannello.filters.CharacterEncodingFilter</filter-class>
+	</filter>
+	
 	<filter-mapping>
-  		<filter-name>AuthenticationFilter</filter-name>
-  		<url-pattern>/*</url-pattern>
+	    <filter-name>CharacterEncodingFilter</filter-name>
+	    <url-pattern>/*</url-pattern>
+	</filter-mapping>
+	
+	<filter>
+	    <filter-name>AuthenticationFilter</filter-name>
+	    <filter-class>be.couderiannello.filters.AuthenticationFilter</filter-class>
+	</filter>
+	
+	<filter-mapping>
+	    <filter-name>AuthenticationFilter</filter-name>
+	    <url-pattern>/*</url-pattern>
 	</filter-mapping>
 
 
@@ -198,6 +209,36 @@
 	<servlet-mapping>
 	    <servlet-name>ProfileEditServlet</servlet-name>
 	    <url-pattern>/profile/edit</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+	  <servlet-name>ReservationFullServlet</servlet-name>
+	  <servlet-class>be.couderiannello.servlets.reservation.ReservationFullServlet</servlet-class>
+	</servlet>
+	
+	<servlet-mapping>
+	  <servlet-name>ReservationFullServlet</servlet-name>
+	  <url-pattern>/reservation/full</url-pattern>
+	</servlet-mapping>
+	
+	<servlet>
+	  <servlet-name>ContributionServlet</servlet-name>
+	  <servlet-class>be.couderiannello.servlets.reservation.ContributionServlet</servlet-class>
+	</servlet>
+	
+	<servlet-mapping>
+	  <servlet-name>ContributionServlet</servlet-name>
+	  <url-pattern>/reservation/contribuer</url-pattern>
+	</servlet-mapping>
+	
+	<servlet>
+	  <servlet-name>ViewContributionServlet</servlet-name>
+	  <servlet-class>be.couderiannello.servlets.reservation.ViewContributionServlet</servlet-class>
+	</servlet>
+	
+	<servlet-mapping>
+	  <servlet-name>ViewContributionServlet</servlet-name>
+	  <url-pattern>/reservation/contributions</url-pattern>
 	</servlet-mapping>
 
     <!-- WELCOME -->

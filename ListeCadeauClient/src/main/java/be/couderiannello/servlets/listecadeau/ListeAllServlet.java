@@ -23,7 +23,8 @@ public class ListeAllServlet extends HttpServlet {
         HttpSession session = req.getSession(false);
         int id = (Integer) session.getAttribute("userId");
 
-	    Personne fullUser = PersonneDAO.getInstance().find(id, false, true, false, false);
+	    Personne fullUser = Personne.findById(id, PersonneDAO.getInstance(), false, true, false, false);
+	    
 	    if (fullUser == null) {
 	        session.invalidate();
 	        resp.sendRedirect(req.getContextPath() + "/login");

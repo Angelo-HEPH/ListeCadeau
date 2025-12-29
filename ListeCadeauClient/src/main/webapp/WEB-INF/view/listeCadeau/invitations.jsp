@@ -30,11 +30,16 @@
             Personne creator = l.getCreator();
 
             String creatorLabel = "Créateur inconnu";
-            creatorLabel = creator.getFirstName() + " " + creator.getName();
+            if (creator != null) {
+                creatorLabel = creator.getFirstName() + " " + creator.getName();
+            }
+
+            boolean active = l.isStatut();
     %>
         <div class="col-md-6 col-lg-4 mb-3">
             <div class="card shadow-sm">
                 <div class="card-body">
+
                     <h5 class="card-title"><%= l.getTitle() %></h5>
 
                     <p class="card-text">
@@ -43,10 +48,20 @@
                         <b>Créée par :</b> <%= creatorLabel %>
                     </p>
 
-                    <a class="btn btn-primary btn-sm"
-                       href="<%= request.getContextPath() %>/liste/view?id=<%= l.getId() %>">
-                        Ouvrir la liste
-                    </a>
+                    <% if (active) { %>
+                        <a class="btn btn-primary btn-sm"
+                           href="<%= request.getContextPath() %>/liste/view?id=<%= l.getId() %>">
+                            Ouvrir la liste
+                        </a>
+                    <% } else { %>
+                        <button class="btn btn-secondary btn-sm" type="button" disabled>
+                            Pas encore disponible
+                        </button>
+                        <div class="text-muted mt-2" style="font-size: 0.9em;">
+                            Cette liste n’est pas encore active.
+                        </div>
+                    <% } %>
+
                 </div>
             </div>
         </div>

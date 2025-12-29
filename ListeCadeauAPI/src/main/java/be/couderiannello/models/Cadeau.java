@@ -8,6 +8,7 @@ import org.json.JSONObject;
 
 import be.couderiannello.dao.CadeauDAO;
 import be.couderiannello.dao.DAO;
+import be.couderiannello.enumeration.StatutCadeau;
 import be.couderiannello.enumeration.StatutPriorite;
 
 public class Cadeau implements Serializable {
@@ -22,7 +23,8 @@ public class Cadeau implements Serializable {
 	private String photo;
 	private String linkSite;
 	private StatutPriorite priorite;
-	
+	private StatutCadeau statutCadeau;
+
 	//Relations
 	private ListeCadeau listeCadeau;
 	private List<Reservation> reservations;
@@ -30,6 +32,7 @@ public class Cadeau implements Serializable {
 	//Constructor
 	public Cadeau() {
 		reservations = new ArrayList<Reservation>();
+		setStatutCadeau(StatutCadeau.DISPONIBLE);
 	}
 	
 	public Cadeau(int id, String name, String description, double price, String photo,String linkSite,
@@ -154,6 +157,17 @@ public class Cadeau implements Serializable {
 		this.reservations = reservations;
 	}
 	
+	public StatutCadeau getStatutCadeau() {
+	    return statutCadeau;
+	}
+
+	public void setStatutCadeau(StatutCadeau statutCadeau) {
+	    if (statutCadeau == null) {
+	        throw new IllegalArgumentException("StatutCadeau ne peut pas être null.");
+	    }
+	    this.statutCadeau = statutCadeau;
+	}
+	
 	//Méthodes
 	public void addReservation(Reservation r) {
 		if (r == null) {
@@ -185,6 +199,80 @@ public class Cadeau implements Serializable {
         }
 	}
 	
+	public double totalContribue() {
+	    if (reservations == null) return 0;
+
+	    double total = reservations.stream().mapToDouble(Reservation::getAmount).sum();
+	    return Math.round(total * 100.0) / 100.0;
+	}
+
+
+	public double restantAContribuer() {
+	    double restant = getPrice() - totalContribue();
+
+	    restant = Math.round(restant * 100.0) / 100.0;
+
+	    return Math.max(0, restant);
+	}
+
+
+	public boolean estReserve() {
+	    return restantAContribuer() <= 0;
+	}
+	
+	public boolean aDesParticipations() {
+	    return totalContribue() > 0;
+	}
+
+	public boolean peutEtreReserveCompletement() {
+	    return getStatutCadeau() == StatutCadeau.DISPONIBLE && !aDesParticipations();
+	}
+
+
+	public void verifierContribution(double montant) {
+	    if (montant <= 0) {
+	        throw new IllegalArgumentException("Montant doit être > 0.");
+	    }
+	    
+	    double rounded2 = Math.round(montant * 100.0) / 100.0;
+	    if (Math.abs(montant - rounded2) > 1e-9) {
+	        throw new IllegalArgumentException("Maximum 2 décimales autorisées.");
+	    }
+
+
+	    double total = totalContribue();
+	    double restant = getPrice() - total;
+
+	    if (restant <= 0) {
+	        throw new IllegalStateException("Cadeau déjà réservé.");
+	    }
+
+	    if (total == 0) {
+	        if (montant > getPrice()) {
+	            throw new IllegalArgumentException("Montant ne peut pas dépasser le prix du cadeau.");
+	        }
+	    } else {
+	        if (montant > restant) {
+	            throw new IllegalArgumentException("Montant ne peut pas dépasser le restant (" + restant + ").");
+	        }
+	    }
+	}
+	
+	public void recalculerStatutApresContribution() {
+	    if (restantAContribuer() <= 0) {
+	        setStatutCadeau(StatutCadeau.RESERVER);
+	    } else {
+	        setStatutCadeau(StatutCadeau.PARTICIPATION);
+	    }
+	}
+
+	public void reserverCompletement() {
+	    if (!peutEtreReserveCompletement()) {
+	        throw new IllegalStateException("Cadeau déjà réservé / en participation.");
+	    }
+	    setStatutCadeau(StatutCadeau.RESERVER);
+	}
+
 	//ToString - hashCode - Equals
 	@Override
 	public String toString() {
@@ -222,7 +310,6 @@ public class Cadeau implements Serializable {
 	           c.getLinkSite().equals(this.getLinkSite()) &&
 	           c.getPriorite() == this.getPriorite();
 	}
-	
 	
 	//DAO
     public int create(DAO<Cadeau> dao) {
@@ -274,6 +361,10 @@ public class Cadeau implements Serializable {
             l.setId(json.getInt("listeCadeauId"));
             setListeCadeau(l);
         }
+        
+        if (json.has("statutCadeau") && !json.isNull("statutCadeau")) {
+            setStatutCadeau(StatutCadeau.valueOf(json.getString("statutCadeau")));
+        }
     }
 
     //Model -> JSON
@@ -289,6 +380,7 @@ public class Cadeau implements Serializable {
         json.put("linkSite", getLinkSite());
         json.put("priorite", getPriorite().name());
         json.put("listeCadeauId", getListeCadeau().getId());
+        json.put("statutCadeau", getStatutCadeau().name());
 
         return json;
     }

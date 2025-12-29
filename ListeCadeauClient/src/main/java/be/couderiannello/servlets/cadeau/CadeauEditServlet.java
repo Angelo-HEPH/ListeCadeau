@@ -1,7 +1,6 @@
 package be.couderiannello.servlets.cadeau;
 
 import java.io.IOException;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
 
@@ -20,19 +19,14 @@ public class CadeauEditServlet extends HttpServlet {
             throws ServletException, IOException {
 
         HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("userId") == null) {
-            resp.sendRedirect(req.getContextPath() + "/login");
-            return;
-        }
+        int userId = (Integer) session.getAttribute("userId");
 
-        int userId   = (Integer) session.getAttribute("userId");
         int cadeauId = Integer.parseInt(req.getParameter("id"));
         int listeId  = Integer.parseInt(req.getParameter("listeId"));
+        
+        ListeCadeau liste = ListeCadeau.findById(listeId, ListeCadeauDAO.getInstance(), true, false, false);
 
-        ListeCadeau liste = ListeCadeauDAO.getInstance()
-                .find(listeId, true, false, false);
-
-        if (liste == null || liste.getCreator().getId() != userId) {
+        if (liste == null || liste.getCreator() == null || liste.getCreator().getId() != userId) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
@@ -54,24 +48,24 @@ public class CadeauEditServlet extends HttpServlet {
             throws ServletException, IOException {
 
         HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("userId") == null) {
-            resp.sendRedirect(req.getContextPath() + "/login");
-            return;
-        }
+        int userId = (Integer) session.getAttribute("userId");
 
-        int userId   = (Integer) session.getAttribute("userId");
         int cadeauId = Integer.parseInt(req.getParameter("id"));
         int listeId  = Integer.parseInt(req.getParameter("listeId"));
 
         ListeCadeau liste = ListeCadeauDAO.getInstance()
                 .find(listeId, true, false, false);
 
-        if (liste == null || liste.getCreator().getId() != userId) {
+        if (liste == null || liste.getCreator() == null || liste.getCreator().getId() != userId) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
 
         Cadeau c = CadeauDAO.getInstance().find(cadeauId);
+        if (c == null) {
+            resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
 
         c.setName(req.getParameter("name"));
         c.setDescription(req.getParameter("description"));
@@ -82,7 +76,6 @@ public class CadeauEditServlet extends HttpServlet {
 
         CadeauDAO.getInstance().update(c);
 
-        resp.sendRedirect(req.getContextPath()
-                + "/liste/manage?id=" + listeId);
+        resp.sendRedirect(req.getContextPath() + "/liste/manage?id=" + listeId);
     }
 }

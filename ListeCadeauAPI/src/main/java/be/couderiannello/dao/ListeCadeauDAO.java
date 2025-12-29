@@ -4,6 +4,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import be.couderiannello.enumeration.StatutCadeau;
 import be.couderiannello.enumeration.StatutPriorite;
 import be.couderiannello.models.*;
 
@@ -353,6 +354,7 @@ public class ListeCadeauDAO extends JdbcDAO<ListeCadeau> {
                         l
                     );
 
+                    c.setStatutCadeau(StatutCadeau.valueOf(rs.getString("STATUTCADEAU")));
                     cadeaux.add(c);
                 }
             }

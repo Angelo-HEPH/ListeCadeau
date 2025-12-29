@@ -60,6 +60,7 @@ public class CadeauAPI {
                     .entity("Erreur : " + e.getMessage() + ".")
                     .build();
         } catch (Exception e) {
+        	e.printStackTrace();
             return Response.status(Status.INTERNAL_SERVER_ERROR)
                     .entity("Erreur lors de la création du cadeau.")
                     .build();
@@ -112,6 +113,7 @@ public class CadeauAPI {
                     .build();
 
         } catch (Exception e) {
+        	e.printStackTrace();
             return Response.status(Status.INTERNAL_SERVER_ERROR)
                     .entity("Erreur lors de la récupération des cadeaux.")
                     .build();

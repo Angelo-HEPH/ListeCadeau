@@ -147,6 +147,30 @@ public class Reservation implements Serializable {
         }
 	}
 	
+	public static Reservation creerContribution(int cadeauId, int userId, double amount) {
+	    return creerReservation(cadeauId, userId, amount);
+	}
+
+	public static Reservation creerReservationComplete(int cadeauId, int userId, double amount) {
+	    return creerReservation(cadeauId, userId, amount);
+	}
+
+	private static Reservation creerReservation(int cadeauId, int userId, double amount) {
+	    Reservation r = new Reservation();
+	    r.setAmount(amount);
+
+	    Cadeau ref = new Cadeau();
+	    ref.setId(cadeauId);
+	    r.setCadeau(ref);
+
+	    Personne p = new Personne();
+	    p.setId(userId);
+	    r.addPersonne(p);
+
+	    return r;
+	}
+
+	
 	// ToString – HashCode – Equals 
 
     @Override
@@ -248,5 +272,4 @@ public class Reservation implements Serializable {
 
         return json;
     }
-
 }

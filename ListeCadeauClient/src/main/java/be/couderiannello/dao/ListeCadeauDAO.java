@@ -13,6 +13,7 @@ import org.json.JSONObject;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.ClientResponse.Status;
 
+import be.couderiannello.enumeration.StatutCadeau;
 import be.couderiannello.enumeration.StatutPriorite;
 import be.couderiannello.models.Cadeau;
 import be.couderiannello.models.ListeCadeau;
@@ -278,6 +279,7 @@ public class ListeCadeauDAO extends RestDAO<ListeCadeau> {
             c.setPhoto(json.getString("photo"));
             c.setLinkSite(json.getString("linkSite"));
             c.setPriorite(StatutPriorite.valueOf(json.getString("priorite")));
+            c.setStatutCadeau(StatutCadeau.valueOf(json.getString("statutCadeau")));
 
             c.setListeCadeau(owner);
 

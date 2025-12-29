@@ -11,28 +11,21 @@ import be.couderiannello.dao.PersonneDAO;
 import be.couderiannello.models.Personne;
 
 public class ProfileEditServlet extends HttpServlet {
-	private static final long serialVersionUID = 1L;
-       
+    private static final long serialVersionUID = 1L;
+
     public ProfileEditServlet() {
         super();
     }
-
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
         HttpSession session = req.getSession(false);
-
-        if (session == null || session.getAttribute("userId") == null) {
-            resp.sendRedirect(req.getContextPath() + "/login");
-            return;
-        }
-
         int userId = (Integer) session.getAttribute("userId");
 
-        Personne user = PersonneDAO.getInstance()
-                .find(userId, false, false, false, false);
+        Personne user = Personne.findById(userId, PersonneDAO.getInstance(),
+                false, false, false, false);
 
         if (user == null) {
             session.invalidate();
@@ -50,12 +43,6 @@ public class ProfileEditServlet extends HttpServlet {
             throws ServletException, IOException {
 
         HttpSession session = req.getSession(false);
-
-        if (session == null || session.getAttribute("userId") == null) {
-            resp.sendRedirect(req.getContextPath() + "/login");
-            return;
-        }
-
         int userId = (Integer) session.getAttribute("userId");
 
         Personne p = PersonneDAO.getInstance().find(userId);

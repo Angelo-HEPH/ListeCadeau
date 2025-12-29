@@ -51,7 +51,9 @@ public class CreateListeCadeauServlet extends HttpServlet {
             ListeCadeauDAO dao = ListeCadeauDAO.getInstance();
             int idListe = l.create(dao);
 
-            response.sendRedirect(request.getContextPath() + "/liste/all");
+            response.sendRedirect(
+            	    request.getContextPath() + "/liste/view?id=" + idListe
+            	);
 
         } catch (Exception e) {
             request.setAttribute("error", e.getMessage());
