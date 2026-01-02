@@ -68,6 +68,17 @@
                         <b>Prix du cadeau :</b> <%= df.format(c.getPrice()) %> €
                     </p>
                 <% } %>
+                <form method="post"
+				      action="<%= request.getContextPath() %>/reservation/delete"
+				      onsubmit="return confirm('Supprimer cette contribution ?');">
+				
+				    <input type="hidden" name="reservationId" value="<%= r.getId() %>">
+				
+				    <button type="submit"
+				            class="btn btn-danger btn-sm mt-auto w-100">
+				        ❌ Supprimer la contribution
+				    </button>
+				</form>
             </div>
         </div>
     </div>

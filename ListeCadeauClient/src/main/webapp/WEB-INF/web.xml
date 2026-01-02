@@ -240,6 +240,19 @@
 	  <servlet-name>ViewContributionServlet</servlet-name>
 	  <url-pattern>/reservation/contributions</url-pattern>
 	</servlet-mapping>
+	
+	<servlet>
+    <servlet-name>ReservationDeleteServlet</servlet-name>
+    <servlet-class>
+        be.couderiannello.servlets.reservation.ReservationDeleteServlet
+    </servlet-class>
+	</servlet>
+	
+	<servlet-mapping>
+	    <servlet-name>ReservationDeleteServlet</servlet-name>
+	    <url-pattern>/reservation/delete</url-pattern>
+	</servlet-mapping>
+
 
     <!-- WELCOME -->
 
