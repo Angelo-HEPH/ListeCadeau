@@ -36,6 +36,16 @@
 	    <url-pattern>/*</url-pattern>
 	</filter-mapping>
 
+	<filter>
+	    <filter-name>NotificationBadgeFilter</filter-name>
+	    <filter-class>be.couderiannello.filters.NotificationBadgeFilter</filter-class>
+	</filter>
+	
+	<filter-mapping>
+	    <filter-name>NotificationBadgeFilter</filter-name>
+	    <url-pattern>/*</url-pattern>
+	</filter-mapping>
+
 
     <!-- AUTHENTICATION -->
 

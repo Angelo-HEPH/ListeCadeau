@@ -79,7 +79,7 @@ public class ContributionServlet extends HttpServlet {
                     NotificationDAO notifDao = NotificationDAO.getInstance();
 
                     String msg = "Participation ouverte pour le cadeau '" + c.getName()
-                               + "' dans la liste '" + liste.getTitle() + "'.";
+                               + "' dans la liste '" + liste.getTitle() + "' de " + liste.getCreator().getName() + " " + liste.getCreator().getFirstName() +".";
 
                     for (Personne invite : liste.getInvites()) {
                         if (invite.getId() == userId) continue;
