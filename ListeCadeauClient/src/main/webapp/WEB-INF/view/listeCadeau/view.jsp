@@ -1,8 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="java.util.*, java.text.DecimalFormat,
-                 be.couderiannello.models.ListeCadeau,
-                 be.couderiannello.models.Cadeau,
-                 be.couderiannello.models.Personne" %>
+<%@ page import="java.util.*, be.couderiannello.models.ListeCadeau, 
+								be.couderiannello.models.Cadeau, be.couderiannello.models.Personne" %>
 
 <!DOCTYPE html>
 <html>
@@ -17,8 +15,6 @@
 <div class="container mt-4">
 
 <%
-    DecimalFormat df = new DecimalFormat("0.00");
-
     ListeCadeau liste = (ListeCadeau) request.getAttribute("liste");
     Personne creator = liste.getCreator();
 %>
@@ -56,7 +52,8 @@
             int percent = 0;
             if (prix > 0) {
                 percent = (int) Math.round((total / prix) * 100.0);
-                percent = Math.max(0, Math.min(100, percent));
+                if (percent < 0) percent = 0;
+                if (percent > 100) percent = 100;
             }
 %>
     <div class="col-md-4 mb-4">
@@ -69,30 +66,28 @@
 
                 <div class="d-flex justify-content-between align-items-start mb-2">
                     <h5 class="card-title mb-0"><%= c.getName() %></h5>
-                    <span class="badge bg-dark"><%= df.format(prix) %> €</span>
+                    <span class="badge bg-dark"><%= prix %> €</span>
                 </div>
 
                 <p class="text-muted small mb-2">
                     <b>Priorité :</b> <%= c.getPriorite() %>
                 </p>
 
-                <!-- Progression -->
                 <div class="mb-2">
                     <div class="progress" style="height: 10px;">
                         <div class="progress-bar" role="progressbar"
                              style="width: <%= percent %>%;"
-                             aria-valuenow="<%= percent %>"
-                             aria-valuemin="0" aria-valuemax="100"></div>
+                             aria-valuenow="<%= percent %>" aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
 
                     <div class="d-flex justify-content-between small mt-1">
-                        <span><b>Déjà offert :</b> <%= df.format(total) %> €</span>
+                        <span><b>Déjà offert :</b> <%= total %> €</span>
                         <span><b><%= percent %>%</b></span>
                     </div>
 
                     <div class="mt-2">
                         <span class="fw-bold">Reste :</span>
-                        <span class="fw-bold fs-5"><%= df.format(restant) %> €</span>
+                        <span class="fw-bold fs-5"><%= restant %> €</span>
                     </div>
                 </div>
 
@@ -100,8 +95,7 @@
                     <%= c.getDescription() %>
                 </p>
 
-                <!-- Actions -->
-                <% if (c.estReserve()) { %>
+                <% if (c.estReserve() || restant <= 0) { %>
                     <div class="alert alert-secondary py-2 mb-2 text-center">
                         🎁 <b>Déjà offert</b>
                     </div>
@@ -122,7 +116,7 @@
                                        min="0.01"
                                        max="<%= restant %>"
                                        class="form-control"
-                                       placeholder="Montant (max <%= df.format(restant) %> €)"
+                                       placeholder="Montant (max <%= restant %> €)"
                                        required>
                                 <span class="input-group-text">€</span>
                             </div>
@@ -130,6 +124,10 @@
                             <button type="submit" class="btn btn-success btn-sm w-100 mt-2">
                                 Offrir
                             </button>
+
+                            <div class="small text-muted mt-1">
+                                Astuce : mets <b><%= restant %> €</b> pour compléter.
+                            </div>
                         </form>
                     </div>
                 <% } %>
@@ -152,8 +150,8 @@
 %>
 
 <div class="mt-4">
-    <a href="<%= request.getContextPath() %>/liste/invitations" class="btn btn-secondary">
-        Retour aux invitations
+    <a href="<%= request.getContextPath() %>/home" class="btn btn-secondary">
+        Retour aux menu principal
     </a>
 </div>
 

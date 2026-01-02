@@ -51,16 +51,20 @@ public class PersonneDAO extends RestDAO<Personne> {
                 .type(MediaType.APPLICATION_JSON)
                 .post(ClientResponse.class, json.toString());
 
-        if (response.getStatus() != Status.CREATED.getStatusCode()) {
-            throw new RuntimeException(
-                    "Erreur API création personne (status=" 
-                    		+ response.getStatus() + ", body=" 
-                    		+ readBody(response) + ")"
-            );
+        int status = response.getStatus();
+        String body = readBody(response);
+
+        if (status == Status.CREATED.getStatusCode()) {
+            return extractIdFromLocation(response, "personne");
         }
 
-        return extractIdFromLocation(response, "personne");
+        if (status == Status.BAD_REQUEST.getStatusCode()) {
+            throw new IllegalArgumentException(body);
+        }
+
+        throw new RuntimeException("API_ERROR");
     }
+
 
     //Find
     @Override

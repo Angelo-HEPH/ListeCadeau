@@ -57,9 +57,15 @@ public class CreateAccountServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/login");
             
 
+        } catch (IllegalArgumentException e) {
+            request.setAttribute("error", e.getMessage());
+            request.getRequestDispatcher("/WEB-INF/view/personne/createAccount.jsp")
+                   .forward(request, response);
+            
         } catch (Exception e) {
             e.printStackTrace();
-            request.setAttribute("error", "Erreur lors de la création : " + e.getMessage());
+            request.setAttribute("error",
+                "Une erreur est survenue lors de la création du compte. Veuillez réessayer.");
             request.getRequestDispatcher("/WEB-INF/view/personne/createAccount.jsp")
                    .forward(request, response);
         }
