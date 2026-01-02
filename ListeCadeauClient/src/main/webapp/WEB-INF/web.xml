@@ -241,6 +241,17 @@
 	  <url-pattern>/reservation/contributions</url-pattern>
 	</servlet-mapping>
 
+	<!-- NOTIFICATION -->
+	<servlet>
+	  <servlet-name>ViewNotificationServlet</servlet-name>
+	  <servlet-class>be.couderiannello.servlets.notifications.ViewNotificationServlet</servlet-class>
+	</servlet>
+	
+	<servlet-mapping>
+	  <servlet-name>ViewNotificationServlet</servlet-name>
+	  <url-pattern>/notifications</url-pattern>
+	</servlet-mapping>
+
     <!-- WELCOME -->
 
     <welcome-file-list>

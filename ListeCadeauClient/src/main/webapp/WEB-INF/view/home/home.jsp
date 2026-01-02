@@ -36,6 +36,12 @@
 		   class="list-group-item list-group-item-action">
 		    💶 Voir mes contributions
 		</a>
+		
+		<a href="${pageContext.request.contextPath}/notifications"
+		   class="list-group-item list-group-item-action">
+		    🔔 Mes notifications
+		</a>
+		
     </div>
 
 </div>

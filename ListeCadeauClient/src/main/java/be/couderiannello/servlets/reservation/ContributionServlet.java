@@ -5,8 +5,14 @@ import javax.servlet.ServletException;
 import javax.servlet.http.*;
 
 import be.couderiannello.dao.CadeauDAO;
+import be.couderiannello.dao.ListeCadeauDAO;
+import be.couderiannello.dao.NotificationDAO;
 import be.couderiannello.dao.ReservationDAO;
+import be.couderiannello.enumeration.StatutCadeau;
 import be.couderiannello.models.Cadeau;
+import be.couderiannello.models.ListeCadeau;
+import be.couderiannello.models.Notification;
+import be.couderiannello.models.Personne;
 import be.couderiannello.models.Reservation;
 
 public class ContributionServlet extends HttpServlet {
@@ -49,6 +55,8 @@ public class ContributionServlet extends HttpServlet {
                 return;
             }
 
+            StatutCadeau statutAvant = c.getStatutCadeau();
+            
             c.verifierContribution(amount);
 
             Reservation r = Reservation.creerContribution(cadeauId, userId, amount);
@@ -57,7 +65,37 @@ public class ContributionServlet extends HttpServlet {
 
             c.recalculerStatutApresContribution();
 
+            StatutCadeau statutApres = c.getStatutCadeau();
+
             c.update(cadeauDao);
+
+            if (statutAvant != StatutCadeau.PARTICIPATION && statutApres == StatutCadeau.PARTICIPATION) {
+
+                ListeCadeau liste = ListeCadeau.findById(c.getListeCadeau().getId(), ListeCadeauDAO.getInstance(),
+                		true, true, false);
+
+                if (liste != null && liste.getInvites() != null && !liste.getInvites().isEmpty()) {
+
+                    NotificationDAO notifDao = NotificationDAO.getInstance();
+
+                    String msg = "Participation ouverte pour le cadeau '" + c.getName()
+                               + "' dans la liste '" + liste.getTitle() + "'.";
+
+                    for (Personne invite : liste.getInvites()) {
+                        if (invite.getId() == userId) continue;
+                        if (liste.getCreator() != null && invite.getId() == liste.getCreator().getId()) continue;
+
+                        Notification n = new Notification();
+                        n.setMessage(msg);
+
+                        Personne ref = new Personne();
+                        ref.setId(invite.getId());
+                        n.setPersonne(ref);
+
+                        n.create(notifDao);
+                    }
+                }
+            }
 
             int listeIdRedirect = c.getListeCadeau().getId();
             resp.sendRedirect(req.getContextPath() + "/liste/view?id=" + listeIdRedirect);
