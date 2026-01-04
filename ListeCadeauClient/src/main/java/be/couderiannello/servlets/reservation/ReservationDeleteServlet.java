@@ -58,21 +58,19 @@ public class ReservationDeleteServlet extends HttpServlet {
 
             int cadeauId = (r.getCadeau() != null) ? r.getCadeau().getId() : 0;
 
+            Cadeau cFull = Cadeau.findById(cadeauId, cadeauDao, false, true);
+            
             Reservation.delete(r, reservationDao);
 
-            Cadeau cFull = Cadeau.findById(cadeauId, cadeauDao, false, true);
             if (cFull != null) {
                 cFull.retirerContribution(r);
                 cFull.update(cadeauDao);
             }
-
-
             resp.sendRedirect(req.getContextPath() + "/reservation/contributions");
 
         } catch (Exception e) {
             req.setAttribute("error", e.getMessage());
-            req.getRequestDispatcher("/WEB-INF/view/reservation/viewContributions.jsp")
-               .forward(req, resp);
+            resp.sendRedirect(req.getContextPath() + "/reservation/contributions");
         }
     }
 }

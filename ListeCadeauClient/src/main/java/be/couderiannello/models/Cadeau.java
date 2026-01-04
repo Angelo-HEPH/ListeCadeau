@@ -30,7 +30,6 @@ public class Cadeau implements Serializable {
 	private List<Reservation> reservations;
 	
 	//Constructor
-	//Constructor
 	public Cadeau() {
 		reservations = new ArrayList<Reservation>();
 		this.statutCadeau = StatutCadeau.DISPONIBLE;

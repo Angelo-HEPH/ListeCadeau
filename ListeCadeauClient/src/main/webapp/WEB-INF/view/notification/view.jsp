@@ -1,7 +1,6 @@
 <%@ page language="java"
          contentType="text/html; charset=UTF-8"
          pageEncoding="UTF-8" %>
-
 <%@ page import="java.util.*,
                  java.time.format.DateTimeFormatter,
                  be.couderiannello.models.Notification" %>
@@ -42,10 +41,8 @@
             <h2 class="fw-bold mb-0">🔔 Mes notifications</h2>
 
             <% if (hasUnread) { %>
-                <form method="post"
-                      action="<%= request.getContextPath() %>/notifications">
-                    <button type="submit"
-                            class="btn btn-sm btn-primary fw-bold">
+                <form method="post" action="<%= request.getContextPath() %>/notifications">
+                    <button type="submit" class="btn btn-sm btn-primary fw-bold">
                         Tout marquer comme lu
                     </button>
                 </form>
@@ -61,31 +58,27 @@
             <div class="row g-3">
                 <%
                     for (Notification n : notifications) {
-                        String bgClass =
-                            n.isRead()
-                                ? "bg-white"
-                                : "bg-warning bg-opacity-25";
+                        String bgClass = n.isRead() ? "bg-white" : "bg-warning bg-opacity-25";
                 %>
 
-                    <div class="col-12">
-                        <div class="card <%= bgClass %> shadow-sm p-3
-                                    d-flex justify-content-between align-items-start">
-                            <div>
-                                <div class="fw-bold mb-1">
-                                    <%= n.getMessage() %>
+                        <div class="col-12">
+                            <div class="card <%= bgClass %> shadow-sm p-3 d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="fw-bold mb-1">
+                                        <%= n.getMessage() %>
+                                    </div>
+                                    <small class="text-muted">
+                                        📅 <%= n.getSendDate().format(formatter) %>
+                                    </small>
                                 </div>
-                                <small class="text-muted">
-                                    📅 <%= n.getSendDate().format(formatter) %>
-                                </small>
-                            </div>
 
-                            <% if (!n.isRead()) { %>
-                                <span class="badge bg-danger rounded-pill ms-3">
-                                    Nouveau
-                                </span>
-                            <% } %>
+                                <% if (!n.isRead()) { %>
+                                    <span class="badge bg-danger rounded-pill ms-3">
+                                        Nouveau
+                                    </span>
+                                <% } %>
+                            </div>
                         </div>
-                    </div>
 
                 <%
                     }
@@ -95,8 +88,7 @@
         <% } %>
 
         <div class="mt-4 text-center">
-            <a href="<%= request.getContextPath() %>/home"
-               class="btn btn-secondary fw-bold">
+            <a href="<%= request.getContextPath() %>/home" class="btn btn-secondary fw-bold">
                 ← Retour au menu principal
             </a>
         </div>

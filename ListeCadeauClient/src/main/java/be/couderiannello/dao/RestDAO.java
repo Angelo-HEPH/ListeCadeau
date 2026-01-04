@@ -10,11 +10,9 @@ import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 
-public abstract class RestDAO<T> implements DAO<T> {
+import be.couderiannello.config.AppConfig;
 
-    private static final URI BASE_URI =
-            UriBuilder.fromUri("http://localhost:8080/ListeCadeauAPI/api/") //Si possible mettre dans web.xml
-                      .build();
+public abstract class RestDAO<T> implements DAO<T> {
 
     private static final Client client;
     static {
@@ -22,11 +20,15 @@ public abstract class RestDAO<T> implements DAO<T> {
         client = Client.create(config);
     }
 
-    protected WebResource getResource() {
-        return client.resource(BASE_URI);
+    protected URI getBaseUri() {
+        String baseUrl = AppConfig.get("api.base.url");
+        return UriBuilder.fromUri(baseUrl).build();
     }
 
-    //Lecture du body
+    protected WebResource getResource() {
+        return client.resource(getBaseUri());
+    }
+
     protected String readBody(ClientResponse response) {
         try {
             return response.getEntity(String.class);
@@ -35,7 +37,6 @@ public abstract class RestDAO<T> implements DAO<T> {
         }
     }
 
-    //Lecture de l'id
     protected int extractIdFromLocation(ClientResponse response, String resourceName) {
         String location = response.getHeaders().getFirst("Location");
 

@@ -8,11 +8,11 @@
 
     <display-name>ListeCadeauClient</display-name>
     
-    <!-- URL 
+    <!-- URL -->
     <context-param>
         <param-name>api.base.url</param-name>
         <param-value>http://localhost:8080/ListeCadeauAPI/api/</param-value>
-    </context-param> -->
+    </context-param> 
     
 
 	<!-- FILTERS -->

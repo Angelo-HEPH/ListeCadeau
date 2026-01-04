@@ -227,7 +227,6 @@ public class CadeauDAO extends JdbcDAO<Cadeau> {
 
         try (PreparedStatement st = connect.prepareStatement(SQL)) {
 
-            // ✅ le ? correspond à Cadeau.Id
             st.setInt(1, c.getId());
 
             try (ResultSet rs = st.executeQuery()) {

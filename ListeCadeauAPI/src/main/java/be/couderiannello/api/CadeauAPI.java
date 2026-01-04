@@ -140,7 +140,6 @@ public class CadeauAPI {
             JSONObject json = new JSONObject(body);
             json.put("id", id);
 
-            // On ne veut pas changer la liste via update (comme tu fais déjà)
             json.remove("listeCadeauId");
 
             existing.parse(json);
