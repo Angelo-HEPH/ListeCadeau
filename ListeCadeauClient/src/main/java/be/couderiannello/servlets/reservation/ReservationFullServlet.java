@@ -57,13 +57,14 @@ public class ReservationFullServlet extends HttpServlet {
                 throw new IllegalStateException("Cadeau introuvable.");
             }
 
-            c.interdireActionSiCreateur(userId);
-            c.reserverCompletement();
+            if (c.getListeCadeau().getCreator().getId() == userId) {
+                throw new IllegalArgumentException("Le créateur ne peut pas réserver.");
+            }
 
             Reservation r = Reservation.creerReservationComplete(cadeauId, userId, c.getPrice());
             r.create(reservationDao);
-            c.addReservation(r);
 
+            c.addContribution(r);
             c.update(cadeauDao);
 
             resp.sendRedirect(req.getContextPath() + "/liste/view?id=" + listeId);

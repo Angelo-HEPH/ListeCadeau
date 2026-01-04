@@ -1,52 +1,88 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Cr�er une liste de cadeaux</title>
+<title>Créer une liste de cadeaux</title>
 </head>
-<body>
+
+<body class="bg-light">
 
 <jsp:include page="/WEB-INF/view/includes/header.jsp" />
 
-<div class="container mt-4">
+<div class="container my-5">
 
-    <h1 class="mb-4">Cr�er une liste de cadeaux</h1>
+    <div class="bg-white rounded-4 shadow-lg p-5 mx-auto" style="max-width: 600px;">
 
-    <%
-        String error = (String) request.getAttribute("error");
-        String title = (String) request.getAttribute("title");
-        String evenement = (String) request.getAttribute("evenement");
-        String expirationDate = (String) request.getAttribute("expirationDate");
-    %>
-
-    <form action="" method="post" class="border rounded p-4 shadow-sm" style="max-width:500px;">
-
-        <div class="mb-3">
-            <label class="form-label">Titre :</label>
-            <input type="text" name="title" class="form-control" required
-                   value="<%= (title != null ? title : "") %>">
+        <div class="text-center mb-4">
+            <span class="badge bg-primary-subtle text-primary mb-2">
+                Nouvelle liste
+            </span>
+            <h1 class="fw-bold mt-2">
+                ➕🎁 Créer une liste
+            </h1>
+            <p class="text-muted">
+                Préparez une liste de cadeaux pour un événement spécial
+            </p>
         </div>
 
-        <div class="mb-3">
-            <label class="form-label">�v�nement :</label>
-            <input type="text" name="evenement" class="form-control" required
-                   value="<%= (evenement != null ? evenement : "") %>">
-        </div>
+        <hr class="my-4">
 
-        <div class="mb-3">
-            <label class="form-label">Date d'expiration :</label>
-            <input type="date" name="expirationDate" class="form-control" required
-                   value="<%= (expirationDate != null ? expirationDate : "") %>">
-        </div>
+        <%
+            String error = (String) request.getAttribute("error");
+            String title = (String) request.getAttribute("title");
+            String evenement = (String) request.getAttribute("evenement");
+            String expirationDate = (String) request.getAttribute("expirationDate");
+        %>
 
-        <button type="submit" class="btn btn-primary w-100">
-            Cr�er
-        </button>
-    </form>
+        <% if (error != null) { %>
+            <div class="alert alert-danger text-center fw-bold">
+                <%= error %>
+            </div>
+        <% } %>
 
-    <% if (error != null) { %>
-        <p class="text-danger mt-3 fw-bold"><%= error %></p>
-    <% } %>
+        <form action="" method="post">
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">📝 Titre</label>
+                <input type="text" name="title"
+                       class="form-control"
+                       placeholder="Ex : Anniversaire de Benoit"
+                       required
+                       value="<%= (title != null ? title : "") %>">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">🎉 Événement</label>
+                <input type="text" name="evenement"
+                       class="form-control"
+                       placeholder="Ex : Anniversaire, mariage, Noël…"
+                       required
+                       value="<%= (evenement != null ? evenement : "") %>">
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-semibold">📅 Date d’expiration</label>
+                <input type="date" name="expirationDate"
+                       class="form-control"
+                       required
+                       value="<%= (expirationDate != null ? expirationDate : "") %>">
+            </div>
+
+            <div class="d-flex flex-column gap-2">
+                <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold">
+                    🎁 Créer la liste
+                </button>
+
+                <a href="<%= request.getContextPath() %>/home" 
+                   class="btn btn-secondary btn-lg w-100 fw-bold">
+                    ❌ Annuler
+                </a>
+            </div>
+
+        </form>
+
+    </div>
 
 </div>
 

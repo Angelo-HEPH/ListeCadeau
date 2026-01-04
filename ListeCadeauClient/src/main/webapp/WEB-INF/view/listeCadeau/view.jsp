@@ -1,6 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="java.util.*, be.couderiannello.models.ListeCadeau,
-                 be.couderiannello.models.Cadeau, be.couderiannello.models.Personne" %>
+<%@ page import="java.util.*, be.couderiannello.models.ListeCadeau, be.couderiannello.models.Cadeau, be.couderiannello.models.Personne" %>
 
 <!DOCTYPE html>
 <html>
@@ -8,11 +7,11 @@
     <meta charset="UTF-8">
     <title>Consultation liste</title>
 </head>
-<body>
+<body class="bg-light">
 
 <jsp:include page="/WEB-INF/view/includes/header.jsp" />
 
-<div class="container mt-4">
+<div class="container my-5">
 
 <%
     ListeCadeau liste = (ListeCadeau) request.getAttribute("liste");
@@ -20,70 +19,57 @@
 
 <% if (liste == null) { %>
 
-    <div class="alert alert-danger mt-3">
+    <div class="alert alert-danger text-center fw-bold mt-4">
         <%= request.getAttribute("error") %>
     </div>
 
 <% } else { %>
 
-    <h2 class="mb-3">Liste : <%= liste.getTitle() %></h2>
-
-    <%
-        String error = (String) request.getAttribute("error");
-        if (error != null && !error.isBlank()) {
-    %>
-        <div class="alert alert-danger mt-3">
-            <%= error %>
-        </div>
-    <%
-        }
-    %>
-
-    <div class="mb-4">
-        <p><b>Événement :</b> <%= liste.getEvenement() %></p>
-        <p><b>Créée par :</b> ${creatorLabel}</p>
-        <p><b>Date de création :</b> <%= liste.getCreationDate() %></p>
-        <p><b>Expiration :</b> <%= liste.getExpirationDate() %></p>
+    <div class="bg-white shadow-lg rounded-4 p-4 mb-4">
+        <h2 class="fw-bold mb-2">📋 Liste : <%= liste.getTitle() %></h2>
+        <p class="text-muted mb-0">
+            🎉 Événement : <b><%= liste.getEvenement() %></b><br>
+            📅 Créée le : <%= liste.getCreationDate() %> | Expiration : <%= liste.getExpirationDate() %>
+        </p>
     </div>
 
-    <hr>
+    <h3 class="mb-3 fw-bold">🎁 Cadeaux</h3>
 
-    <h3 class="mb-3">Cadeaux</h3>
+<%
+    List<Cadeau> cadeaux = liste.getCadeaux();
+    if (cadeaux == null || cadeaux.isEmpty()) {
+%>
+    <div class="alert alert-info text-center">
+        Aucun cadeau dans cette liste.
+    </div>
+<%
+    } else {
+%>
 
-    <%
-        List<Cadeau> cadeaux = liste.getCadeaux();
-        if (cadeaux == null || cadeaux.isEmpty()) {
-    %>
-        <p class="text-muted">Aucun cadeau dans cette liste.</p>
-    <%
-        } else {
-    %>
+    <div class="row g-4">
+<%
+        for (Cadeau c : cadeaux) {
 
-    <div class="row">
-        <%
-            for (Cadeau c : cadeaux) {
+            double prix = c.getPrice();
+            double total = c.getTotalContributed();
+            double restant = c.getRemainingAmount();
 
-                double prix = c.getPrice();
-                double total = c.totalContribue();
-                double restant = c.restantAContribuer();
+            int percent = 0;
+            if (prix > 0) {
+                percent = (int) Math.round((total / prix) * 100.0);
+                percent = Math.min(100, Math.max(0, percent));
+            }
+%>
+        <div class="col-md-4">
+            <div class="card shadow-sm rounded-4 h-100">
 
-                int percent = 0;
-                if (prix > 0) {
-                    percent = (int) Math.round((total / prix) * 100.0);
-                    percent = Math.min(100, Math.max(0, percent));
-                }
-        %>
-
-        <div class="col-md-4 mb-4">
-            <div class="card shadow-sm h-100">
-
-                <img src="<%= c.getPhoto() %>" class="card-img-top"
-                     alt="photo cadeau" style="height:180px; object-fit:cover;">
+                <img src="<%= c.getPhoto() %>" class="card-img-top" alt="photo cadeau"
+                     style="height:180px; object-fit:cover;">
 
                 <div class="card-body d-flex flex-column">
 
                     <div class="d-flex justify-content-between align-items-start mb-2">
-                        <h5 class="card-title mb-0"><%= c.getName() %></h5>
+                        <h5 class="card-title mb-0 fw-bold"><%= c.getName() %></h5>
                         <span class="badge bg-dark"><%= prix %> €</span>
                     </div>
 
@@ -91,56 +77,44 @@
                         <b>Priorité :</b> <%= c.getPriorite() %>
                     </p>
 
+                    <!-- Progress bar -->
                     <div class="mb-2">
-                        <div class="progress" style="height: 10px;">
-                            <div class="progress-bar"
-                                 style="width: <%= percent %>%;">
+                        <div class="progress" style="height: 12px;">
+                            <div class="progress-bar bg-success" style="width: <%= percent %>%;">
                             </div>
                         </div>
-
                         <div class="d-flex justify-content-between small mt-1">
-                            <span><b>Déjà offert :</b> <%= total %> €</span>
-                            <span><b><%= percent %>%</b></span>
+                            <span>Déjà offert : <%= total %> €</span>
+                            <span><%= percent %>%</span>
                         </div>
-
-                        <div class="mt-2">
-                            <span class="fw-bold">Reste :</span>
-                            <span class="fw-bold fs-5"><%= restant %> €</span>
-                        </div>
+                        <div class="mt-1 fw-bold">Reste : <span class="fs-5"><%= restant %> €</span></div>
                     </div>
 
-                    <p class="card-text small text-muted mb-3" style="flex: 1;">
+                    <p class="card-text small text-muted mb-3" style="flex:1;">
                         <%= c.getDescription() %>
                     </p>
 
-                    <% if (c.estReserve() || restant <= 0) { %>
-                        <div class="alert alert-secondary py-2 mb-2 text-center">
+
+					<% if (c.isReserved() || restant <= 0) { %>                        
+					<div class="alert alert-secondary py-2 text-center mb-2">
                             🎁 <b>Déjà offert</b>
                         </div>
                     <% } else { %>
-
                         <div class="border rounded p-2 mb-2">
                             <div class="fw-bold mb-2">Offrir ce cadeau</div>
 
-                            <form method="post"
-                                  action="<%= request.getContextPath() %>/reservation/contribuer">
-
+                            <form method="post" action="<%= request.getContextPath() %>/reservation/contribuer">
                                 <input type="hidden" name="cadeauId" value="<%= c.getId() %>">
                                 <input type="hidden" name="listeId" value="<%= liste.getId() %>">
 
                                 <div class="input-group input-group-sm">
-                                    <input type="number"
-                                           name="amount"
-                                           step="0.01"
-                                           min="0.01"
-                                           max="<%= restant %>"
-                                           class="form-control"
-                                           placeholder="Montant (max <%= restant %> €)"
-                                           required>
+                                    <input type="number" name="amount" step="0.01" min="0.01"
+                                           max="<%= restant %>" class="form-control"
+                                           placeholder="Montant (max <%= restant %> €)" required>
                                     <span class="input-group-text">€</span>
                                 </div>
 
-                                <button type="submit" class="btn btn-success btn-sm w-100 mt-2">
+                                <button type="submit" class="btn btn-success btn-sm w-100 mt-2 fw-bold">
                                     Offrir
                                 </button>
 
@@ -149,30 +123,28 @@
                                 </div>
                             </form>
                         </div>
-
                     <% } %>
 
                     <a href="<%= c.getLinkSite() %>" target="_blank"
-                       class="btn btn-outline-primary btn-sm w-100 mt-auto">
+                       class="btn btn-outline-primary btn-sm w-100 mt-auto fw-bold">
                         Voir le produit
                     </a>
 
                 </div>
             </div>
         </div>
-
-        <%
-            }
-        %>
+<%
+        }
+%>
     </div>
 
-    <%
-        }
-    %>
+<%
+    }
+%>
 
-    <div class="mt-4">
-        <a href="<%= request.getContextPath() %>/home" class="btn btn-secondary">
-            Retour au menu principal
+     <div class="mt-4 text-center">
+        <a class="btn btn-secondary btn-lg fw-bold" href="<%= request.getContextPath() %>/home">
+            ← Retour à l’accueil
         </a>
     </div>
 

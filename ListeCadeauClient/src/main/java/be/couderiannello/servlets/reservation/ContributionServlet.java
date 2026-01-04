@@ -70,15 +70,14 @@ public class ContributionServlet extends HttpServlet {
 
             StatutCadeau statutAvant = c.getStatutCadeau();
 
-            c.interdireActionSiCreateur(userId);
-            c.verifierContribution(amount);
+            if (c.getListeCadeau().getCreator().getId() == userId) {
+                throw new IllegalArgumentException("Le créateur ne peut pas contribuer.");
+            }
 
             Reservation r = Reservation.creerContribution(cadeauId, userId, amount);
             r.create(reservationDao);
 
-            c.addReservation(r);
-            c.recalculerStatutApresContribution();
-
+            c.addContribution(r);
             StatutCadeau statutApres = c.getStatutCadeau();
             c.update(cadeauDao);
 

@@ -5,86 +5,93 @@
 <meta charset="UTF-8">
 <title>Ajouter un cadeau</title>
 </head>
-<body>
+<body class="bg-light">
 
 <jsp:include page="/WEB-INF/view/includes/header.jsp" />
 
-<div class="container mt-5">
+<div class="container my-5">
 
-    <h1 class="mb-4">Ajouter un cadeau</h1>
+<%
+    String error = (String) request.getAttribute("error");
+    int listeId = Integer.parseInt(request.getAttribute("listeId").toString());
 
-    <%
-        String error = (String) request.getAttribute("error");
-        Object listeIdObj = request.getAttribute("listeId");
+    String name = (String) request.getAttribute("name");
+    String description = (String) request.getAttribute("description");
+    String price = (String) request.getAttribute("price");
+    String photo = (String) request.getAttribute("photo");
+    String linkSite = (String) request.getAttribute("linkSite");
+    String priorite = (String) request.getAttribute("priorite");
+%>
 
-        String name = (String) request.getAttribute("name");
-        String description = (String) request.getAttribute("description");
-        String price = (String) request.getAttribute("price");
-        String photo = (String) request.getAttribute("photo");
-        String linkSite = (String) request.getAttribute("linkSite");
-        String priorite = (String) request.getAttribute("priorite");
-    %>
+<% if (error != null && !error.trim().isEmpty()) { %>
+    <div class="alert alert-danger text-center fw-bold">
+        <%= error %>
+    </div>
+<% } %>
 
-    <% if (error != null && !error.trim().isEmpty()) { %>
-        <div class="alert alert-danger mt-3">
-            <%= error %>
-        </div>
-    <% } %>
+<div class="bg-light shadow-lg rounded-4 p-5 mx-auto" style="max-width:600px;">
 
-<% int listeId = Integer.parseInt(request.getAttribute("listeId").toString()); %>
+    <h2 class="mb-4 fw-bold">➕ Ajouter un cadeau</h2>
+    <p class="text-muted mb-4">
+        🎁 Remplissez les informations du cadeau que vous souhaitez ajouter
+    </p>
 
-
-    <form action="<%= request.getContextPath() %>/cadeau/create" method="post" class="card p-4 shadow-sm">
+    <form action="<%= request.getContextPath() %>/cadeau/create" method="post">
 
         <input type="hidden" name="listeId" value="<%= listeId %>">
 
         <div class="mb-3">
-            <label class="form-label">Nom :</label>
-            <input type="text" name="name" class="form-control" required
-                   value="<%= (name != null ? name : "") %>">
+            <label class="form-label fw-semibold">📝 Nom du cadeau</label>
+            <input type="text" name="name" class="form-control form-control-lg"
+                   value="<%= (name != null ? name : "") %>" required>
         </div>
 
         <div class="mb-3">
-            <label class="form-label">Description :</label>
-            <textarea name="description" class="form-control" required><%= (description != null ? description : "") %></textarea>
+            <label class="form-label fw-semibold">🖊 Description</label>
+            <textarea name="description" class="form-control form-control-lg" required><%= (description != null ? description : "") %></textarea>
         </div>
 
         <div class="mb-3">
-            <label class="form-label">Prix :</label>
-            <input type="number" name="price" step="0.01" class="form-control" required
-                   value="<%= (price != null ? price : "") %>">
+            <label class="form-label fw-semibold">💶 Prix (€)</label>
+            <input type="number" step="0.01" name="price" class="form-control form-control-lg"
+                   value="<%= (price != null ? price : "") %>" required>
         </div>
 
         <div class="mb-3">
-            <label class="form-label">Photo (URL) :</label>
-            <input type="text" name="photo" class="form-control" required
-                   value="<%= (photo != null ? photo : "") %>">
+            <label class="form-label fw-semibold">🖼 Photo (URL)</label>
+            <input type="url" name="photo" class="form-control form-control-lg"
+                   value="<%= (photo != null ? photo : "") %>" required>
         </div>
 
         <div class="mb-3">
-            <label class="form-label">Lien du site :</label>
-            <input type="text" name="linkSite" class="form-control" required
-                   value="<%= (linkSite != null ? linkSite : "") %>">
+            <label class="form-label fw-semibold">🔗 Lien du site</label>
+            <input type="url" name="linkSite" class="form-control form-control-lg"
+                   value="<%= (linkSite != null ? linkSite : "") %>" required>
         </div>
 
-        <div class="mb-3">
-            <label class="form-label">Priorité :</label>
-            <select name="priorite" class="form-select" required>
+        <div class="mb-4">
+            <label class="form-label fw-semibold">🎯 Priorité</label>
+            <select name="priorite" class="form-select form-select-lg" required>
                 <option value="GRANDE" <%= "GRANDE".equals(priorite) ? "selected" : "" %>>GRANDE</option>
                 <option value="MOYENNE" <%= "MOYENNE".equals(priorite) ? "selected" : "" %>>MOYENNE</option>
                 <option value="FAIBLE" <%= "FAIBLE".equals(priorite) ? "selected" : "" %>>FAIBLE</option>
             </select>
         </div>
 
-        <button type="submit" class="btn btn-primary">Ajouter</button>
-    </form>
+        <div class="d-flex justify-content-between">
+            <button type="submit" class="btn btn-primary fw-bold btn-lg">
+                💾 Ajouter
+            </button>
 
-    <div class="mt-3">
-        <a href="<%= request.getContextPath() %>/liste/manage?id=<%= listeId %>" class="btn btn-secondary">
-            Retour à la liste
-        </a>
-    </div>
+            <a href="<%= request.getContextPath() %>/liste/manage?id=<%= listeId %>"
+               class="btn btn-secondary fw-bold btn-lg">
+                ❌ Annuler
+            </a>
+        </div>
+
+    </form>
 </div>
 
+</div>
 </body>
 </html>

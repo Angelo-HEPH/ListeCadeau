@@ -7,11 +7,11 @@
 <meta charset="UTF-8">
 <title>Modifier la liste</title>
 </head>
-<body>
+<body class="bg-light">
 
 <jsp:include page="/WEB-INF/view/includes/header.jsp" />
 
-<div class="container mt-4">
+<div class="container my-5">
 
 <%
     ListeCadeau liste = (ListeCadeau) request.getAttribute("liste");
@@ -19,51 +19,60 @@
 %>
 
 <% if (error != null && !error.isBlank()) { %>
-    <div class="alert alert-danger"><%= error %></div>
+    <div class="alert alert-danger text-center fw-bold">
+        <%= error %>
+    </div>
 <% } %>
 
 <% if (liste == null) { return; } %>
 
-<h2 class="mb-4">Modifier la liste</h2>
+<div class="bg-light shadow-lg rounded-4 p-5 mx-auto" style="max-width:600px;">
 
-<form method="post" action="<%= request.getContextPath() %>/liste/edit">
+    <h2 class="mb-4 fw-bold">✏️ Modifier la liste</h2>
+    <p class="text-muted mb-4">
+        🎉 <b><%= liste.getEvenement() %></b> | 📅 Date d’expiration : <b><%= liste.getExpirationDate() %></b>
+    </p>
 
-    <input type="hidden" name="id" value="<%= liste.getId() %>">
+    <form method="post" action="<%= request.getContextPath() %>/liste/edit">
 
-    <div class="mb-3">
-        <label class="form-label">Titre</label>
-        <input type="text" name="title" class="form-control"
-               value="<%= liste.getTitle() %>" required>
-    </div>
+        <input type="hidden" name="id" value="<%= liste.getId() %>">
 
-    <div class="mb-3">
-        <label class="form-label">Événement</label>
-        <input type="text" name="evenement" class="form-control"
-               value="<%= liste.getEvenement() %>" required>
-    </div>
+        <div class="mb-3">
+            <label class="form-label fw-semibold">📝 Titre</label>
+            <input type="text" name="title" class="form-control form-control-lg"
+                   value="<%= liste.getTitle() %>" required>
+        </div>
 
-    <div class="mb-3">
-        <label class="form-label">Date d’expiration</label>
-        <input type="date" name="expirationDate" class="form-control"
-               value="<%= liste.getExpirationDate() %>">
-    </div>
+        <div class="mb-3">
+            <label class="form-label fw-semibold">🎉 Événement</label>
+            <input type="text" name="evenement" class="form-control form-control-lg"
+                   value="<%= liste.getEvenement() %>" required>
+        </div>
 
-    <div class="form-check mb-3">
-        <input type="checkbox" class="form-check-input"
-               name="statut" <%= liste.isStatut() ? "checked" : "" %>>
-        <label class="form-check-label">Liste active</label>
-    </div>
+        <div class="mb-3">
+            <label class="form-label fw-semibold">📅 Date d’expiration</label>
+            <input type="date" name="expirationDate" class="form-control form-control-lg"
+                   value="<%= liste.getExpirationDate() %>">
+        </div>
 
-    <button type="submit" class="btn btn-success">
-        Enregistrer
-    </button>
+        <div class="form-check mb-4">
+            <input type="checkbox" class="form-check-input" name="statut" <%= liste.isStatut() ? "checked" : "" %>>
+            <label class="form-check-label fw-semibold"> Liste active</label>
+        </div>
 
-    <a href="<%= request.getContextPath() %>/liste/manage?id=<%= liste.getId() %>"
-       class="btn btn-secondary ms-2">
-        Annuler
-    </a>
+        <div class="d-flex justify-content-between">
+            <button type="submit" class="btn btn-primary fw-bold btn-lg">
+                💾 Enregistrer
+            </button>
 
-</form>
+            <a href="<%= request.getContextPath() %>/liste/manage?id=<%= liste.getId() %>"
+               class="btn btn-secondary fw-bold btn-lg">
+                ❌ Annuler
+            </a>
+        </div>
+
+    </form>
+</div>
 
 </div>
 </body>

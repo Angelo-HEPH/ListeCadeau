@@ -5,44 +5,67 @@
 <meta charset="UTF-8">
 <title>Connexion</title>
 </head>
-<body>
+<body class="bg-light">
 
 <jsp:include page="/WEB-INF/view/includes/header.jsp" />
 
-<div class="container">
+<div class="container my-5">
 
-    <h2>Connexion</h2>
+    <div class="bg-white shadow-lg rounded-4 p-5 mx-auto" style="max-width: 400px;">
 
-    <% 
-        String success = (String) session.getAttribute("successMessage");
-        if (success != null) {
-    %>
-        <p class="text-success fw-bold"><%= success %></p>
-    <%
-            session.removeAttribute("successMessage");
-        }
-    %>
+        <h2 class="text-center fw-bold mb-4">🔑 Connexion</h2>
+        <p class="text-center text-muted mb-4">
+            Connectez-vous pour accéder à vos listes de cadeaux 🎁
+        </p>
 
-    <% 
-        String error = (String) request.getAttribute("error");
-        if (error != null) {
-    %>
-        <p class="text-danger fw-bold"><%= error %></p>
-    <%
-        }
-    %>
+        <% 
+            String success = (String) session.getAttribute("successMessage");
+            if (success != null) {
+        %>
+            <div class="alert alert-success text-center fw-bold">
+                <%= success %>
+            </div>
+        <%
+                session.removeAttribute("successMessage");
+            }
+        %>
 
-<form action="login" method="post" class="mb-3">
+        <% 
+            String error = (String) request.getAttribute("error");
+            if (error != null) {
+        %>
+            <div class="alert alert-danger text-center fw-bold">
+                <%= error %>
+            </div>
+        <% } %>
 
-    <label class="form-label">Email :</label>
-    <input type="email" class="form-control" name="email" value="<%= request.getAttribute("email") != null ? request.getAttribute("email") : "" %>" required>
+        <form action="login" method="post" class="mt-3">
 
-    <label class="form-label mt-2">Mot de passe :</label>
-    <input type="password" class="form-control" name="password" required>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">✉️ Email</label>
+                <input type="email" class="form-control form-control-lg" name="email" 
+                       value="<%= request.getAttribute("email") != null ? request.getAttribute("email") : "" %>" 
+                       required>
+            </div>
 
-    <button type="submit" class="btn btn-primary mt-3">Se connecter</button>
-</form>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">🔒 Mot de passe</label>
+                <input type="password" class="form-control form-control-lg" name="password" required>
+            </div>
 
+            <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold mt-3">
+                Se connecter
+            </button>
+
+        </form>
+
+        <div class="text-center mt-3">
+            <a href="<%= request.getContextPath() %>/createAccount" class="text-decoration-none">
+                Pas encore de compte ? Créez-en un 🎁
+            </a>
+        </div>
+
+    </div>
 
 </div>
 

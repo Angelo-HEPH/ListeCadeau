@@ -67,7 +67,7 @@ public class ReservationDeleteServlet extends HttpServlet {
             if (cadeauId > 0) {
                 Cadeau cFull = Cadeau.findById(cadeauId, cadeauDao, false, true);
                 if (cFull != null) {
-                    cFull.recalculerStatutApresContribution();
+                    cFull.removeContribution(r);
                     cFull.update(cadeauDao);
                 }
             }

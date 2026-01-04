@@ -7,11 +7,11 @@
 <meta charset="UTF-8">
 <title>Modifier un cadeau</title>
 </head>
-<body>
+<body class="bg-light">
 
 <jsp:include page="/WEB-INF/view/includes/header.jsp" />
 
-<div class="container mt-4">
+<div class="container my-5">
 
 <%
     Cadeau cadeau = (Cadeau) request.getAttribute("cadeau");
@@ -19,73 +19,83 @@
     String error = (String) request.getAttribute("error");
 %>
 
-<h2 class="mb-4">Modifier le cadeau</h2>
-
-<% if (error != null) { %>
-    <div class="alert alert-danger">
+<% if (error != null && !error.isBlank()) { %>
+    <div class="alert alert-danger text-center fw-bold">
         <%= error %>
     </div>
 <% } %>
 
-<form method="post" action="<%= request.getContextPath() %>/cadeau/edit">
+<% if (cadeau == null) { return; } %>
 
-    <input type="hidden" name="id" value="<%= cadeau.getId() %>">
-    <input type="hidden" name="listeId" value="<%= listeId %>">
+<div class="bg-light shadow-lg rounded-4 p-5 mx-auto" style="max-width:600px;">
 
-    <div class="mb-3">
-        <label class="form-label">Nom</label>
-        <input type="text" name="name" class="form-control"
-               value="<%= cadeau.getName() %>" required>
-    </div>
+    <h2 class="mb-4 fw-bold">🎁 Modifier le cadeau</h2>
+    <p class="text-muted mb-4">
+        ✨ <b><%= cadeau.getName() %></b> | 💶 Prix : <b><%= cadeau.getPrice() %> €</b>
+    </p>
 
-    <div class="mb-3">
-        <label class="form-label">Description</label>
-        <textarea name="description" class="form-control" required><%= cadeau.getDescription() %></textarea>
-    </div>
+    <form method="post" action="<%= request.getContextPath() %>/cadeau/edit">
 
-    <div class="mb-3">
-        <label class="form-label">Prix (€)</label>
-        <input type="number" step="0.01" name="price" class="form-control"
-               value="<%= cadeau.getPrice() %>" required>
-    </div>
+        <input type="hidden" name="id" value="<%= cadeau.getId() %>">
+        <input type="hidden" name="listeId" value="<%= listeId %>">
 
-    <div class="mb-3">
-        <label class="form-label">Lien produit</label>
-        <input type="url" name="linkSite" class="form-control"
-               value="<%= cadeau.getLinkSite() %>" required>
-    </div>
+        <div class="mb-3">
+            <label class="form-label fw-semibold">📝 Nom du cadeau</label>
+            <input type="text" name="name" class="form-control form-control-lg"
+                   value="<%= cadeau.getName() %>" required>
+        </div>
 
-    <div class="mb-3">
-        <label class="form-label">Photo (URL)</label>
-        <input type="url" name="photo" class="form-control"
-               value="<%= cadeau.getPhoto() %>" required>
-    </div>
+        <div class="mb-3">
+            <label class="form-label fw-semibold">🖊 Description</label>
+            <textarea name="description" class="form-control form-control-lg" required><%= cadeau.getDescription() %></textarea>
+        </div>
 
-    <div class="mb-3">
-        <label class="form-label">Priorité</label>
-        <select name="priorite" class="form-select" required>
-            <option value="GRANDE" <%= cadeau.getPriorite().name().equals("GRANDE") ? "selected" : "" %>>
-                GRANDE
-            </option>
-            <option value="MOYENNE" <%= cadeau.getPriorite().name().equals("MOYENNE") ? "selected" : "" %>>
-                MOYENNE
-            </option>
-            <option value="FAIBLE" <%= cadeau.getPriorite().name().equals("FAIBLE") ? "selected" : "" %>>
-                FAIBLE
-            </option>
-        </select>
-    </div>
+        <div class="mb-3">
+            <label class="form-label fw-semibold">💶 Prix (€)</label>
+            <input type="number" step="0.01" name="price" class="form-control form-control-lg"
+                   value="<%= cadeau.getPrice() %>" required>
+        </div>
 
-    <button type="submit" class="btn btn-success">
-        Enregistrer
-    </button>
+        <div class="mb-3">
+            <label class="form-label fw-semibold">🔗 Lien produit</label>
+            <input type="url" name="linkSite" class="form-control form-control-lg"
+                   value="<%= cadeau.getLinkSite() %>" required>
+        </div>
 
-    <a href="<%= request.getContextPath() %>/liste/manage?id=<%= listeId %>"
-       class="btn btn-secondary ms-2">
-        Annuler
-    </a>
+        <div class="mb-3">
+            <label class="form-label fw-semibold">🖼 Photo (URL)</label>
+            <input type="url" name="photo" class="form-control form-control-lg"
+                   value="<%= cadeau.getPhoto() %>" required>
+        </div>
 
-</form>
+        <div class="mb-4">
+            <label class="form-label fw-semibold">🎯 Priorité</label>
+            <select name="priorite" class="form-select form-select-lg" required>
+                <option value="GRANDE" <%= cadeau.getPriorite().name().equals("GRANDE") ? "selected" : "" %>>
+                    GRANDE
+                </option>
+                <option value="MOYENNE" <%= cadeau.getPriorite().name().equals("MOYENNE") ? "selected" : "" %>>
+                    MOYENNE
+                </option>
+                <option value="FAIBLE" <%= cadeau.getPriorite().name().equals("FAIBLE") ? "selected" : "" %>>
+                    FAIBLE
+                </option>
+            </select>
+        </div>
+
+        <div class="d-flex justify-content-between">
+            <button type="submit" class="btn btn-primary fw-bold btn-lg">
+                💾 Enregistrer
+            </button>
+
+            <a href="<%= request.getContextPath() %>/liste/manage?id=<%= listeId %>"
+               class="btn btn-secondary fw-bold btn-lg">
+                ❌ Annuler
+            </a>
+        </div>
+
+    </form>
+</div>
 
 </div>
 </body>
