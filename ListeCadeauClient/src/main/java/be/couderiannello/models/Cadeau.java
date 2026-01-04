@@ -211,65 +211,80 @@ public class Cadeau implements Serializable {
     //Méthode logique
     public double getTotalContributed() {
         return Math.round(
-                reservations.stream().mapToDouble(Reservation::getAmount).sum() * 100.0
-        ) / 100.0;
+            reservations.stream().mapToDouble(Reservation::getAmount).sum() * 100.0) / 100.0;
     }
 
     public double getRemainingAmount() {
-        return Math.max(0,
-                Math.round((price - getTotalContributed()) * 100.0) / 100.0
-        );
+        double remaining = price - getTotalContributed();
+        remaining = Math.round(remaining * 100.0) / 100.0;
+        return Math.max(0.0, remaining);
     }
 
-    public boolean isReserved() {
-        return getRemainingAmount() <= 0;
-    }
 
-    public boolean hasParticipations() {
+    public boolean hasContributions() {
         return getTotalContributed() > 0;
     }
 
-    public boolean canBeFullyReserved() {
-        return statutCadeau == StatutCadeau.DISPONIBLE && !hasParticipations();
+    public boolean isFullyReserved() {
+        return getRemainingAmount() <= 0;
     }
 
-    public void updateStatusAfterContribution() {
-        if (isReserved()) {
-            setStatutCadeau(StatutCadeau.RESERVER);
-        } else if (hasParticipations()) {
-            setStatutCadeau(StatutCadeau.PARTICIPATION);
+    private void updateStatut() {
+        if (isFullyReserved()) {
+            statutCadeau = StatutCadeau.RESERVER;
+        } else if (hasContributions()) {
+            statutCadeau = StatutCadeau.PARTICIPATION;
         } else {
-            setStatutCadeau(StatutCadeau.DISPONIBLE);
+            statutCadeau = StatutCadeau.DISPONIBLE;
         }
     }
 
-    public void addContribution(Reservation reservation) {
-        if (reservation == null) {
-            throw new IllegalArgumentException("La réservation ne peut pas être null.");
+    public void contribuer(Personne personne, double amount) {
+        if (personne == null) {
+        	throw new IllegalArgumentException("Personne obligatoire.");
+        }
+        if (amount <= 0) {
+        	throw new IllegalArgumentException("Montant invalide.");
+        }
+        if (amount > getRemainingAmount()) {
+            throw new IllegalArgumentException("Montant trop élevé.");
         }
 
-        if (isReserved()) {
-            throw new IllegalStateException("Le cadeau est déja réservé.");
-        }
+        Reservation r = new Reservation();
+        r.setAmount(amount);
+        r.addPersonne(personne);
+        r.setCadeau(this);
 
-        if (reservation.getAmount() > getRemainingAmount()) {
-            throw new IllegalArgumentException(
-                "Le montant ne peut pas dépacer ce qu'il reste (" + getRemainingAmount() + ")."
-            );
-        }
-
-        addReservation(reservation);
-        updateStatusAfterContribution();
+        reservations.add(r);
+        updateStatut();
     }
 
-    public void removeContribution(Reservation reservation) {
-        if (reservation == null) {
-            throw new IllegalArgumentException("La réservation ne peut pas être null.");
+    public void retirerContribution(Reservation r) {
+        if (!reservations.remove(r)) {
+            throw new IllegalArgumentException("Réservation introuvable.");
         }
 
-        removeReservation(reservation);
-        updateStatusAfterContribution();
+        r.setCadeau(null);
+        updateStatut();
     }
+
+    public void ensureCanBeModifiedOrDeleted() {
+
+        if (listeCadeau != null) {
+            listeCadeau.ensureCanManageCadeaux();
+        }
+
+        if (hasContributions() || isFullyReserved()) {
+            throw new IllegalStateException("Impossible de modifier ou supprimer un cadeau avec des contributions ou déjà réservé.");
+        }
+    }
+
+    public void ensureCanReceiveContribution() {
+        if (listeCadeau != null) {
+            listeCadeau.ensureCanReceiveContributions();
+        }
+    }
+
 
 	//ToString - hashCode - Equals
 	@Override

@@ -1,6 +1,9 @@
 package be.couderiannello.servlets.reservation;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
 
@@ -19,6 +22,12 @@ public class ContributionServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
 
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        doPost(req, resp);
+    }
+    
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
@@ -68,18 +77,25 @@ public class ContributionServlet extends HttpServlet {
                 throw new IllegalArgumentException("Incohérence liste/cadeau.");
             }
 
-            StatutCadeau statutAvant = c.getStatutCadeau();
-
             if (c.getListeCadeau().getCreator().getId() == userId) {
                 throw new IllegalArgumentException("Le créateur ne peut pas contribuer.");
             }
+            
+            StatutCadeau statutAvant = c.getStatutCadeau();
 
-            Reservation r = Reservation.creerContribution(cadeauId, userId, amount);
+            Personne p = new Personne();
+            p.setId(userId);
+
+            c.ensureCanReceiveContribution();
+            c.contribuer(p, amount);
+
+            Reservation r = c.getReservations().get(c.getReservations().size() - 1);
+
             r.create(reservationDao);
 
-            c.addContribution(r);
             StatutCadeau statutApres = c.getStatutCadeau();
             c.update(cadeauDao);
+
 
             if (statutAvant != StatutCadeau.PARTICIPATION && statutApres == StatutCadeau.PARTICIPATION) {
 
@@ -121,19 +137,23 @@ public class ContributionServlet extends HttpServlet {
         } catch (IllegalStateException e) {
             errorMsg = e.getMessage();
         } catch (Exception e) {
-            e.printStackTrace();
             errorMsg = "Erreur serveur lors de la contribution.";
         }
 
         if (listeIdToReload != null) {
-            ListeCadeau l = ListeCadeau.findById(listeIdToReload, ListeCadeauDAO.getInstance(), true, false, true);
+            ListeCadeau l = ListeCadeau.findById(listeIdToReload, ListeCadeauDAO.getInstance(), true, true, true);
 
+            List<Cadeau> cadeauxComplets = new ArrayList<>();
+
+            for (Cadeau c : l.getCadeaux()) {
+                Cadeau full = Cadeau.findById(c.getId(), CadeauDAO.getInstance(), true, true);
+                cadeauxComplets.add(full);
+            }
+
+            l.setCadeaux(cadeauxComplets);
             req.setAttribute("liste", l);
 
-            String creatorLabel = "Créateur inconnu";
-            if (l != null && l.getCreator() != null) {
-                creatorLabel = l.getCreator().getFirstName() + " " + l.getCreator().getName();
-            }
+            String creatorLabel = l.getCreator().getFirstName() + " " + l.getCreator().getName();
             req.setAttribute("creatorLabel", creatorLabel);
 
             req.setAttribute("error", errorMsg);

@@ -16,10 +16,6 @@ import be.couderiannello.models.Reservation;
 public class ReservationDeleteServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
-    public ReservationDeleteServlet() {
-        super();
-    }
-
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
@@ -64,18 +60,16 @@ public class ReservationDeleteServlet extends HttpServlet {
 
             Reservation.delete(r, reservationDao);
 
-            if (cadeauId > 0) {
-                Cadeau cFull = Cadeau.findById(cadeauId, cadeauDao, false, true);
-                if (cFull != null) {
-                    cFull.removeContribution(r);
-                    cFull.update(cadeauDao);
-                }
+            Cadeau cFull = Cadeau.findById(cadeauId, cadeauDao, false, true);
+            if (cFull != null) {
+                cFull.retirerContribution(r);
+                cFull.update(cadeauDao);
             }
+
 
             resp.sendRedirect(req.getContextPath() + "/reservation/contributions");
 
         } catch (Exception e) {
-            e.printStackTrace();
             req.setAttribute("error", e.getMessage());
             req.getRequestDispatcher("/WEB-INF/view/reservation/viewContributions.jsp")
                .forward(req, resp);

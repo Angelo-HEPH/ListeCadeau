@@ -103,6 +103,7 @@ public class ListeCadeau implements Serializable {
         this.creationDate = creationDate;
     }
 
+    //Utilisé pour le DAO
     public void initCreationDate(LocalDate creationDate) {
         this.creationDate = creationDate;
     }
@@ -127,6 +128,9 @@ public class ListeCadeau implements Serializable {
         return statut;
     }
     public void setStatut(boolean statut) {
+        if (!statut) {
+            ensureCanBeDeactivated();
+        }
         this.statut = statut;
     }
     
@@ -191,7 +195,7 @@ public class ListeCadeau implements Serializable {
         this.cadeaux = cadeaux;
     }
     
-    public boolean addInvite(Personne p, ListeCadeauDAO dao) {
+    public void addInvite(Personne p, ListeCadeauDAO dao) {
         if (p == null) {
             throw new IllegalArgumentException("Personne obligatoire.");
         }
@@ -213,12 +217,10 @@ public class ListeCadeau implements Serializable {
         }
 
         dao.addInvite(this.id, p.getId());
-
-        return true;
     }
 
 
-    public boolean removeInvite(int personneId, ListeCadeauDAO dao) {
+    public void removeInvite(int personneId, ListeCadeauDAO dao) {
         if (dao == null) {
             throw new IllegalArgumentException("DAO obligatoire.");
         }
@@ -231,8 +233,6 @@ public class ListeCadeau implements Serializable {
         if (this.invites != null) {
             this.invites.removeIf(x -> x.getId() == personneId);
         }
-
-        return true;
     }
 
 
@@ -265,6 +265,50 @@ public class ListeCadeau implements Serializable {
             c.setListeCadeau(null);
         }
     }
+
+    public boolean containsContributions() {
+    	if (cadeaux == null || cadeaux.isEmpty()) {
+    		return false;
+    	}
+
+        return cadeaux.stream().anyMatch(c -> !c.getReservations().isEmpty());
+    }
+
+    public void ensureCanBeDeleted() {
+        if (containsContributions()) {
+            throw new IllegalStateException("Impossible de supprimer une liste contenant des contributions.");
+        }
+    }
+    
+    public void ensureCanBeDeactivated() {
+        boolean hasLockedCadeaux = cadeaux.stream()
+            .anyMatch(c -> c.hasContributions() || c.isFullyReserved());
+
+        if (hasLockedCadeaux) {
+            throw new IllegalStateException(
+                "Impossible de désactiver la liste : des cadeaux ont déjà des contributions ou sont réservés."
+            );
+        }
+    }
+
+    public boolean isExpired() {
+        return expirationDate != null && expirationDate.isBefore(LocalDate.now());
+    }
+
+    public void ensureCanBeModified() {
+        if (isExpired()) {
+            throw new IllegalStateException("Aucune action possible : la liste est expirée.");
+        }
+    }
+
+    public void ensureCanManageCadeaux() {
+        ensureCanBeModified();
+    }
+
+    public void ensureCanReceiveContributions() {
+        ensureCanBeModified();
+    }
+
 
     //ToString - HashCode - Equals
     @Override

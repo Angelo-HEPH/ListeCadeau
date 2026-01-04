@@ -2,6 +2,8 @@ package be.couderiannello.servlets.listecadeau;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -9,7 +11,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import be.couderiannello.dao.CadeauDAO;
 import be.couderiannello.dao.ListeCadeauDAO;
+import be.couderiannello.models.Cadeau;
 import be.couderiannello.models.ListeCadeau;
 
 public class ListeEditServlet extends HttpServlet {
@@ -36,7 +40,7 @@ public class ListeEditServlet extends HttpServlet {
                 throw new IllegalArgumentException("Paramètre id invalide.");
             }
 
-            ListeCadeau liste = ListeCadeau.findById(listeId, ListeCadeauDAO.getInstance(), true, false, false);
+            ListeCadeau liste = ListeCadeau.findById(listeId, ListeCadeauDAO.getInstance(), true, false, true);
 
             if (liste == null) {
                 throw new IllegalStateException("Erreur : Liste introuvable.");
@@ -44,6 +48,17 @@ public class ListeEditServlet extends HttpServlet {
 
             if (liste.getCreator() == null || liste.getCreator().getId() != userId) {
                 throw new IllegalStateException("Erreur : Accès interdit.");
+            }
+            
+            if (liste.getCadeaux() != null) {
+                List<Cadeau> fullCadeaux = new ArrayList<>();
+
+                for (Cadeau c : liste.getCadeaux()) {
+                    Cadeau full = Cadeau.findById(c.getId(), CadeauDAO.getInstance(), false, true);
+                    fullCadeaux.add(full);
+                }
+
+                liste.setCadeaux(fullCadeaux);
             }
 
             req.setAttribute("liste", liste);
@@ -76,7 +91,7 @@ public class ListeEditServlet extends HttpServlet {
                 throw new IllegalArgumentException("Paramètre id invalide.");
             }
 
-            ListeCadeau liste = ListeCadeau.findById(listeId, ListeCadeauDAO.getInstance(), true, false, false);
+            ListeCadeau liste = ListeCadeau.findById(listeId, ListeCadeauDAO.getInstance(), true, false, true);
 
             if (liste == null) {
                 throw new IllegalStateException("Erreur : Liste introuvable.");
@@ -85,6 +100,20 @@ public class ListeEditServlet extends HttpServlet {
             if (liste.getCreator() == null || liste.getCreator().getId() != userId) {
                 throw new IllegalStateException("Erreur : Accès interdit.");
             }
+            
+            if (liste.getCadeaux() != null) {
+                List<Cadeau> fullCadeaux = new ArrayList<>();
+
+                for (Cadeau c : liste.getCadeaux()) {
+                    Cadeau full = Cadeau.findById(c.getId(), CadeauDAO.getInstance(), false, true);
+                    fullCadeaux.add(full);
+                }
+
+                liste.setCadeaux(fullCadeaux);
+            }
+            
+            liste.ensureCanManageCadeaux();
+
 
             liste.setTitle(req.getParameter("title"));
             liste.setEvenement(req.getParameter("evenement"));

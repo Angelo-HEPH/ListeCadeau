@@ -55,7 +55,6 @@ public class ViewContributionServlet extends HttpServlet {
                .forward(req, resp);
 
         } catch (Exception e) {
-            e.printStackTrace();
             req.setAttribute("error", e.getMessage());
             req.getRequestDispatcher("/WEB-INF/view/reservation/viewContributions.jsp")
                .forward(req, resp);

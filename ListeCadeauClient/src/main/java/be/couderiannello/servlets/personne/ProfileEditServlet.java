@@ -13,10 +13,6 @@ import be.couderiannello.models.Personne;
 public class ProfileEditServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
-    public ProfileEditServlet() {
-        super();
-    }
-
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
@@ -39,7 +35,6 @@ public class ProfileEditServlet extends HttpServlet {
                .forward(req, resp);
 
         } catch (RuntimeException e) {
-            e.printStackTrace();
             req.setAttribute("error", "Erreur : Erreur serveur lors du chargement du profil.");
             req.getRequestDispatcher("/WEB-INF/view/personne/editProfile.jsp")
                .forward(req, resp);
@@ -107,7 +102,6 @@ public class ProfileEditServlet extends HttpServlet {
             doGet(req, resp);
 
         } catch (RuntimeException e) {
-            e.printStackTrace();
             req.setAttribute("error", "Erreur : Erreur serveur lors de la mise à jour du profil.");
             doGet(req, resp);
         }

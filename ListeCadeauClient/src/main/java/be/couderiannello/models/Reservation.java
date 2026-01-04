@@ -59,6 +59,7 @@ public class Reservation implements Serializable {
 		this.id = id;
 	}
 	
+	
 	public double getAmount() {
 		return amount;
 	}
@@ -70,6 +71,7 @@ public class Reservation implements Serializable {
 		
 		this.amount = amount;
 	}
+	
 	
 	public LocalDate getDateReservation() {
 		return dateReservation;
@@ -83,6 +85,7 @@ public class Reservation implements Serializable {
 		this.dateReservation = dateReservation;
 	}
 
+	
 	//Getters - Setters - Relations
 	public Cadeau getCadeau() {
 		return cadeau;
@@ -96,14 +99,16 @@ public class Reservation implements Serializable {
         Cadeau old = this.cadeau;
         this.cadeau = cadeau;
 
-        if (old != null) {
+        if (old != null && old.getReservations().contains(this)) {
             old.getReservations().remove(this);
         }
+
         if (cadeau != null && !cadeau.getReservations().contains(this)) {
             cadeau.getReservations().add(this);
         }
     }
 
+    
 	public List<Personne> getPersonnes() {
 		return personnes;
 	}
@@ -115,6 +120,7 @@ public class Reservation implements Serializable {
 		
 		this.personnes = personnes;
 	}
+	
 	
     //Méthodes
     public void addPersonne(Personne p) {
@@ -147,7 +153,7 @@ public class Reservation implements Serializable {
         }
     }
     
-    public static Reservation creerContribution(int cadeauId, int userId, double amount) {
+   /* public static Reservation creerContribution(int cadeauId, int userId, double amount) {
         return creerReservation(cadeauId, userId, amount);
     }
 
@@ -168,10 +174,9 @@ public class Reservation implements Serializable {
         r.addPersonne(p);
 
         return r;
-    }
+    }*/
 
 	// ToString – HashCode – Equals 
-
     @Override
     public String toString() {
         return "Reservation{" +

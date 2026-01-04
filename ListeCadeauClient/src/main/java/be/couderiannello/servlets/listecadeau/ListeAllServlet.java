@@ -35,7 +35,6 @@ public class ListeAllServlet extends HttpServlet {
             req.getRequestDispatcher("/WEB-INF/view/listeCadeau/all.jsp").forward(req, resp);
 
         } catch (Exception e) {
-            e.printStackTrace();
             req.setAttribute("error", e.getMessage());
             req.getRequestDispatcher("/WEB-INF/view/listeCadeau/all.jsp").forward(req, resp);
         }

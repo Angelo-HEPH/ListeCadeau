@@ -92,7 +92,6 @@ public class CreateAccountServlet extends HttpServlet {
                    .forward(request, response);
 
         } catch (RuntimeException e) {
-            e.printStackTrace();
             request.setAttribute("error",
                 "Erreur : Une erreur serveur est survenue. Veuillez réessayer.");
             request.getRequestDispatcher("/WEB-INF/view/personne/createAccount.jsp")

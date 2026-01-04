@@ -7,6 +7,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import be.couderiannello.dao.CadeauDAO;
+import be.couderiannello.dao.ListeCadeauDAO;
 import be.couderiannello.enumeration.StatutPriorite;
 import be.couderiannello.models.Cadeau;
 import be.couderiannello.models.ListeCadeau;
@@ -19,21 +20,43 @@ public class CreateCadeauServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        String listeIdParam = req.getParameter("listeId");
-        if (listeIdParam == null || listeIdParam.isBlank()) {
-            req.setAttribute("error", "Erreur : Paramètre listeId manquant.");
-            req.getRequestDispatcher("/WEB-INF/view/cadeau/addCadeau.jsp").forward(req, resp);
-            return;
-        }
-
         try {
-            int listeId = Integer.parseInt(listeIdParam);
-            req.setAttribute("listeId", listeId);
-            req.getRequestDispatcher("/WEB-INF/view/cadeau/addCadeau.jsp").forward(req, resp);
+            String listeIdParam = req.getParameter("listeId");
+            if (listeIdParam == null || listeIdParam.isBlank()) {
+                throw new IllegalArgumentException("Erreur : Paramètre listeId manquant.");
+            }
 
-        } catch (NumberFormatException ex) {
-            req.setAttribute("error", "Erreur : Paramètre listeId invalide.");
-            req.getRequestDispatcher("/WEB-INF/view/cadeau/addCadeau.jsp").forward(req, resp);
+            int listeId;
+            try {
+                listeId = Integer.parseInt(listeIdParam);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Erreur : Paramètre listeId invalide.");
+            }
+
+            ListeCadeau l = ListeCadeau.findById(listeId, ListeCadeauDAO.getInstance(), false, true, false);
+
+            if (l == null) {
+                throw new IllegalStateException("Liste introuvable.");
+            }
+
+            l.ensureCanBeModified();
+
+            req.setAttribute("liste", l);
+            req.setAttribute("listeId", listeId);
+
+            req.getRequestDispatcher("/WEB-INF/view/cadeau/addCadeau.jsp")
+               .forward(req, resp);
+
+        } catch (Exception e) {
+            req.setAttribute("error", e.getMessage());
+
+            String listeIdParam = req.getParameter("listeId");
+            if (listeIdParam != null) {
+                req.setAttribute("listeId", listeIdParam);
+            }
+
+            req.getRequestDispatcher("/WEB-INF/view/cadeau/addCadeau.jsp")
+               .forward(req, resp);
         }
     }
 
@@ -80,12 +103,17 @@ public class CreateCadeauServlet extends HttpServlet {
             c.setLinkSite(request.getParameter("linkSite"));
             c.setPriorite(StatutPriorite.valueOf(request.getParameter("priorite")));
 
-            ListeCadeau l = new ListeCadeau();
-            l.setId(listeId);
+            ListeCadeau l = ListeCadeau.findById(listeId, ListeCadeauDAO.getInstance(), false, true, false);
+
+            if (l == null) {
+                throw new IllegalStateException("Liste introuvable.");
+            }
+
+            l.ensureCanBeModified();
+
             c.setListeCadeau(l);
 
-            CadeauDAO dao = CadeauDAO.getInstance();
-            c.create(dao);
+            c.create(CadeauDAO.getInstance());
 
             response.sendRedirect(request.getContextPath() + "/liste/manage?id=" + listeId);
 
@@ -95,7 +123,6 @@ public class CreateCadeauServlet extends HttpServlet {
                    .forward(request, response);
 
         } catch (RuntimeException e) {
-            e.printStackTrace();
             request.setAttribute("error", "Erreur : Une erreur serveur est survenue lors de la création du cadeau.");
             request.getRequestDispatcher("/WEB-INF/view/cadeau/addCadeau.jsp")
                    .forward(request, response);

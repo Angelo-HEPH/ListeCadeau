@@ -56,7 +56,6 @@ public class LoginServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/home");
 
         } catch (RuntimeException e) {
-            e.printStackTrace();
             request.setAttribute("error", e.getMessage());
             request.getRequestDispatcher("/WEB-INF/view/personne/login.jsp")
                    .forward(request, response);

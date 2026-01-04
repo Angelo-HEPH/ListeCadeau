@@ -38,7 +38,6 @@ public class ViewNotificationServlet extends HttpServlet {
                .forward(req, resp);
 
         } catch (Exception e) {
-            e.printStackTrace();
             req.setAttribute("error", "Erreur chargement des notifications.");
             req.getRequestDispatcher("/WEB-INF/view/notification/view.jsp")
                .forward(req, resp);
@@ -75,8 +74,6 @@ public class ViewNotificationServlet extends HttpServlet {
             resp.sendRedirect(req.getContextPath() + "/notifications");
 
         } catch (Exception e) {
-            e.printStackTrace();
-
                 Personne user = Personne.findById(userId, PersonneDAO.getInstance(), true, false, false, false);
                 if (user != null) {
                     req.setAttribute("notifications", user.getNotifications());

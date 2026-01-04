@@ -59,6 +59,7 @@ public class Reservation implements Serializable {
 		this.id = id;
 	}
 	
+	
 	public double getAmount() {
 		return amount;
 	}
@@ -70,6 +71,7 @@ public class Reservation implements Serializable {
 		
 		this.amount = amount;
 	}
+	
 	
 	public LocalDate getDateReservation() {
 		return dateReservation;
@@ -83,6 +85,7 @@ public class Reservation implements Serializable {
 		this.dateReservation = dateReservation;
 	}
 
+	
 	//Getters - Setters - Relations
 	public Cadeau getCadeau() {
 		return cadeau;
@@ -96,14 +99,16 @@ public class Reservation implements Serializable {
         Cadeau old = this.cadeau;
         this.cadeau = cadeau;
 
-        if (old != null) {
+        if (old != null && old.getReservations().contains(this)) {
             old.getReservations().remove(this);
         }
+
         if (cadeau != null && !cadeau.getReservations().contains(this)) {
             cadeau.getReservations().add(this);
         }
     }
 
+    
 	public List<Personne> getPersonnes() {
 		return personnes;
 	}
@@ -116,63 +121,62 @@ public class Reservation implements Serializable {
 		this.personnes = personnes;
 	}
 	
-	//Méthodes
-	public void addPersonne(Personne p) {
-		if (p == null) {
-			throw new IllegalArgumentException("Personne ne peut pas être null.");
-		}
-		
-		if (personnes.contains(p)) {
-			throw new IllegalArgumentException("Cette personne participe déjà à la réservation.");
-		}
-		
-		personnes.add(p);
+	
+    //Méthodes
+    public void addPersonne(Personne p) {
+        if (p == null) {
+            throw new IllegalArgumentException("Personne ne peut pas être null.");
+        }
+        
+        if (personnes.contains(p)) {
+            throw new IllegalArgumentException("Cette personne participe déjà à la réservation.");
+        }
+        
+        personnes.add(p);
         if (!p.getReservations().contains(this)) {
             p.getReservations().add(this);
         }
-	}
-	
-	public void removePersonne(Personne p) {
-		if (p == null) {
-			throw new IllegalArgumentException("Personne ne peut pas être null.");
-		}
-		
-		if (!personnes.contains(p)) {
-			throw new IllegalArgumentException("Cette personne n’est pas liée à cette réservation.");
-		}
-		
-		personnes.remove(p);
+    }
+    
+    public void removePersonne(Personne p) {
+        if (p == null) {
+            throw new IllegalArgumentException("Personne ne peut pas être null.");
+        }
+        
+        if (!personnes.contains(p)) {
+            throw new IllegalArgumentException("Cette personne n’est pas liée à cette réservation.");
+        }
+        
+        personnes.remove(p);
         if (p.getReservations().contains(this)) {
             p.getReservations().remove(this);
         }
-	}
-	
-	public static Reservation creerContribution(int cadeauId, int userId, double amount) {
-	    return creerReservation(cadeauId, userId, amount);
-	}
+    }
+    
+   /* public static Reservation creerContribution(int cadeauId, int userId, double amount) {
+        return creerReservation(cadeauId, userId, amount);
+    }
 
-	public static Reservation creerReservationComplete(int cadeauId, int userId, double amount) {
-	    return creerReservation(cadeauId, userId, amount);
-	}
+    public static Reservation creerReservationComplete(int cadeauId, int userId, double amount) {
+        return creerReservation(cadeauId, userId, amount);
+    }
 
-	private static Reservation creerReservation(int cadeauId, int userId, double amount) {
-	    Reservation r = new Reservation();
-	    r.setAmount(amount);
+    private static Reservation creerReservation(int cadeauId, int userId, double amount) {
+        Reservation r = new Reservation();
+        r.setAmount(amount);
 
-	    Cadeau ref = new Cadeau();
-	    ref.setId(cadeauId);
-	    r.setCadeau(ref);
+        Cadeau ref = new Cadeau();
+        ref.setId(cadeauId);
+        r.setCadeau(ref);
 
-	    Personne p = new Personne();
-	    p.setId(userId);
-	    r.addPersonne(p);
+        Personne p = new Personne();
+        p.setId(userId);
+        r.addPersonne(p);
 
-	    return r;
-	}
+        return r;
+    }*/
 
-	
 	// ToString – HashCode – Equals 
-
     @Override
     public String toString() {
         return "Reservation{" +

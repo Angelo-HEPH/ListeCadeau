@@ -14,6 +14,7 @@ import be.couderiannello.dao.ListeCadeauDAO;
 import be.couderiannello.dao.ReservationDAO;
 import be.couderiannello.models.Cadeau;
 import be.couderiannello.models.ListeCadeau;
+import be.couderiannello.models.Personne;
 import be.couderiannello.models.Reservation;
 
 public class ReservationFullServlet extends HttpServlet {
@@ -61,17 +62,21 @@ public class ReservationFullServlet extends HttpServlet {
                 throw new IllegalArgumentException("Le créateur ne peut pas réserver.");
             }
 
-            Reservation r = Reservation.creerReservationComplete(cadeauId, userId, c.getPrice());
-            r.create(reservationDao);
+            Personne p = new Personne();
+            p.setId(userId);
 
-            c.addContribution(r);
+            c.contribuer(p, c.getPrice());
+
+            Reservation r = c.getReservations()
+                             .get(c.getReservations().size() - 1);
+
+            r.create(reservationDao);
             c.update(cadeauDao);
+
 
             resp.sendRedirect(req.getContextPath() + "/liste/view?id=" + listeId);
 
         } catch (Exception e) {
-            e.printStackTrace();
-
                 String listeIdParam = req.getParameter("listeId");
                 if (listeIdParam != null && !listeIdParam.isBlank()) {
                     int listeId = Integer.parseInt(listeIdParam);
@@ -93,10 +98,7 @@ public class ReservationFullServlet extends HttpServlet {
                         }
                     }
 
-                    String creatorLabel = "Créateur inconnu";
-                    if (l != null && l.getCreator() != null) {
-                        creatorLabel = l.getCreator().getFirstName() + " " + l.getCreator().getName();
-                    }
+                    String creatorLabel = l.getCreator().getFirstName() + " " + l.getCreator().getName();
 
                     req.setAttribute("creatorLabel", creatorLabel);
                     req.setAttribute("liste", l);

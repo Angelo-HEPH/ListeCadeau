@@ -33,17 +33,20 @@ public class ListeManageServlet extends HttpServlet {
                 throw new IllegalArgumentException("Paramètre id invalide.");
             }
 
-            ListeCadeau l = ListeCadeauDAO.getInstance().find(id, false, true, true);
+            ListeCadeau l = ListeCadeau.findById(id, ListeCadeauDAO.getInstance(), false, true, true);
+
             if (l == null) {
                 throw new IllegalStateException("Erreur : Liste introuvable.");
             }
 
             req.setAttribute("liste", l);
+
+            l.ensureCanBeModified();
+
             req.getRequestDispatcher("/WEB-INF/view/listeCadeau/manage.jsp")
                .forward(req, resp);
 
         } catch (Exception e) {
-            e.printStackTrace();
             req.setAttribute("error", e.getMessage());
             req.getRequestDispatcher("/WEB-INF/view/listeCadeau/manage.jsp")
                .forward(req, resp);
@@ -83,7 +86,7 @@ public class ListeManageServlet extends HttpServlet {
                         throw new IllegalArgumentException("Email requis.");
                     }
 
-                    liste = ListeCadeau.findById(listeId, listeDao);
+                    liste = ListeCadeau.findById(listeId, listeDao, true, true, false);
                     if (liste == null) {
                         throw new IllegalStateException("Erreur : Liste introuvable.");
                     }
@@ -113,7 +116,7 @@ public class ListeManageServlet extends HttpServlet {
                         throw new IllegalArgumentException("Identifiant invité invalide.");
                     }
 
-                    liste = listeDao.find(listeId, false, true, false);
+                    liste = ListeCadeau.findById(listeId, listeDao, false, true, false);
                     if (liste == null) {
                         throw new IllegalStateException("Erreur : Liste introuvable.");
                     }
@@ -129,8 +132,6 @@ public class ListeManageServlet extends HttpServlet {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
-
             try {
                 String listeIdParam = req.getParameter("listeId");
                 if (listeIdParam != null) {

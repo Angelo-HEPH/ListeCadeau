@@ -41,15 +41,20 @@ public class CadeauDeleteServlet extends HttpServlet {
         try {
             ListeCadeau liste = ListeCadeau.findById(listeId, ListeCadeauDAO.getInstance(), true, true, true);
 
-            if (liste == null || liste.getCreator() == null || liste.getCreator().getId() != userId) {
-                req.setAttribute("error", "Erreur : Accès interdit.");
-                req.setAttribute("liste", liste);
-                req.getRequestDispatcher("/WEB-INF/view/listeCadeau/manage.jsp")
-                   .forward(req, resp);
-                return;
+            if (liste == null || liste.getCreator() == null
+                    || liste.getCreator().getId() != userId) {
+                throw new IllegalStateException("Accès interdit.");
             }
 
-            Cadeau c = Cadeau.findById(cadeauId, CadeauDAO.getInstance());
+            liste.ensureCanBeModified();
+
+            Cadeau c = Cadeau.findById(cadeauId, CadeauDAO.getInstance(), false, true);
+            if (c == null) {
+                throw new IllegalStateException("Cadeau introuvable.");
+            }
+
+            c.ensureCanBeModifiedOrDeleted();
+
             Cadeau.delete(c, CadeauDAO.getInstance());
 
             resp.sendRedirect(req.getContextPath() + "/liste/manage?id=" + listeId);
@@ -64,7 +69,6 @@ public class CadeauDeleteServlet extends HttpServlet {
                .forward(req, resp);
 
         } catch (RuntimeException e) {
-            e.printStackTrace();
             req.setAttribute("error", "Erreur : Erreur serveur lors de la suppression du cadeau.");
 
             ListeCadeau refreshed = ListeCadeau.findById(listeId, ListeCadeauDAO.getInstance(), true, true, true);

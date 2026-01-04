@@ -17,6 +17,17 @@
     ListeCadeau liste = (ListeCadeau) request.getAttribute("liste");
 %>
 
+<%
+    String error = (String) request.getAttribute("error");
+%>
+
+<% if (error != null && !error.isBlank()) { %>
+    <div class="alert alert-danger text-center fw-bold">
+        <%= error %>
+    </div>
+<% } %>
+
+
 <% if (liste == null) { %>
 
     <div class="alert alert-danger text-center fw-bold mt-4">
@@ -95,7 +106,7 @@
                     </p>
 
 
-					<% if (c.isReserved() || restant <= 0) { %>                        
+					<% if (c.isFullyReserved() || restant <= 0) { %>                        
 					<div class="alert alert-secondary py-2 text-center mb-2">
                             🎁 <b>Déjà offert</b>
                         </div>
@@ -117,10 +128,6 @@
                                 <button type="submit" class="btn btn-success btn-sm w-100 mt-2 fw-bold">
                                     Offrir
                                 </button>
-
-                                <div class="small text-muted mt-1">
-                                    Astuce : mets <b><%= restant %> €</b> pour compléter.
-                                </div>
                             </form>
                         </div>
                     <% } %>

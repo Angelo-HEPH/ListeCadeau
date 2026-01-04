@@ -73,7 +73,7 @@ public class CreateListeCadeauServlet extends HttpServlet {
             l.setShareLink(shareLink);
             dao.update(l);
 
-            response.sendRedirect(request.getContextPath() + "/liste/view?id=" + idListe);
+            response.sendRedirect(request.getContextPath() + "/liste/all");
 
         } catch (IllegalArgumentException e) {
             request.setAttribute("error", e.getMessage());
@@ -81,7 +81,6 @@ public class CreateListeCadeauServlet extends HttpServlet {
                    .forward(request, response);
 
         } catch (Exception e) {
-            e.printStackTrace();
             request.setAttribute("error", e.getMessage());
             request.getRequestDispatcher("/WEB-INF/view/listeCadeau/createListeCadeau.jsp")
                    .forward(request, response);

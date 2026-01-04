@@ -56,7 +56,6 @@ public class CadeauEditServlet extends HttpServlet {
             req.getRequestDispatcher("/WEB-INF/view/cadeau/edit.jsp").forward(req, resp);
 
         } catch (RuntimeException e) {
-            e.printStackTrace();
             req.setAttribute("error", "Erreur : Erreur serveur lors du chargement du cadeau.");
             req.setAttribute("listeId", listeId);
             req.getRequestDispatcher("/WEB-INF/view/cadeau/edit.jsp").forward(req, resp);
@@ -91,14 +90,16 @@ public class CadeauEditServlet extends HttpServlet {
                 req.getRequestDispatcher("/WEB-INF/view/cadeau/edit.jsp").forward(req, resp);
                 return;
             }
+            
+            liste.ensureCanManageCadeaux();
 
-            Cadeau c = Cadeau.findById(cadeauId, CadeauDAO.getInstance());
+            Cadeau c = Cadeau.findById(cadeauId, CadeauDAO.getInstance(), false, true);
             if (c == null) {
-                req.setAttribute("error", "Erreur : Cadeau introuvable.");
-                req.setAttribute("listeId", listeId);
-                req.getRequestDispatcher("/WEB-INF/view/cadeau/edit.jsp").forward(req, resp);
-                return;
+                throw new IllegalStateException("Cadeau introuvable.");
             }
+            
+            liste.ensureCanManageCadeaux();
+            c.ensureCanBeModifiedOrDeleted();
 
             double price;
             try {
@@ -127,24 +128,28 @@ public class CadeauEditServlet extends HttpServlet {
             }
 
             resp.sendRedirect(req.getContextPath() + "/liste/manage?id=" + listeId);
+            return;
 
         } catch (IllegalArgumentException e) {
             req.setAttribute("error", e.getMessage());
             req.setAttribute("listeId", listeId);
             req.setAttribute("cadeau", Cadeau.findById(cadeauId, CadeauDAO.getInstance()));
             req.getRequestDispatcher("/WEB-INF/view/cadeau/edit.jsp").forward(req, resp);
+            return;
 
         } catch (IllegalStateException e) {
             req.setAttribute("error", e.getMessage());
             req.setAttribute("listeId", listeId);
             req.setAttribute("cadeau", Cadeau.findById(cadeauId, CadeauDAO.getInstance()));
             req.getRequestDispatcher("/WEB-INF/view/cadeau/edit.jsp").forward(req, resp);
+            return;
 
         } catch (RuntimeException e) {
-            e.printStackTrace();
             req.setAttribute("error", "Erreur : Erreur serveur lors de la mise à jour du cadeau.");
             req.setAttribute("listeId", listeId);
-            req.setAttribute("cadeau", Cadeau.findById(cadeauId, CadeauDAO.getInstance())); }
+            req.setAttribute("cadeau", Cadeau.findById(cadeauId, CadeauDAO.getInstance()));
             req.getRequestDispatcher("/WEB-INF/view/cadeau/edit.jsp").forward(req, resp);
+            return;
         }
     }
+}

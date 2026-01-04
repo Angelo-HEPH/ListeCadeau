@@ -57,9 +57,9 @@ public class ListeViewServlet extends HttpServlet {
                 List<Cadeau> cadeaux = l.getCadeaux();
 
                 for (int i = 0; i < cadeaux.size(); i++) {
-                    Cadeau cLight = cadeaux.get(i);
+                    Cadeau cadeau = cadeaux.get(i);
 
-                    Cadeau cFull = Cadeau.findById(cLight.getId(), cadeauDao, false, true);
+                    Cadeau cFull = Cadeau.findById(cadeau.getId(), cadeauDao, false, true);
 
                     if (cFull != null) {
                         cFull.setListeCadeau(l);
@@ -78,8 +78,6 @@ public class ListeViewServlet extends HttpServlet {
             req.getRequestDispatcher("/WEB-INF/view/listeCadeau/view.jsp").forward(req, resp);
 
         } catch (Exception e) {
-            e.printStackTrace();
-
             try {
                 String idParam = req.getParameter("id");
                 if (idParam != null && !idParam.isBlank()) {

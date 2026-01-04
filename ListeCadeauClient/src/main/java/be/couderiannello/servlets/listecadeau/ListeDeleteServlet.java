@@ -9,8 +9,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import be.couderiannello.dao.CadeauDAO;
 import be.couderiannello.dao.ListeCadeauDAO;
 import be.couderiannello.dao.PersonneDAO;
+import be.couderiannello.models.Cadeau;
 import be.couderiannello.models.ListeCadeau;
 import be.couderiannello.models.Personne;
 
@@ -56,26 +58,37 @@ public class ListeDeleteServlet extends HttpServlet {
             }
 
             ListeCadeauDAO dao = ListeCadeauDAO.getInstance();
-            ListeCadeau liste = dao.find(listeId, true, false, false);
+            ListeCadeau liste = ListeCadeau.findById(listeId, dao, true, true, true);
 
             if (liste == null) {
                 throw new IllegalStateException("Erreur : Liste introuvable.");
             }
 
+            CadeauDAO cadeauDao = CadeauDAO.getInstance();
+
+            for (int i = 0; i < liste.getCadeaux().size(); i++) {
+                Cadeau light = liste.getCadeaux().get(i);
+
+                    Cadeau full = Cadeau.findById(light.getId(), cadeauDao, false, true);
+
+             full.setListeCadeau(liste);
+             liste.getCadeaux().set(i, full);
+         }
+
             if (liste.getCreator() == null || liste.getCreator().getId() != userId) {
                 throw new IllegalStateException("Erreur : Accès interdit.");
             }
 
-            boolean ok = dao.delete(liste);
+            liste.ensureCanBeDeleted();
+
+            boolean ok = ListeCadeau.delete(liste, dao);
             if (!ok) {
                 throw new IllegalStateException("Erreur : Impossible de supprimer cette liste.");
             }
-
+            
             resp.sendRedirect(req.getContextPath() + "/liste/all");
 
         } catch (Exception e) {
-            e.printStackTrace();
-
                 Personne fullUser = Personne.findById(userId, PersonneDAO.getInstance(), false, true, false, false);
                 if (fullUser == null) {
                     session.invalidate();
