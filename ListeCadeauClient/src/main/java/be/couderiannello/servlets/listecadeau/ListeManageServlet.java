@@ -1,6 +1,7 @@
 package be.couderiannello.servlets.listecadeau;
 
 import java.io.IOException;
+import java.util.Comparator;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -9,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import be.couderiannello.dao.ListeCadeauDAO;
 import be.couderiannello.dao.PersonneDAO;
+import be.couderiannello.models.Cadeau;
 import be.couderiannello.models.ListeCadeau;
 import be.couderiannello.models.Personne;
 
@@ -38,7 +40,8 @@ public class ListeManageServlet extends HttpServlet {
             if (l == null) {
                 throw new IllegalStateException("Erreur : Liste introuvable.");
             }
-
+            
+            l.getCadeaux().sort(Comparator.comparing(Cadeau::getPriorite));
             req.setAttribute("liste", l);
 
             l.ensureCanBeModified();

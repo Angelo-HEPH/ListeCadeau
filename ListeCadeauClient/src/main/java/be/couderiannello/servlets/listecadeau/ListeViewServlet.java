@@ -1,6 +1,7 @@
 package be.couderiannello.servlets.listecadeau;
 
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.servlet.ServletException;
@@ -66,6 +67,7 @@ public class ListeViewServlet extends HttpServlet {
                         cadeaux.set(i, cFull);
                     }
                 }
+                cadeaux.sort(Comparator.comparing(Cadeau::getPriorite));
             }
 
             String creatorLabel = "Créateur inconnu";
