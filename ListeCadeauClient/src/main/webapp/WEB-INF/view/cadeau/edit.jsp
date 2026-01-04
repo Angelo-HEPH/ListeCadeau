@@ -16,9 +16,16 @@
 <%
     Cadeau cadeau = (Cadeau) request.getAttribute("cadeau");
     int listeId = (Integer) request.getAttribute("listeId");
+    String error = (String) request.getAttribute("error");
 %>
 
 <h2 class="mb-4">Modifier le cadeau</h2>
+
+<% if (error != null) { %>
+    <div class="alert alert-danger">
+        <%= error %>
+    </div>
+<% } %>
 
 <form method="post" action="<%= request.getContextPath() %>/cadeau/edit">
 
@@ -45,29 +52,29 @@
     <div class="mb-3">
         <label class="form-label">Lien produit</label>
         <input type="url" name="linkSite" class="form-control"
-               value="<%= cadeau.getLinkSite() %>">
+               value="<%= cadeau.getLinkSite() %>" required>
     </div>
 
     <div class="mb-3">
         <label class="form-label">Photo (URL)</label>
         <input type="url" name="photo" class="form-control"
-               value="<%= cadeau.getPhoto() %>">
+               value="<%= cadeau.getPhoto() %>" required>
     </div>
 
     <div class="mb-3">
-    <label class="form-label">Priorité</label>
-	    <select name="priorite" class="form-select" required>
-	        <option value="GRANDE" <%= cadeau.getPriorite().name().equals("GRANDE") ? "selected" : "" %>>
-	            GRANDE
-	        </option>
-	        <option value="MOYENNE" <%= cadeau.getPriorite().name().equals("MOYENNE") ? "selected" : "" %>>
-	            MOYENNE
-	        </option>
-	        <option value="FAIBLE" <%= cadeau.getPriorite().name().equals("FAIBLE") ? "selected" : "" %>>
-	            FAIBLE
-	        </option>
-	    </select>
-	</div>
+        <label class="form-label">Priorité</label>
+        <select name="priorite" class="form-select" required>
+            <option value="GRANDE" <%= cadeau.getPriorite().name().equals("GRANDE") ? "selected" : "" %>>
+                GRANDE
+            </option>
+            <option value="MOYENNE" <%= cadeau.getPriorite().name().equals("MOYENNE") ? "selected" : "" %>>
+                MOYENNE
+            </option>
+            <option value="FAIBLE" <%= cadeau.getPriorite().name().equals("FAIBLE") ? "selected" : "" %>>
+                FAIBLE
+            </option>
+        </select>
+    </div>
 
     <button type="submit" class="btn btn-success">
         Enregistrer

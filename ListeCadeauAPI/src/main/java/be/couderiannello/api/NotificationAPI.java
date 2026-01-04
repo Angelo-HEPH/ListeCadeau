@@ -59,7 +59,7 @@ public class NotificationAPI {
                     .entity("Erreur : " + e.getMessage() + ".")
                     .build();
         } catch (Exception e) {
-            return Response.status(Status.BAD_REQUEST)
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
                     .entity("Erreur lors de la création de la notification.")
                     .build();
         }

@@ -25,6 +25,12 @@ public class ViewNotificationServlet extends HttpServlet {
         try {
             Personne user = Personne.findById(userId, PersonneDAO.getInstance(), true, false, false, false);
 
+            if (user == null) {
+                session.invalidate();
+                resp.sendRedirect(req.getContextPath() + "/login");
+                return;
+            }
+
             List<Notification> notifications = user.getNotifications();
             req.setAttribute("notifications", notifications);
 
@@ -32,7 +38,10 @@ public class ViewNotificationServlet extends HttpServlet {
                .forward(req, resp);
 
         } catch (Exception e) {
-            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erreur chargement des notifications");
+            e.printStackTrace();
+            req.setAttribute("error", "Erreur chargement des notifications.");
+            req.getRequestDispatcher("/WEB-INF/view/notification/view.jsp")
+               .forward(req, resp);
         }
     }
 
@@ -44,8 +53,14 @@ public class ViewNotificationServlet extends HttpServlet {
         int userId = (Integer) session.getAttribute("userId");
 
         try {
-            Personne user = Personne.findById(userId,  PersonneDAO.getInstance(), true, false, false, false);
-            
+            Personne user = Personne.findById(userId, PersonneDAO.getInstance(), true, false, false, false);
+
+            if (user == null) {
+                session.invalidate();
+                resp.sendRedirect(req.getContextPath() + "/login");
+                return;
+            }
+
             NotificationDAO notifDao = NotificationDAO.getInstance();
 
             if (user.getNotifications() != null) {
@@ -60,10 +75,16 @@ public class ViewNotificationServlet extends HttpServlet {
             resp.sendRedirect(req.getContextPath() + "/notifications");
 
         } catch (Exception e) {
-            resp.sendError(
-                HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                "Erreur mise à jour notifications"
-            );
+            e.printStackTrace();
+
+                Personne user = Personne.findById(userId, PersonneDAO.getInstance(), true, false, false, false);
+                if (user != null) {
+                    req.setAttribute("notifications", user.getNotifications());
+                }
+
+            req.setAttribute("error", "Erreur mise à jour notifications.");
+            req.getRequestDispatcher("/WEB-INF/view/notification/view.jsp")
+               .forward(req, resp);
         }
     }
 }

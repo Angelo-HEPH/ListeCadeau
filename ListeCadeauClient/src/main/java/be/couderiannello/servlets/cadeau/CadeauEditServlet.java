@@ -21,26 +21,46 @@ public class CadeauEditServlet extends HttpServlet {
         HttpSession session = req.getSession(false);
         int userId = (Integer) session.getAttribute("userId");
 
-        int cadeauId = Integer.parseInt(req.getParameter("id"));
-        int listeId  = Integer.parseInt(req.getParameter("listeId"));
-        
-        ListeCadeau liste = ListeCadeau.findById(listeId, ListeCadeauDAO.getInstance(), true, false, false);
+        Integer cadeauId = null;
+        Integer listeId = null;
 
-        if (liste == null || liste.getCreator() == null || liste.getCreator().getId() != userId) {
-            resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+        try {
+            cadeauId = Integer.parseInt(req.getParameter("id"));
+            listeId  = Integer.parseInt(req.getParameter("listeId"));
+        } catch (NumberFormatException ex) {
+            req.setAttribute("error", "Erreur : Paramètres invalides.");
+            req.getRequestDispatcher("/WEB-INF/view/cadeau/edit.jsp").forward(req, resp);
             return;
         }
 
-        Cadeau cadeau = CadeauDAO.getInstance().find(cadeauId);
-        if (cadeau == null) {
-            resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-            return;
-        }
+        try {
+            ListeCadeau liste = ListeCadeau.findById(listeId, ListeCadeauDAO.getInstance(), true, false, false);
 
-        req.setAttribute("cadeau", cadeau);
-        req.setAttribute("listeId", listeId);
-        req.getRequestDispatcher("/WEB-INF/view/cadeau/edit.jsp")
-           .forward(req, resp);
+            if (liste == null || liste.getCreator() == null || liste.getCreator().getId() != userId) {
+                req.setAttribute("error", "Erreur : Accès interdit.");
+                req.setAttribute("listeId", listeId);
+                req.getRequestDispatcher("/WEB-INF/view/cadeau/edit.jsp").forward(req, resp);
+                return;
+            }
+
+            Cadeau cadeau = Cadeau.findById(cadeauId, CadeauDAO.getInstance());
+            if (cadeau == null) {
+                req.setAttribute("error", "Erreur : Cadeau introuvable.");
+                req.setAttribute("listeId", listeId);
+                req.getRequestDispatcher("/WEB-INF/view/cadeau/edit.jsp").forward(req, resp);
+                return;
+            }
+
+            req.setAttribute("cadeau", cadeau);
+            req.setAttribute("listeId", listeId);
+            req.getRequestDispatcher("/WEB-INF/view/cadeau/edit.jsp").forward(req, resp);
+
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            req.setAttribute("error", "Erreur : Erreur serveur lors du chargement du cadeau.");
+            req.setAttribute("listeId", listeId);
+            req.getRequestDispatcher("/WEB-INF/view/cadeau/edit.jsp").forward(req, resp);
+        }
     }
 
     @Override
@@ -50,32 +70,81 @@ public class CadeauEditServlet extends HttpServlet {
         HttpSession session = req.getSession(false);
         int userId = (Integer) session.getAttribute("userId");
 
-        int cadeauId = Integer.parseInt(req.getParameter("id"));
-        int listeId  = Integer.parseInt(req.getParameter("listeId"));
+        Integer cadeauId = null;
+        Integer listeId = null;
 
-        ListeCadeau liste = ListeCadeauDAO.getInstance()
-                .find(listeId, true, false, false);
-
-        if (liste == null || liste.getCreator() == null || liste.getCreator().getId() != userId) {
-            resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+        try {
+            cadeauId = Integer.parseInt(req.getParameter("id"));
+            listeId  = Integer.parseInt(req.getParameter("listeId"));
+        } catch (NumberFormatException ex) {
+            req.setAttribute("error", "Erreur : Paramètres invalides.");
+            req.getRequestDispatcher("/WEB-INF/view/cadeau/edit.jsp").forward(req, resp);
             return;
         }
 
-        Cadeau c = CadeauDAO.getInstance().find(cadeauId);
-        if (c == null) {
-            resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-            return;
+        try {
+            ListeCadeau liste = ListeCadeau.findById(listeId, ListeCadeauDAO.getInstance(), true, false, false);
+
+            if (liste == null || liste.getCreator() == null || liste.getCreator().getId() != userId) {
+                req.setAttribute("error", "Erreur : Accès interdit.");
+                req.setAttribute("listeId", listeId);
+                req.getRequestDispatcher("/WEB-INF/view/cadeau/edit.jsp").forward(req, resp);
+                return;
+            }
+
+            Cadeau c = Cadeau.findById(cadeauId, CadeauDAO.getInstance());
+            if (c == null) {
+                req.setAttribute("error", "Erreur : Cadeau introuvable.");
+                req.setAttribute("listeId", listeId);
+                req.getRequestDispatcher("/WEB-INF/view/cadeau/edit.jsp").forward(req, resp);
+                return;
+            }
+
+            double price;
+            try {
+                price = Double.parseDouble(req.getParameter("price"));
+            } catch (NumberFormatException ex) {
+                req.setAttribute("error", "Erreur : Le prix doit être un nombre.");
+                req.setAttribute("cadeau", c);
+                req.setAttribute("listeId", listeId);
+                req.getRequestDispatcher("/WEB-INF/view/cadeau/edit.jsp").forward(req, resp);
+                return;
+            }
+
+            c.setName(req.getParameter("name"));
+            c.setDescription(req.getParameter("description"));
+            c.setPrice(price);
+            c.setLinkSite(req.getParameter("linkSite"));
+            c.setPhoto(req.getParameter("photo"));
+            c.setPriorite(StatutPriorite.valueOf(req.getParameter("priorite")));
+
+            boolean ok = c.update(CadeauDAO.getInstance());
+            if (!ok) {
+                req.setAttribute("error", "Erreur : Cadeau introuvable.");
+                req.setAttribute("listeId", listeId);
+                req.getRequestDispatcher("/WEB-INF/view/cadeau/edit.jsp").forward(req, resp);
+                return;
+            }
+
+            resp.sendRedirect(req.getContextPath() + "/liste/manage?id=" + listeId);
+
+        } catch (IllegalArgumentException e) {
+            req.setAttribute("error", e.getMessage());
+            req.setAttribute("listeId", listeId);
+            req.setAttribute("cadeau", Cadeau.findById(cadeauId, CadeauDAO.getInstance()));
+            req.getRequestDispatcher("/WEB-INF/view/cadeau/edit.jsp").forward(req, resp);
+
+        } catch (IllegalStateException e) {
+            req.setAttribute("error", e.getMessage());
+            req.setAttribute("listeId", listeId);
+            req.setAttribute("cadeau", Cadeau.findById(cadeauId, CadeauDAO.getInstance()));
+            req.getRequestDispatcher("/WEB-INF/view/cadeau/edit.jsp").forward(req, resp);
+
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            req.setAttribute("error", "Erreur : Erreur serveur lors de la mise à jour du cadeau.");
+            req.setAttribute("listeId", listeId);
+            req.setAttribute("cadeau", Cadeau.findById(cadeauId, CadeauDAO.getInstance())); }
+            req.getRequestDispatcher("/WEB-INF/view/cadeau/edit.jsp").forward(req, resp);
         }
-
-        c.setName(req.getParameter("name"));
-        c.setDescription(req.getParameter("description"));
-        c.setPrice(Double.parseDouble(req.getParameter("price")));
-        c.setLinkSite(req.getParameter("linkSite"));
-        c.setPhoto(req.getParameter("photo"));
-        c.setPriorite(StatutPriorite.valueOf(req.getParameter("priorite")));
-
-        CadeauDAO.getInstance().update(c);
-
-        resp.sendRedirect(req.getContextPath() + "/liste/manage?id=" + listeId);
     }
-}

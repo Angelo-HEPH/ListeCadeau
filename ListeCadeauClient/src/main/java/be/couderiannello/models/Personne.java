@@ -126,7 +126,7 @@ public class Personne implements Serializable {
 	}
 	
 	public void setCity(String city) {
-		if(city == null || street.isBlank()) {
+		if(city == null || city.isBlank()) {
             throw new IllegalArgumentException("La ville ne peut pas être vide.");
 		}
 		if (city.length() > 100) {
@@ -442,6 +442,10 @@ public class Personne implements Serializable {
         setStreetNumber(json.getString("streetNumber"));
         setPostalCode(json.getInt("postalCode"));
         setEmail(json.getString("email"));
+        if (json.has("password")) {
+            setPassword(json.getString("password"));
+        }
+
     }
     
     //Model -> JSON

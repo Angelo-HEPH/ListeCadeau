@@ -156,33 +156,44 @@ public class Notification implements Serializable {
     	return dao.update(this);
     }
     
-    //JSON -> Model
- // JSON -> Model
+    // JSON -> Model
     public void parse(JSONObject json, boolean isCreate) {
 
         if (json.has("id") && !json.isNull("id")) {
             setId(json.getInt("id"));
         }
 
-        setMessage(json.getString("message"));
-        setSendDate(LocalDate.parse(json.getString("sendDate")));
-
         if (isCreate) {
-                Personne p = new Personne();
-                p.setId(json.getInt("personneId"));
-                setPersonne(p);
+
+            if (!json.has("message") || json.isNull("message")) {
+                throw new IllegalArgumentException("message obligatoire.");
+            }
+            setMessage(json.getString("message"));
+
+            if (!json.has("personneId") || json.isNull("personneId")) {
+                throw new IllegalArgumentException("personneId obligatoire.");
+            }
+            Personne p = new Personne();
+            p.setId(json.getInt("personneId"));
+            setPersonne(p);
+
+            if (json.has("sendDate") && !json.isNull("sendDate")) {
+                setSendDate(LocalDate.parse(json.getString("sendDate")));
+            }
+
+            if (json.has("read") && !json.isNull("read")) {
                 setRead(json.getBoolean("read"));
+            }
 
         } else {
-                setRead(json.getBoolean("read"));
 
-            if (json.has("personneId") && !json.isNull("personneId")) {
-                Personne p = new Personne();
-                p.setId(json.getInt("personneId"));
-                setPersonne(p);
+            if (!json.has("read") || json.isNull("read")) {
+                throw new IllegalArgumentException("read obligatoire.");
             }
+            setRead(json.getBoolean("read"));
         }
     }
+
 
 
     //Model -> JSON

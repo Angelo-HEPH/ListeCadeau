@@ -1,6 +1,8 @@
 package be.couderiannello.servlets.listecadeau;
 
 import java.io.IOException;
+import java.util.List;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -20,8 +22,9 @@ public class ListeDeleteServlet extends HttpServlet {
     }
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        doPost(req,resp);
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        doPost(req, resp);
     }
 
     @Override
@@ -31,27 +34,60 @@ public class ListeDeleteServlet extends HttpServlet {
         HttpSession session = req.getSession(false);
         int userId = (Integer) session.getAttribute("userId");
 
-        int listeId = Integer.parseInt(req.getParameter("id"));
-        
-        Personne fullUser = Personne.findById(userId, PersonneDAO.getInstance(), false, true, false, false);
+        try {
+            String idParam = req.getParameter("id");
+            if (idParam == null || idParam.isBlank()) {
+                throw new IllegalArgumentException("Paramètre id manquant.");
+            }
 
-        if (fullUser == null) {
-            session.invalidate();
-            resp.sendRedirect(req.getContextPath() + "/login");
-            return;
+            int listeId;
+            try {
+                listeId = Integer.parseInt(idParam);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Paramètre id invalide.");
+            }
+
+            Personne fullUser = Personne.findById(userId, PersonneDAO.getInstance(), false, true, false, false);
+
+            if (fullUser == null) {
+                session.invalidate();
+                resp.sendRedirect(req.getContextPath() + "/login");
+                return;
+            }
+
+            ListeCadeauDAO dao = ListeCadeauDAO.getInstance();
+            ListeCadeau liste = dao.find(listeId, true, false, false);
+
+            if (liste == null) {
+                throw new IllegalStateException("Erreur : Liste introuvable.");
+            }
+
+            if (liste.getCreator() == null || liste.getCreator().getId() != userId) {
+                throw new IllegalStateException("Erreur : Accès interdit.");
+            }
+
+            boolean ok = dao.delete(liste);
+            if (!ok) {
+                throw new IllegalStateException("Erreur : Impossible de supprimer cette liste.");
+            }
+
+            resp.sendRedirect(req.getContextPath() + "/liste/all");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+                Personne fullUser = Personne.findById(userId, PersonneDAO.getInstance(), false, true, false, false);
+                if (fullUser == null) {
+                    session.invalidate();
+                    resp.sendRedirect(req.getContextPath() + "/login");
+                    return;
+                }
+
+                List<ListeCadeau> listes = fullUser.getListeCadeauCreator();
+                req.setAttribute("listes", listes);
+
+            req.setAttribute("error", e.getMessage());
+            req.getRequestDispatcher("/WEB-INF/view/listeCadeau/all.jsp").forward(req, resp);
         }
-
-        ListeCadeauDAO dao = ListeCadeauDAO.getInstance();
-        ListeCadeau liste = dao.find(listeId, true, false, false);
-
-        if (liste == null || liste.getCreator() == null
-                || liste.getCreator().getId() != userId) {
-            resp.sendError(HttpServletResponse.SC_FORBIDDEN);
-            return;
-        }
-
-        dao.delete(liste);
-
-        resp.sendRedirect(req.getContextPath() + "/liste/all");
     }
 }

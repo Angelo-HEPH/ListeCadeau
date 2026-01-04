@@ -15,9 +15,16 @@
 
 <%
     Personne user = (Personne) request.getAttribute("user");
+    String error = (String) request.getAttribute("error");
 %>
 
+<% if (error != null && !error.trim().isEmpty()) { %>
+    <p class="text-danger fw-bold"><%= error %></p>
+<% } %>
+
 <h2 class="mb-4">✏️ Modifier mon profil</h2>
+
+<% if (user != null) { %>
 
 <form method="post"
       action="<%= request.getContextPath() %>/profile/edit"
@@ -82,6 +89,13 @@
     </a>
 
 </form>
+
+<% } else { %>
+
+    <p class="text-muted">Impossible de charger le profil.</p>
+    <a href="<%= request.getContextPath() %>/profile" class="btn btn-secondary">Retour</a>
+
+<% } %>
 
 </div>
 </body>

@@ -23,48 +23,95 @@ public class ListeEditServlet extends HttpServlet {
         HttpSession session = req.getSession(false);
         int userId = (Integer) session.getAttribute("userId");
 
-        int listeId = Integer.parseInt(req.getParameter("id"));
-        
-        ListeCadeau liste = ListeCadeau.findById(listeId, ListeCadeauDAO.getInstance(), true, false, false);
+        try {
+            String idParam = req.getParameter("id");
+            if (idParam == null || idParam.isBlank()) {
+                throw new IllegalArgumentException("Paramètre id manquant.");
+            }
 
-        if (liste == null || liste.getCreator() == null || liste.getCreator().getId() != userId) {
-            resp.sendError(HttpServletResponse.SC_FORBIDDEN);
-            return;
+            int listeId;
+            try {
+                listeId = Integer.parseInt(idParam);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Paramètre id invalide.");
+            }
+
+            ListeCadeau liste = ListeCadeau.findById(listeId, ListeCadeauDAO.getInstance(), true, false, false);
+
+            if (liste == null) {
+                throw new IllegalStateException("Erreur : Liste introuvable.");
+            }
+
+            if (liste.getCreator() == null || liste.getCreator().getId() != userId) {
+                throw new IllegalStateException("Erreur : Accès interdit.");
+            }
+
+            req.setAttribute("liste", liste);
+            req.getRequestDispatcher("/WEB-INF/view/listeCadeau/edit.jsp").forward(req, resp);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            req.setAttribute("error", e.getMessage());
+            req.getRequestDispatcher("/WEB-INF/view/listeCadeau/edit.jsp").forward(req, resp);
         }
-
-        req.setAttribute("liste", liste);
-        req.getRequestDispatcher("/WEB-INF/view/listeCadeau/edit.jsp")
-           .forward(req, resp);
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-    	
+
         HttpSession session = req.getSession(false);
         int userId = (Integer) session.getAttribute("userId");
 
-        int listeId = Integer.parseInt(req.getParameter("id"));
+        try {
+            String idParam = req.getParameter("id");
+            if (idParam == null || idParam.isBlank()) {
+                throw new IllegalArgumentException("Paramètre id manquant.");
+            }
 
-        ListeCadeau liste = ListeCadeauDAO.getInstance()
-                .find(listeId, true, false, false);
+            int listeId;
+            try {
+                listeId = Integer.parseInt(idParam);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Paramètre id invalide.");
+            }
 
-        if (liste == null || liste.getCreator() == null || liste.getCreator().getId() != userId) {
-            resp.sendError(HttpServletResponse.SC_FORBIDDEN);
-            return;
-        }
+            ListeCadeau liste = ListeCadeau.findById(listeId, ListeCadeauDAO.getInstance(), true, false, false);
 
-        liste.setTitle(req.getParameter("title"));
-        liste.setEvenement(req.getParameter("evenement"));
-        liste.setStatut(req.getParameter("statut") != null);
+            if (liste == null) {
+                throw new IllegalStateException("Erreur : Liste introuvable.");
+            }
 
-        String date = req.getParameter("expirationDate");
-        if (date != null && !date.isBlank()) {
+            if (liste.getCreator() == null || liste.getCreator().getId() != userId) {
+                throw new IllegalStateException("Erreur : Accès interdit.");
+            }
+
+            liste.setTitle(req.getParameter("title"));
+            liste.setEvenement(req.getParameter("evenement"));
+            liste.setStatut(req.getParameter("statut") != null);
+
+            String date = req.getParameter("expirationDate");
             liste.setExpirationDate(LocalDate.parse(date));
+
+            boolean ok = liste.update(ListeCadeauDAO.getInstance());
+            if (!ok) {
+                throw new IllegalStateException("Erreur : La mise à jour a échoué.");
+            }
+
+            resp.sendRedirect(req.getContextPath() + "/liste/manage?id=" + listeId);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+                String idParam = req.getParameter("id");
+                if (idParam != null && !idParam.isBlank()) {
+                    int listeId = Integer.parseInt(idParam);
+                    ListeCadeau liste = ListeCadeau.findById(listeId, ListeCadeauDAO.getInstance(), true, false, false);
+                    req.setAttribute("liste", liste);
+                }
+
+            req.setAttribute("error", e.getMessage());
+            req.getRequestDispatcher("/WEB-INF/view/listeCadeau/edit.jsp").forward(req, resp);
         }
-
-        ListeCadeauDAO.getInstance().update(liste);
-
-        resp.sendRedirect(req.getContextPath() + "/liste/manage?id=" + listeId);
     }
 }

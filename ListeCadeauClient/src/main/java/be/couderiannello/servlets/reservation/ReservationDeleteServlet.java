@@ -1,6 +1,7 @@
 package be.couderiannello.servlets.reservation;
 
 import java.io.IOException;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -13,59 +14,71 @@ import be.couderiannello.models.Cadeau;
 import be.couderiannello.models.Reservation;
 
 public class ReservationDeleteServlet extends HttpServlet {
-	private static final long serialVersionUID = 1L;
-       
+    private static final long serialVersionUID = 1L;
 
     public ReservationDeleteServlet() {
         super();
     }
 
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		response.getWriter().append("Served at: ").append(request.getContextPath());
-	}
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        doPost(req, resp);
+    }
 
-	@Override
+    @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
         HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("userId") == null) {
-            resp.sendRedirect(req.getContextPath() + "/login");
-            return;
-        }
-
         int userId = (Integer) session.getAttribute("userId");
-        int reservationId = Integer.parseInt(req.getParameter("reservationId"));
 
-        ReservationDAO reservationDao = ReservationDAO.getInstance();
-        CadeauDAO cadeauDao = CadeauDAO.getInstance();
+        try {
+            String reservationIdParam = req.getParameter("reservationId");
+            if (reservationIdParam == null || reservationIdParam.isBlank()) {
+                throw new IllegalArgumentException("Paramètre reservationId manquant.");
+            }
 
-        Reservation r = reservationDao.find(reservationId, true, true);
+            int reservationId;
+            try {
+                reservationId = Integer.parseInt(reservationIdParam);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Paramètre reservationId invalide.");
+            }
 
-        if (r == null) {
-            resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-            return;
+            ReservationDAO reservationDao = ReservationDAO.getInstance();
+            CadeauDAO cadeauDao = CadeauDAO.getInstance();
+
+            Reservation r = Reservation.findById(reservationId, reservationDao, true, true);
+            if (r == null) {
+                throw new IllegalStateException("Réservation introuvable.");
+            }
+
+            boolean isOwner = r.getPersonnes() != null && r.getPersonnes().stream().anyMatch(p -> p.getId() == userId);
+
+            if (!isOwner) {
+                throw new IllegalStateException("Vous n'avez pas le droit de supprimer cette contribution.");
+            }
+
+            int cadeauId = (r.getCadeau() != null) ? r.getCadeau().getId() : 0;
+
+            Reservation.delete(r, reservationDao);
+
+            if (cadeauId > 0) {
+                Cadeau cFull = Cadeau.findById(cadeauId, cadeauDao, false, true);
+                if (cFull != null) {
+                    cFull.recalculerStatutApresContribution();
+                    cFull.update(cadeauDao);
+                }
+            }
+
+            resp.sendRedirect(req.getContextPath() + "/reservation/contributions");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            req.setAttribute("error", e.getMessage());
+            req.getRequestDispatcher("/WEB-INF/view/reservation/viewContributions.jsp")
+               .forward(req, resp);
         }
-
-        boolean isOwner = r.getPersonnes()
-                           .stream()
-                           .anyMatch(p -> p.getId() == userId);
-
-        if (!isOwner) {
-            resp.sendError(HttpServletResponse.SC_FORBIDDEN);
-            return;
-        }
-
-        Cadeau c = r.getCadeau();
-
-        reservationDao.delete(r);
-
-        if (c != null) {
-            c.recalculerStatutApresContribution();
-            cadeauDao.update(c);
-        }
-
-        resp.sendRedirect(req.getContextPath() + "/reservation/contributions");
     }
-
 }

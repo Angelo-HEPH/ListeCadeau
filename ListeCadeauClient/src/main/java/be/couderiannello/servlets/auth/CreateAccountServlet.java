@@ -29,17 +29,47 @@ public class CreateAccountServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        try {
-            String name = request.getParameter("name");
-            String firstName = request.getParameter("firstName");
-            int age = Integer.parseInt(request.getParameter("age"));
-            String street = request.getParameter("street");
-            String city = request.getParameter("city");
-            String streetNumber = request.getParameter("streetNumber");
-            int postalCode = Integer.parseInt(request.getParameter("postalCode"));
-            String email = request.getParameter("email");
-            String password = request.getParameter("password");
+        String name = request.getParameter("name");
+        String firstName = request.getParameter("firstName");
+        String ageStr = request.getParameter("age");
+        String street = request.getParameter("street");
+        String city = request.getParameter("city");
+        String streetNumber = request.getParameter("streetNumber");
+        String postalCodeStr = request.getParameter("postalCode");
+        String email = request.getParameter("email");
+        String password = request.getParameter("password");
 
+        request.setAttribute("name", name);
+        request.setAttribute("firstName", firstName);
+        request.setAttribute("age", ageStr);
+        request.setAttribute("street", street);
+        request.setAttribute("city", city);
+        request.setAttribute("streetNumber", streetNumber);
+        request.setAttribute("postalCode", postalCodeStr);
+        request.setAttribute("email", email);
+
+        int age;
+        int postalCode;
+
+        try {
+            age = Integer.parseInt(ageStr);
+        } catch (NumberFormatException ex) {
+            request.setAttribute("error", "Erreur : L'âge doit être un nombre.");
+            request.getRequestDispatcher("/WEB-INF/view/personne/createAccount.jsp")
+                   .forward(request, response);
+            return;
+        }
+
+        try {
+            postalCode = Integer.parseInt(postalCodeStr);
+        } catch (NumberFormatException ex) {
+            request.setAttribute("error", "Erreur : Le code postal doit être un nombre.");
+            request.getRequestDispatcher("/WEB-INF/view/personne/createAccount.jsp")
+                   .forward(request, response);
+            return;
+        }
+
+        try {
             Personne p = new Personne();
             p.setName(name);
             p.setFirstName(firstName);
@@ -52,20 +82,19 @@ public class CreateAccountServlet extends HttpServlet {
             p.setPassword(password);
 
             PersonneDAO dao = PersonneDAO.getInstance();
-            int id = p.create(dao);
+            p.create(dao);
 
             response.sendRedirect(request.getContextPath() + "/login");
-            
 
         } catch (IllegalArgumentException e) {
             request.setAttribute("error", e.getMessage());
             request.getRequestDispatcher("/WEB-INF/view/personne/createAccount.jsp")
                    .forward(request, response);
-            
-        } catch (Exception e) {
+
+        } catch (RuntimeException e) {
             e.printStackTrace();
             request.setAttribute("error",
-                "Une erreur est survenue lors de la création du compte. Veuillez réessayer.");
+                "Erreur : Une erreur serveur est survenue. Veuillez réessayer.");
             request.getRequestDispatcher("/WEB-INF/view/personne/createAccount.jsp")
                    .forward(request, response);
         }

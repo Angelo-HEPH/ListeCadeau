@@ -7,6 +7,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import be.couderiannello.connection.ConnectionBdd;
@@ -22,12 +23,12 @@ public class LoginAPI {
     public Response login(String body) {
         try {
             JSONObject json = new JSONObject(body);
-            String email = json.optString("email", "");
+            String email = json.optString("email", "").trim();
             String password = json.optString("password", "");
 
             if (email.isBlank() || password.isBlank()) {
                 return Response.status(Response.Status.BAD_REQUEST)
-                        .entity("Email et mot de passe requis.")
+                        .entity("Erreur : Email et mot de passe requis.")
                         .build();
             }
 
@@ -50,9 +51,20 @@ public class LoginAPI {
                     .entity(responseJson.toString())
                     .build();
 
-        } catch (Exception e) {
+        } catch (JSONException e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("Requête invalide.")
+                    .entity("Erreur : Requête invalide.")
+                    .build();
+
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("Erreur : " + e.getMessage())
+                    .build();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Erreur : Erreur interne.")
                     .build();
         }
     }

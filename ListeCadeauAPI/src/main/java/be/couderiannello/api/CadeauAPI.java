@@ -34,40 +34,47 @@ public class CadeauAPI {
         return new CadeauDAO(ConnectionBdd.getInstance());
     }
 
-    //Create
+    // Create
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response create(String jsonBody) {
         try {
             JSONObject json = new JSONObject(jsonBody);
-            json.remove("id"); 
-            
+            json.remove("id");
+
             Cadeau c = new Cadeau();
             c.parse(json);
-            
+
             int id = c.create(getDao());
-            
+
             return Response.status(Status.CREATED)
                     .location(URI.create("cadeau/" + id))
                     .build();
 
         } catch (JSONException e) {
             return Response.status(Status.BAD_REQUEST)
-                    .entity("JSON invalide ou champs manquants.")
+                    .entity("Erreur : JSON invalide ou champs manquants.")
                     .build();
+
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST)
-                    .entity("Erreur : " + e.getMessage() + ".")
+                    .entity("Erreur : " + e.getMessage())
                     .build();
+
+        } catch (IllegalStateException e) {
+            return Response.status(Status.CONFLICT)
+                    .entity("Erreur : " + e.getMessage())
+                    .build();
+
         } catch (Exception e) {
-        	e.printStackTrace();
+            e.printStackTrace();
             return Response.status(Status.INTERNAL_SERVER_ERROR)
-                    .entity("Erreur lors de la création du cadeau.")
+                    .entity("Erreur : Erreur interne.")
                     .build();
         }
     }
 
-    //FindById
+    // FindById
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -75,11 +82,9 @@ public class CadeauAPI {
                              @QueryParam("loadListeCadeau") @DefaultValue("false") boolean loadListeCadeau,
                              @QueryParam("loadReservations") @DefaultValue("false") boolean loadReservations) {
         try {
-
             Cadeau c = Cadeau.findById(id, getDao(), loadListeCadeau, loadReservations);
             if (c == null) {
-                return Response.status(Status.NOT_FOUND)
-                		.build();
+                return Response.status(Status.NOT_FOUND).build();
             }
 
             JSONObject json = toJson(c, loadListeCadeau, loadReservations);
@@ -89,13 +94,14 @@ public class CadeauAPI {
                     .build();
 
         } catch (Exception e) {
+            e.printStackTrace();
             return Response.status(Status.INTERNAL_SERVER_ERROR)
-                    .entity("Erreur lors de la récupération du cadeau.")
+                    .entity("Erreur : Erreur interne.")
                     .build();
         }
     }
 
-    //FindAll
+    // FindAll
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response findAll(@QueryParam("loadListeCadeau") @DefaultValue("false") boolean loadListeCadeau,
@@ -113,14 +119,14 @@ public class CadeauAPI {
                     .build();
 
         } catch (Exception e) {
-        	e.printStackTrace();
+            e.printStackTrace();
             return Response.status(Status.INTERNAL_SERVER_ERROR)
-                    .entity("Erreur lors de la récupération des cadeaux.")
+                    .entity("Erreur : Erreur interne.")
                     .build();
         }
     }
 
-    //Update
+    // Update
     @PUT
     @Path("/{id}")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -128,21 +134,19 @@ public class CadeauAPI {
         try {
             Cadeau existing = Cadeau.findById(id, getDao());
             if (existing == null) {
-                return Response.status(Status.NOT_FOUND)
-                        .entity("Erreur : Cadeau non trouvé.")
-                        .build();
+                return Response.status(Status.NOT_FOUND).build();
             }
 
             JSONObject json = new JSONObject(body);
-
             json.put("id", id);
+
+            // On ne veut pas changer la liste via update (comme tu fais déjà)
             json.remove("listeCadeauId");
 
             existing.parse(json);
 
-            boolean updated = existing.update(getDao());
-
-            if (!updated) {
+            boolean ok = existing.update(getDao());
+            if (!ok) {
                 return Response.status(Status.SERVICE_UNAVAILABLE)
                         .entity("Erreur : La mise à jour a échoué.")
                         .build();
@@ -154,30 +158,36 @@ public class CadeauAPI {
             return Response.status(Status.BAD_REQUEST)
                     .entity("Erreur : JSON invalide.")
                     .build();
+
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST)
-                    .entity("Erreur : " + e.getMessage() + ".")
+                    .entity("Erreur : " + e.getMessage())
                     .build();
+
+        } catch (IllegalStateException e) {
+            return Response.status(Status.CONFLICT)
+                    .entity("Erreur : " + e.getMessage())
+                    .build();
+
         } catch (Exception e) {
+            e.printStackTrace();
             return Response.status(Status.INTERNAL_SERVER_ERROR)
-                    .entity("Erreur lors de la mise à jour du cadeau.")
+                    .entity("Erreur : Erreur interne.")
                     .build();
         }
     }
 
-    //Delete
+    // Delete
     @DELETE
     @Path("/{id}")
     public Response delete(@PathParam("id") int id) {
         try {
             Cadeau c = Cadeau.findById(id, getDao());
-
             if (c == null) {
                 return Response.status(Status.NOT_FOUND).build();
             }
 
             boolean deleted = Cadeau.delete(c, getDao());
-
             if (!deleted) {
                 return Response.status(Status.BAD_REQUEST)
                         .entity("Erreur : Impossible de supprimer ce cadeau.")
@@ -186,20 +196,28 @@ public class CadeauAPI {
 
             return Response.status(Status.NO_CONTENT).build();
 
+        } catch (IllegalArgumentException e) {
+            return Response.status(Status.BAD_REQUEST)
+                    .entity("Erreur : " + e.getMessage())
+                    .build();
+
+        } catch (IllegalStateException e) {
+            return Response.status(Status.CONFLICT)
+                    .entity("Erreur : " + e.getMessage())
+                    .build();
+
         } catch (Exception e) {
+            e.printStackTrace();
             return Response.status(Status.INTERNAL_SERVER_ERROR)
-                    .entity("Erreur lors de la suppression.")
+                    .entity("Erreur : Erreur interne.")
                     .build();
         }
     }
 
-    //Méthode privé
     private JSONObject toJson(Cadeau c, boolean includeListeCadeau, boolean includeReservations) {
-
         JSONObject json = c.unparse();
 
         if (includeListeCadeau && c.getListeCadeau() != null) {
-
             ListeCadeau l = c.getListeCadeau();
 
             JSONObject lcJson = new JSONObject();

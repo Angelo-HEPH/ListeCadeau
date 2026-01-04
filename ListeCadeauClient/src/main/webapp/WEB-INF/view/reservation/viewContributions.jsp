@@ -24,6 +24,15 @@
 <h2 class="mb-3">💶 Mes contributions</h2>
 
 <%
+    String error = (String) request.getAttribute("error");
+    if (error != null && !error.isBlank()) {
+%>
+    <div class="alert alert-danger"><%= error %></div>
+<%
+    }
+%>
+
+<%
     if (contributions == null || contributions.isEmpty()) {
 %>
     <div class="alert alert-info">

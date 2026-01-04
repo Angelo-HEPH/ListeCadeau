@@ -10,7 +10,6 @@ import javax.servlet.http.HttpServletResponse;
 import be.couderiannello.dao.PersonneDAO;
 import be.couderiannello.models.Personne;
 
-
 public class LoginServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
@@ -22,12 +21,12 @@ public class LoginServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-    	var session = request.getSession(false);
-    	if (session != null && session.getAttribute("userId") != null) {
-    	    response.sendRedirect(request.getContextPath() + "/liste/all");
-    	    return;
-    	}
-    	request.getRequestDispatcher("/WEB-INF/view/personne/login.jsp").forward(request, response);
+        var session = request.getSession(false);
+        if (session != null && session.getAttribute("userId") != null) {
+            response.sendRedirect(request.getContextPath() + "/liste/all");
+            return;
+        }
+        request.getRequestDispatcher("/WEB-INF/view/personne/login.jsp").forward(request, response);
     }
 
     @Override
@@ -37,6 +36,8 @@ public class LoginServlet extends HttpServlet {
         String email = request.getParameter("email");
         String password = request.getParameter("password");
 
+        request.setAttribute("email", email);
+
         try {
             PersonneDAO dao = PersonneDAO.getInstance();
             Personne p = Personne.authenticate(email, password, dao);
@@ -44,8 +45,7 @@ public class LoginServlet extends HttpServlet {
             if (p == null) {
                 request.setAttribute("error", "Email ou mot de passe incorrect.");
                 request.getRequestDispatcher("/WEB-INF/view/personne/login.jsp")
-                	.forward(request, response);
-                
+                    .forward(request, response);
                 return;
             }
 
@@ -55,10 +55,9 @@ public class LoginServlet extends HttpServlet {
 
             response.sendRedirect(request.getContextPath() + "/home");
 
-
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             e.printStackTrace();
-            request.setAttribute("error", "Erreur serveur lors de la connexion.");
+            request.setAttribute("error", e.getMessage());
             request.getRequestDispatcher("/WEB-INF/view/personne/login.jsp")
                    .forward(request, response);
         }

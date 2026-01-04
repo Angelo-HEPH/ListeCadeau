@@ -1,7 +1,6 @@
 package be.couderiannello.servlets.listecadeau;
 
 import java.io.IOException;
-import java.util.NoSuchElementException;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -21,156 +20,129 @@ public class ListeManageServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        String idParam = req.getParameter("id");
-        if (idParam == null || idParam.isBlank()) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Paramètre id manquant");
-            return;
-        }
-
-        int id;
         try {
-            id = Integer.parseInt(idParam);
-        } catch (NumberFormatException e) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Paramètre id invalide");
-            return;
+            String idParam = req.getParameter("id");
+            if (idParam == null || idParam.isBlank()) {
+                throw new IllegalArgumentException("Paramètre id manquant.");
+            }
+
+            int id;
+            try {
+                id = Integer.parseInt(idParam);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Paramètre id invalide.");
+            }
+
+            ListeCadeau l = ListeCadeauDAO.getInstance().find(id, false, true, true);
+            if (l == null) {
+                throw new IllegalStateException("Erreur : Liste introuvable.");
+            }
+
+            req.setAttribute("liste", l);
+            req.getRequestDispatcher("/WEB-INF/view/listeCadeau/manage.jsp")
+               .forward(req, resp);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            req.setAttribute("error", e.getMessage());
+            req.getRequestDispatcher("/WEB-INF/view/listeCadeau/manage.jsp")
+               .forward(req, resp);
         }
-
-        ListeCadeauDAO dao = ListeCadeauDAO.getInstance();
-        ListeCadeau l = dao.find(id, false, true, true);
-
-        if (l == null) {
-            resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Liste introuvable");
-            return;
-        }
-
-        req.setAttribute("liste", l);
-        req.getRequestDispatcher("/WEB-INF/view/listeCadeau/manage.jsp").forward(req, resp);
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        String action = req.getParameter("action");
-        if (action == null || action.isBlank()) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Paramètre action manquant");
-            return;
-        }
-
-        String listeIdParam = req.getParameter("listeId");
-        if (listeIdParam == null || listeIdParam.isBlank()) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Paramètre listeId manquant");
-            return;
-        }
-
-        int listeId;
         try {
-            listeId = Integer.parseInt(listeIdParam);
-        } catch (NumberFormatException e) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Paramètre listeId invalide");
-            return;
-        }
+            String action = req.getParameter("action");
+            if (action == null || action.isBlank()) {
+                throw new IllegalArgumentException("Paramètre action manquant.");
+            }
 
-        ListeCadeauDAO listeDao = ListeCadeauDAO.getInstance();
+            String listeIdParam = req.getParameter("listeId");
+            if (listeIdParam == null || listeIdParam.isBlank()) {
+                throw new IllegalArgumentException("Paramètre listeId manquant.");
+            }
 
-        switch (action) {
+            int listeId;
+            try {
+                listeId = Integer.parseInt(listeIdParam);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Paramètre listeId invalide.");
+            }
 
-            case "invite": {
-                String email = req.getParameter("email");
-                email = email.trim().toLowerCase();
+            ListeCadeauDAO listeDao = ListeCadeauDAO.getInstance();
+            ListeCadeau liste;
 
-                ListeCadeau liste = listeDao.find(listeId, false, false, false);
-                if (liste == null) {
-                    resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Liste introuvable");
-                    return;
-                }
+            switch (action) {
 
-                PersonneDAO personneDao = PersonneDAO.getInstance();
-                Personne p = personneDao.findByEmail(email);
-                if (p == null) {
-                    reloadWithError(req, resp, listeId, "Aucune personne trouvée avec cet email.");
-                    return;
-                }
+                case "invite": {
+                    String email = req.getParameter("email");
+                    if (email == null || email.isBlank()) {
+                        throw new IllegalArgumentException("Email requis.");
+                    }
 
-                try {
+                    liste = ListeCadeau.findById(listeId, listeDao);
+                    if (liste == null) {
+                        throw new IllegalStateException("Erreur : Liste introuvable.");
+                    }
+
+                    Personne p = Personne.findByEmail(email.trim().toLowerCase(), PersonneDAO.getInstance());
+
+                    if (p == null) {
+                        throw new IllegalArgumentException("Aucune personne trouvée avec cet email.");
+                    }
+
                     liste.addInvite(p, listeDao);
 
-                } catch (IllegalArgumentException ex) {
-                    reloadWithError(req, resp, listeId, ex.getMessage());
-                    return;
-
-                } catch (IllegalStateException ex) {
-                    reloadWithError(req, resp, listeId, ex.getMessage());
-                    return;
-
-                } catch (Exception ex) {
-                    reloadWithError(req, resp, listeId, "Erreur lors de l'invitation.");
+                    resp.sendRedirect(req.getContextPath() + "/liste/manage?id=" + listeId);
                     return;
                 }
 
-                resp.sendRedirect(req.getContextPath() + "/liste/manage?id=" + listeId);
-                return;
-            }
+                case "remove": {
+                    String personneIdParam = req.getParameter("personneId");
+                    if (personneIdParam == null || personneIdParam.isBlank()) {
+                        throw new IllegalArgumentException("Identifiant invité manquant.");
+                    }
 
-            case "remove": {
-                String personneIdParam = req.getParameter("personneId");
-                if (personneIdParam == null || personneIdParam.isBlank()) {
-                    reloadWithError(req, resp, listeId, "Identifiant invité manquant.");
-                    return;
-                }
+                    int personneId;
+                    try {
+                        personneId = Integer.parseInt(personneIdParam);
+                    } catch (NumberFormatException e) {
+                        throw new IllegalArgumentException("Identifiant invité invalide.");
+                    }
 
-                int personneId;
-                try {
-                    personneId = Integer.parseInt(personneIdParam);
-                } catch (NumberFormatException e) {
-                    reloadWithError(req, resp, listeId, "Identifiant invité invalide.");
-                    return;
-                }
+                    liste = listeDao.find(listeId, false, true, false);
+                    if (liste == null) {
+                        throw new IllegalStateException("Erreur : Liste introuvable.");
+                    }
 
-                ListeCadeau liste = listeDao.find(listeId, false, true, false);
-                if (liste == null) {
-                    resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Liste introuvable");
-                    return;
-                }
-
-                try {
                     liste.removeInvite(personneId, listeDao);
 
-                } catch (NoSuchElementException ex) {
-                    reloadWithError(req, resp, listeId, "Invitation introuvable.");
-                    return;
-
-                } catch (IllegalArgumentException ex) {
-                    reloadWithError(req, resp, listeId, ex.getMessage());
-                    return;
-
-                } catch (Exception ex) {
-                    reloadWithError(req, resp, listeId, "Erreur lors de la suppression de l'invité.");
+                    resp.sendRedirect(req.getContextPath() + "/liste/manage?id=" + listeId);
                     return;
                 }
 
-                resp.sendRedirect(req.getContextPath() + "/liste/manage?id=" + listeId);
-                return;
+                default:
+                    throw new IllegalArgumentException("Action invalide : " + action);
             }
 
-            default:
-                resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Action invalide : " + action);
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            try {
+                String listeIdParam = req.getParameter("listeId");
+                if (listeIdParam != null) {
+                    int listeId = Integer.parseInt(listeIdParam);
+                    ListeCadeau l = ListeCadeau.findById(listeId, ListeCadeauDAO.getInstance(), false, true, true);
+                    req.setAttribute("liste", l);
+                }
+            } catch (Exception ignore) {}
+
+            req.setAttribute("error", e.getMessage());
+            req.getRequestDispatcher("/WEB-INF/view/listeCadeau/manage.jsp")
+               .forward(req, resp);
         }
-    }
-
-    private void reloadWithError(HttpServletRequest req, HttpServletResponse resp, int listeId, String errorMsg)
-            throws ServletException, IOException {
-
-        ListeCadeauDAO dao = ListeCadeauDAO.getInstance();
-
-        ListeCadeau l = dao.find(listeId, false, true, true);
-        if (l == null) {
-            resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Liste introuvable");
-            return;
-        }
-
-        req.setAttribute("error", errorMsg);
-        req.setAttribute("liste", l);
-        req.getRequestDispatcher("/WEB-INF/view/listeCadeau/manage.jsp").forward(req, resp);
     }
 }

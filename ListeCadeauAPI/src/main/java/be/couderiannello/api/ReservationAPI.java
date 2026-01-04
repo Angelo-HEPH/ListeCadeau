@@ -53,16 +53,20 @@ public class ReservationAPI {
 
         } catch (JSONException e) {
             return Response.status(Status.BAD_REQUEST)
-                    .entity("JSON invalide ou champs manquants.")
+                    .entity("Erreur : JSON invalide ou champs manquants.")
                     .build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST)
-                    .entity("Erreur : " + e.getMessage() + ".")
+                    .entity("Erreur : " + e.getMessage())
+                    .build();
+        } catch (IllegalStateException e) {
+            return Response.status(Status.CONFLICT)
+                    .entity("Erreur : " + e.getMessage())
                     .build();
         } catch (Exception e) {
             e.printStackTrace();
             return Response.status(Status.INTERNAL_SERVER_ERROR)
-                    .entity("Erreur lors de la création de la réservation.")
+                    .entity("Erreur : Erreur lors de la création de la réservation.")
                     .build();
         }
     }
@@ -87,8 +91,9 @@ public class ReservationAPI {
                     .build();
 
         } catch (Exception e) {
+            e.printStackTrace();
             return Response.status(Status.INTERNAL_SERVER_ERROR)
-                    .entity("Erreur lors de la récupération de la réservation.")
+                    .entity("Erreur : Erreur lors de la récupération de la réservation.")
                     .build();
         }
     }
@@ -111,8 +116,9 @@ public class ReservationAPI {
                     .build();
 
         } catch (Exception e) {
+            e.printStackTrace();
             return Response.status(Status.INTERNAL_SERVER_ERROR)
-                    .entity("Erreur lors de la récupération des réservations.")
+                    .entity("Erreur : Erreur lors de la récupération des réservations.")
                     .build();
         }
     }
@@ -132,6 +138,7 @@ public class ReservationAPI {
 
             JSONObject json = new JSONObject(body);
             json.put("id", id);
+
             existing.parse(json);
 
             boolean updated = existing.update(getDao());
@@ -141,8 +148,7 @@ public class ReservationAPI {
                         .build();
             }
 
-            return Response.status(Status.NO_CONTENT)
-            		.build();
+            return Response.status(Status.NO_CONTENT).build();
 
         } catch (JSONException e) {
             return Response.status(Status.BAD_REQUEST)
@@ -150,11 +156,16 @@ public class ReservationAPI {
                     .build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST)
-                    .entity("Erreur : " + e.getMessage() + ".")
+                    .entity("Erreur : " + e.getMessage())
+                    .build();
+        } catch (IllegalStateException e) {
+            return Response.status(Status.CONFLICT)
+                    .entity("Erreur : " + e.getMessage())
                     .build();
         } catch (Exception e) {
+            e.printStackTrace();
             return Response.status(Status.INTERNAL_SERVER_ERROR)
-                    .entity("Erreur lors de la mise à jour de la réservation.")
+                    .entity("Erreur : Erreur lors de la mise à jour de la réservation.")
                     .build();
         }
     }
@@ -178,13 +189,12 @@ public class ReservationAPI {
                         .build();
             }
 
-            return Response.status(Status.NO_CONTENT)
-            		.build();
+            return Response.status(Status.NO_CONTENT).build();
 
         } catch (Exception e) {
             e.printStackTrace();
             return Response.status(Status.INTERNAL_SERVER_ERROR)
-                    .entity("Erreur lors de la suppression.")
+                    .entity("Erreur : Erreur lors de la suppression.")
                     .build();
         }
     }
@@ -222,5 +232,4 @@ public class ReservationAPI {
 
         return json;
     }
-
 }

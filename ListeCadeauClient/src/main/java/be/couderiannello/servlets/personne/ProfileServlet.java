@@ -24,19 +24,26 @@ public class ProfileServlet extends HttpServlet {
         HttpSession session = req.getSession(false);
         int userId = (Integer) session.getAttribute("userId");
 
-        Personne user = Personne.findById(userId, PersonneDAO.getInstance(),
-                false, false, false, false);
+        try {
+            Personne user = Personne.findById(userId, PersonneDAO.getInstance(),
+                    false, false, false, false);
 
+            if (user == null) {
+                session.invalidate();
+                resp.sendRedirect(req.getContextPath() + "/login");
+                return;
+            }
 
-        if (user == null) {
-            session.invalidate();
-            resp.sendRedirect(req.getContextPath() + "/login");
-            return;
+            req.setAttribute("user", user);
+            req.getRequestDispatcher("/WEB-INF/view/personne/profile.jsp")
+               .forward(req, resp);
+
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            req.setAttribute("error", "Erreur : Erreur serveur lors du chargement du profil.");
+            req.getRequestDispatcher("/WEB-INF/view/personne/profile.jsp")
+               .forward(req, resp);
         }
-
-        req.setAttribute("user", user);
-        req.getRequestDispatcher("/WEB-INF/view/personne/profile.jsp")
-           .forward(req, resp);
     }
 
     @Override

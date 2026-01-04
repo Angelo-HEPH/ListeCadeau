@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 import org.json.JSONObject;
 
@@ -53,16 +52,16 @@ public class ListeCadeau implements Serializable {
     
     //Getters - Setters
     public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
         if(id < 0) {
             throw new IllegalArgumentException("L'Id ne peut pas être plus petit que 0.");
         }
-        
-        return id;
-    }
-    
-    public void setId(int id) {
         this.id = id;
     }
+
     
     public String getTitle() {
         return title;
@@ -192,14 +191,13 @@ public class ListeCadeau implements Serializable {
         this.cadeaux = cadeaux;
     }
     
-    //Méthodes
     public boolean addInvite(Personne p, ListeCadeauDAO dao) {
         if (p == null) {
-        	throw new IllegalArgumentException("Personne obligatoire.");
+            throw new IllegalArgumentException("Personne obligatoire.");
         }
-        
+
         if (dao == null) {
-        	throw new IllegalArgumentException("DAO obligatoire.");
+            throw new IllegalArgumentException("DAO obligatoire.");
         }
 
         if (this.creator == null) {
@@ -214,13 +212,11 @@ public class ListeCadeau implements Serializable {
             throw new IllegalArgumentException("Cette personne est déjà invitée.");
         }
 
-        boolean ok = dao.addInvite(this.id, p.getId());
-        if (!ok) {
-            throw new IllegalArgumentException("Cette personne est déjà invitée.");
-        }
+        dao.addInvite(this.id, p.getId());
 
         return true;
     }
+
 
     public boolean removeInvite(int personneId, ListeCadeauDAO dao) {
         if (dao == null) {
@@ -230,10 +226,7 @@ public class ListeCadeau implements Serializable {
             throw new IllegalArgumentException("Identifiant invité invalide.");
         }
 
-        boolean ok = dao.removeInvite(this.id, personneId);
-        if (!ok) {
-            throw new NoSuchElementException();
-        }
+        dao.removeInvite(this.id, personneId);
 
         if (this.invites != null) {
             this.invites.removeIf(x -> x.getId() == personneId);
@@ -241,6 +234,7 @@ public class ListeCadeau implements Serializable {
 
         return true;
     }
+
 
     public void addCadeau(Cadeau c) {
         if (c == null) {

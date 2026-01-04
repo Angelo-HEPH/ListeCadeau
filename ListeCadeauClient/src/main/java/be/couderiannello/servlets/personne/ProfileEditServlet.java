@@ -24,18 +24,26 @@ public class ProfileEditServlet extends HttpServlet {
         HttpSession session = req.getSession(false);
         int userId = (Integer) session.getAttribute("userId");
 
-        Personne user = Personne.findById(userId, PersonneDAO.getInstance(),
-                false, false, false, false);
+        try {
+            Personne user = Personne.findById(userId, PersonneDAO.getInstance(),
+                    false, false, false, false);
 
-        if (user == null) {
-            session.invalidate();
-            resp.sendRedirect(req.getContextPath() + "/login");
-            return;
+            if (user == null) {
+                session.invalidate();
+                resp.sendRedirect(req.getContextPath() + "/login");
+                return;
+            }
+
+            req.setAttribute("user", user);
+            req.getRequestDispatcher("/WEB-INF/view/personne/editProfile.jsp")
+               .forward(req, resp);
+
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            req.setAttribute("error", "Erreur : Erreur serveur lors du chargement du profil.");
+            req.getRequestDispatcher("/WEB-INF/view/personne/editProfile.jsp")
+               .forward(req, resp);
         }
-
-        req.setAttribute("user", user);
-        req.getRequestDispatcher("/WEB-INF/view/personne/editProfile.jsp")
-           .forward(req, resp);
     }
 
     @Override
@@ -45,27 +53,63 @@ public class ProfileEditServlet extends HttpServlet {
         HttpSession session = req.getSession(false);
         int userId = (Integer) session.getAttribute("userId");
 
-        Personne p = PersonneDAO.getInstance().find(userId);
+        PersonneDAO dao = PersonneDAO.getInstance();
 
-        if (p == null) {
-            session.invalidate();
-            resp.sendRedirect(req.getContextPath() + "/login");
-            return;
+        try {
+            Personne p = Personne.findById(userId, dao);
+
+            if (p == null) {
+                session.invalidate();
+                resp.sendRedirect(req.getContextPath() + "/login");
+                return;
+            }
+
+            int age;
+            int postalCode;
+
+            try {
+                age = Integer.parseInt(req.getParameter("age"));
+            } catch (NumberFormatException ex) {
+                req.setAttribute("error", "Erreur : L'âge doit être un nombre.");
+                doGet(req, resp);
+                return;
+            }
+
+            try {
+                postalCode = Integer.parseInt(req.getParameter("postalCode"));
+            } catch (NumberFormatException ex) {
+                req.setAttribute("error", "Erreur : Le code postal doit être un nombre.");
+                doGet(req, resp);
+                return;
+            }
+
+            p.setFirstName(req.getParameter("firstName"));
+            p.setName(req.getParameter("name"));
+            p.setAge(age);
+            p.setStreet(req.getParameter("street"));
+            p.setStreetNumber(req.getParameter("streetNumber"));
+            p.setCity(req.getParameter("city"));
+            p.setPostalCode(postalCode);
+            p.setEmail(req.getParameter("email"));
+
+            boolean ok = p.update(dao);
+            if (!ok) {
+                session.invalidate();
+                resp.sendRedirect(req.getContextPath() + "/login");
+                return;
+            }
+
+            session.setAttribute("firstName", p.getFirstName());
+            resp.sendRedirect(req.getContextPath() + "/profile");
+
+        } catch (IllegalArgumentException e) {
+            req.setAttribute("error", e.getMessage());
+            doGet(req, resp);
+
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            req.setAttribute("error", "Erreur : Erreur serveur lors de la mise à jour du profil.");
+            doGet(req, resp);
         }
-
-        p.setFirstName(req.getParameter("firstName"));
-        p.setName(req.getParameter("name"));
-        p.setAge(Integer.parseInt(req.getParameter("age")));
-        p.setStreet(req.getParameter("street"));
-        p.setStreetNumber(req.getParameter("streetNumber"));
-        p.setCity(req.getParameter("city"));
-        p.setPostalCode(Integer.parseInt(req.getParameter("postalCode")));
-        p.setEmail(req.getParameter("email"));
-
-        PersonneDAO.getInstance().update(p);
-
-        session.setAttribute("firstName", p.getFirstName());
-
-        resp.sendRedirect(req.getContextPath() + "/profile");
     }
 }

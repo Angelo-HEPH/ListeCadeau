@@ -20,18 +20,18 @@
 
 <h2 class="mb-3">Détail de la liste : <%= liste.getTitle() %></h2>
 
+<% if (error != null && !error.isBlank()) { %>
+    <div class="alert alert-danger" role="alert">
+        <%= error %>
+    </div>
+<% } %>
+
 <div class="mb-3">
     <a href="<%= request.getContextPath() %>/liste/edit?id=<%= liste.getId() %>"
        class="btn btn-warning">
         Modifier la liste
     </a>
 </div>
-
-<% if (error != null && !error.isBlank()) { %>
-    <div class="alert alert-danger" role="alert">
-        <%= error %>
-    </div>
-<% } %>
 
 <div class="mb-4">
     <p><b>Événement :</b> <%= liste.getEvenement() %></p>

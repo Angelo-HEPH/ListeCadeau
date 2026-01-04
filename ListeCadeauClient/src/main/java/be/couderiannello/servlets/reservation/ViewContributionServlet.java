@@ -4,7 +4,10 @@ import java.io.IOException;
 import java.util.List;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.*;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import be.couderiannello.dao.PersonneDAO;
 import be.couderiannello.dao.ReservationDAO;
@@ -24,7 +27,6 @@ public class ViewContributionServlet extends HttpServlet {
 
         try {
             PersonneDAO personneDao = PersonneDAO.getInstance();
-
             Personne user = Personne.findById(userId, personneDao, false, false, false, true);
 
             if (user == null) {
@@ -53,7 +55,10 @@ public class ViewContributionServlet extends HttpServlet {
                .forward(req, resp);
 
         } catch (Exception e) {
-            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erreur chargement contributions");
+            e.printStackTrace();
+            req.setAttribute("error", e.getMessage());
+            req.getRequestDispatcher("/WEB-INF/view/reservation/viewContributions.jsp")
+               .forward(req, resp);
         }
     }
 

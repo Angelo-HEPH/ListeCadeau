@@ -2,18 +2,8 @@ package be.couderiannello.api;
 
 import java.net.URI;
 import java.util.List;
-import java.util.NoSuchElementException;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -41,8 +31,8 @@ public class ListeCadeauAPI {
     public Response create(String jsonBody) {
         try {
             JSONObject json = new JSONObject(jsonBody);
-
             json.remove("id");
+
             ListeCadeau l = new ListeCadeau();
             l.parse(json);
 
@@ -54,19 +44,21 @@ public class ListeCadeauAPI {
 
         } catch (JSONException e) {
             return Response.status(Status.BAD_REQUEST)
-                    .entity("JSON invalide ou champs manquants.")
+                    .entity("Erreur : JSON invalide ou champs manquants.")
                     .build();
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
             return Response.status(Status.BAD_REQUEST)
-                    .entity("Erreur : " + e.getMessage() + ".")
+                    .entity("Erreur : " + e.getMessage())
                     .build();
         } catch (Exception e) {
-            return Response.status(Status.BAD_REQUEST)
-                    .entity("Erreur lors de la création de la liste.")
+            e.printStackTrace();
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
+                    .entity("Erreur : Erreur lors de la création de la liste.")
                     .build();
         }
     }
 
+    //Add invite
     @POST
     @Path("/{id}/invites")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -74,20 +66,24 @@ public class ListeCadeauAPI {
         try {
             ListeCadeau l = ListeCadeau.findById(listeId, getDao(), true, true, false);
             if (l == null) {
-                return Response.status(Status.NOT_FOUND).build();
+                return Response.status(Status.NOT_FOUND)
+                        .entity("Erreur : Liste introuvable.")
+                        .build();
             }
 
             JSONObject json = new JSONObject(body);
             int personneId = json.getInt("personneId");
 
-            //S'inviter sois-même
             if (l.getCreator() != null && l.getCreator().getId() == personneId) {
-                return Response.status(Status.BAD_REQUEST).build();
+                return Response.status(Status.BAD_REQUEST)
+                        .entity("Erreur : Le créateur ne peut pas s'inviter lui-même.")
+                        .build();
             }
 
-            //Personne déja invité
             if (l.getInvites() != null && l.getInvites().stream().anyMatch(x -> x.getId() == personneId)) {
-                return Response.status(Status.CONFLICT).build();
+                return Response.status(Status.CONFLICT)
+                        .entity("Erreur : Cette personne est déjà invitée.")
+                        .build();
             }
 
             Personne p = new Personne();
@@ -95,27 +91,29 @@ public class ListeCadeauAPI {
 
             l.addInvite(p, getDao());
 
-            return Response.status(Status.CREATED).
-            		build();
+            return Response.status(Status.CREATED).build();
 
         } catch (JSONException e) {
             return Response.status(Status.BAD_REQUEST)
-            		.build();
-
+                    .entity("Erreur : JSON invalide ou champs manquants.")
+                    .build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST)
-            		.build();
-
+                    .entity("Erreur : " + e.getMessage())
+                    .build();
         } catch (IllegalStateException e) {
-            return Response.status(Status.INTERNAL_SERVER_ERROR)
-            		.build();
-
+            return Response.status(Status.BAD_REQUEST)
+                    .entity("Erreur : " + e.getMessage())
+                    .build();
         } catch (Exception e) {
+            e.printStackTrace();
             return Response.status(Status.INTERNAL_SERVER_ERROR)
-            		.build();
+                    .entity("Erreur : Erreur lors de l'invitation.")
+                    .build();
         }
     }
 
+    //Remove invite
     @DELETE
     @Path("/{id}/invites/{personneId}")
     public Response removeInvite(@PathParam("id") int listeId,
@@ -123,24 +121,28 @@ public class ListeCadeauAPI {
         try {
             ListeCadeau l = ListeCadeau.findById(listeId, getDao(), false, false, false);
             if (l == null) {
-                return Response.status(Status.NOT_FOUND).build();
+                return Response.status(Status.NOT_FOUND)
+                        .entity("Erreur : Liste introuvable.")
+                        .build();
             }
 
             l.removeInvite(personneId, getDao());
 
-            return Response.status(Status.NO_CONTENT)
-            		.build();
-        } catch (NoSuchElementException e) {
-            return Response.status(Status.NOT_FOUND)
-            		.build();
+            return Response.status(Status.NO_CONTENT).build();
 
+        } catch (IllegalStateException e) {
+            return Response.status(Status.NOT_FOUND)
+                    .entity("Erreur : " + e.getMessage())
+                    .build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST)
-            		.build();
-
+                    .entity("Erreur : " + e.getMessage())
+                    .build();
         } catch (Exception e) {
+            e.printStackTrace();
             return Response.status(Status.INTERNAL_SERVER_ERROR)
-            		.build();
+                    .entity("Erreur : Erreur lors de la suppression de l'invitation.")
+                    .build();
         }
     }
 
@@ -165,12 +167,14 @@ public class ListeCadeauAPI {
                     .build();
 
         } catch (Exception e) {
-            return Response.status(Status.BAD_REQUEST)
-                    .entity("Erreur lors de la récupération de la liste.")
+            e.printStackTrace();
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
+                    .entity("Erreur : Erreur lors de la récupération de la liste.")
                     .build();
         }
     }
 
+    //FindAll
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response findAll(@QueryParam("loadCreator") @DefaultValue("false") boolean loadCreator,
@@ -203,14 +207,15 @@ public class ListeCadeauAPI {
 
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST)
-            		.build();
+                    .entity("Erreur : " + e.getMessage())
+                    .build();
         } catch (Exception e) {
-            return Response.status(Status.BAD_REQUEST)
-                    .entity("Erreur lors de la récupération des listes.")
+            e.printStackTrace();
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
+                    .entity("Erreur : Erreur lors de la récupération des listes.")
                     .build();
         }
     }
-
 
     //Update
     @PUT
@@ -233,10 +238,12 @@ public class ListeCadeauAPI {
                         .build();
             }
 
+            json.put("id", id);
+            json.remove("creatorId");
+
             existing.parse(json);
 
             boolean updated = existing.update(getDao());
-
             if (!updated) {
                 return Response.status(Status.SERVICE_UNAVAILABLE)
                         .entity("Erreur : La mise à jour a échoué.")
@@ -249,13 +256,14 @@ public class ListeCadeauAPI {
             return Response.status(Status.BAD_REQUEST)
                     .entity("Erreur : JSON invalide.")
                     .build();
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
             return Response.status(Status.BAD_REQUEST)
-                    .entity("Erreur : " + e.getMessage() + ".")
+                    .entity("Erreur : " + e.getMessage())
                     .build();
         } catch (Exception e) {
-            return Response.status(Status.BAD_REQUEST)
-                    .entity("Erreur lors de la mise à jour de la liste.")
+            e.printStackTrace();
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
+                    .entity("Erreur : Erreur lors de la mise à jour de la liste.")
                     .build();
         }
     }
@@ -266,31 +274,28 @@ public class ListeCadeauAPI {
     public Response delete(@PathParam("id") int id) {
         try {
             ListeCadeau l = ListeCadeau.findById(id, getDao());
-
             if (l == null) {
                 return Response.status(Status.NOT_FOUND).build();
             }
 
             boolean deleted = ListeCadeau.delete(l, getDao());
-
             if (!deleted) {
                 return Response.status(Status.BAD_REQUEST)
                         .entity("Erreur : Impossible de supprimer cette liste.")
                         .build();
             }
 
-            return Response.status(Status.NO_CONTENT)
-            		.build();
+            return Response.status(Status.NO_CONTENT).build();
 
         } catch (Exception e) {
-            return Response.status(Status.BAD_REQUEST)
-                    .entity("Erreur lors de la suppression.")
+            e.printStackTrace();
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
+                    .entity("Erreur : Erreur lors de la suppression.")
                     .build();
         }
     }
 
     private JSONObject toJson(ListeCadeau l, boolean includeCreator, boolean includeInvites, boolean includeCadeaux) {
-
         JSONObject json = l.unparse();
 
         if (includeCreator && l.getCreator() != null) {

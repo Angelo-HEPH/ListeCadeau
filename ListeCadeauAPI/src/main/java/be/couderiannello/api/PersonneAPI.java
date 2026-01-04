@@ -42,29 +42,37 @@ public class PersonneAPI {
         try {
             JSONObject json = new JSONObject(personneJson);
 
+            if (!json.has("password") || json.isNull("password") || json.getString("password").isBlank()) {
+                return Response.status(Status.BAD_REQUEST)
+                        .entity("Erreur : mot de passe requis.")
+                        .build();
+            }
+
             json.remove("id");
             Personne p = new Personne();
             p.parse(json);
 
             int id = p.create(getDao());
 
-            return Response
-                    .status(Status.CREATED)
+            return Response.status(Status.CREATED)
                     .location(URI.create("personne/" + id))
                     .build();
 
         } catch (JSONException e) {
             return Response.status(Status.BAD_REQUEST)
-                    .entity("JSON invalide ou champs manquants.")
+                    .entity("Erreur : JSON invalide ou champs manquants.")
                     .build();
+
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST)
-                    .entity("Erreur : " + e.getMessage() + ".")
+                    .entity("Erreur : " + e.getMessage())
                     .build();
+
+
         } catch (Exception e) {
             e.printStackTrace();
             return Response.status(Status.INTERNAL_SERVER_ERROR)
-                    .entity("Erreur lors de la création de la personne.")
+                    .entity("Erreur : Erreur interne.")
                     .build();
         }
     }
@@ -79,32 +87,23 @@ public class PersonneAPI {
                              @QueryParam("loadInvitedLists") @DefaultValue("false") boolean loadInvitedLists,
                              @QueryParam("loadReservations") @DefaultValue("false") boolean loadReservations) {
         try {
-            Personne p = Personne.findById(
-                    id, getDao(),
-                    loadNotifications,
-                    loadCreatedLists,
-                    loadInvitedLists,
-                    loadReservations
-            );
+            Personne p = Personne.findById(id, getDao(), loadNotifications, loadCreatedLists,
+                    loadInvitedLists, loadReservations);
 
             if (p == null) {
                 return Response.status(Status.NOT_FOUND).build();
             }
 
-            JSONObject json = toJson(p,
-                    loadNotifications,
-                    loadCreatedLists,
-                    loadInvitedLists,
-                    loadReservations);
+            JSONObject json = toJson(p, loadNotifications, loadCreatedLists, loadInvitedLists, loadReservations);
 
-            return Response
-                    .status(Status.OK)
+            return Response.status(Status.OK)
                     .entity(json.toString())
                     .build();
 
         } catch (Exception e) {
+            e.printStackTrace();
             return Response.status(Status.INTERNAL_SERVER_ERROR)
-                    .entity("Erreur lors de la récupération de la personne.")
+                    .entity("Erreur : Erreur interne.")
                     .build();
         }
     }
@@ -115,7 +114,14 @@ public class PersonneAPI {
     @Produces(MediaType.APPLICATION_JSON)
     public Response findByEmail(@QueryParam("email") String email) {
         try {
+            if (email == null || email.isBlank()) {
+                return Response.status(Status.BAD_REQUEST)
+                        .entity("Erreur : email requis.")
+                        .build();
+            }
+
             Personne p = Personne.findByEmail(email.trim().toLowerCase(), getDao());
+
             if (p == null) {
                 return Response.status(Status.NOT_FOUND).build();
             }
@@ -127,8 +133,9 @@ public class PersonneAPI {
                     .build();
 
         } catch (Exception e) {
+            e.printStackTrace();
             return Response.status(Status.INTERNAL_SERVER_ERROR)
-                    .entity("Erreur lors de la récupération de la personne par email.")
+                    .entity("Erreur : Erreur interne.")
                     .build();
         }
     }
@@ -141,21 +148,12 @@ public class PersonneAPI {
                             @QueryParam("loadInvitedLists") @DefaultValue("false") boolean loadInvitedLists,
                             @QueryParam("loadReservations") @DefaultValue("false") boolean loadReservations) {
         try {
-            List<Personne> personnes = Personne.findAll(
-            		getDao(),
-                    loadNotifications,
-                    loadCreatedLists,
-                    loadInvitedLists,
-                    loadReservations
-            );
+            List<Personne> personnes = Personne.findAll(getDao(), loadNotifications, loadCreatedLists,
+                    loadInvitedLists, loadReservations);
 
             JSONArray array = new JSONArray();
             for (Personne p : personnes) {
-                array.put(toJson(p,
-                        loadNotifications,
-                        loadCreatedLists,
-                        loadInvitedLists,
-                        loadReservations));
+                array.put(toJson(p, loadNotifications, loadCreatedLists, loadInvitedLists, loadReservations));
             }
 
             return Response.status(Status.OK)
@@ -165,7 +163,7 @@ public class PersonneAPI {
         } catch (Exception e) {
             e.printStackTrace();
             return Response.status(Status.INTERNAL_SERVER_ERROR)
-                    .entity("Erreur lors de la récupération des personnes.")
+                    .entity("Erreur : Erreur interne.")
                     .build();
         }
     }
@@ -192,10 +190,15 @@ public class PersonneAPI {
 
             return Response.status(Status.NO_CONTENT).build();
 
+        } catch (IllegalArgumentException e) {
+            return Response.status(Status.BAD_REQUEST)
+                    .entity("Erreur : " + e.getMessage())
+                    .build();
+
         } catch (Exception e) {
             e.printStackTrace();
             return Response.status(Status.INTERNAL_SERVER_ERROR)
-                    .entity("Erreur lors de la suppression.")
+                    .entity("Erreur : Erreur interne.")
                     .build();
         }
     }
@@ -209,9 +212,7 @@ public class PersonneAPI {
         try {
             Personne existing = Personne.findById(id, getDao());
             if (existing == null) {
-                return Response.status(Status.NOT_FOUND)
-                        .entity("Erreur : Personne non trouvée.")
-                        .build();
+                return Response.status(Status.NOT_FOUND).build();
             }
 
             JSONObject json = new JSONObject(personneJson);
@@ -225,29 +226,28 @@ public class PersonneAPI {
                         .build();
             }
 
-            return Response.status(Status.NO_CONTENT)
-            		.build();
+            return Response.status(Status.NO_CONTENT).build();
 
         } catch (JSONException e) {
             return Response.status(Status.BAD_REQUEST)
                     .entity("Erreur : JSON invalide.")
                     .build();
+
         } catch (IllegalArgumentException e) {
             return Response.status(Status.BAD_REQUEST)
-                    .entity("Erreur : " + e.getMessage() + ".")
+                    .entity("Erreur : " + e.getMessage())
                     .build();
+
         } catch (Exception e) {
+            e.printStackTrace();
             return Response.status(Status.INTERNAL_SERVER_ERROR)
-                    .entity("Erreur lors de la mise à jour de la personne.")
+                    .entity("Erreur : Erreur interne.")
                     .build();
         }
     }
 
-    private JSONObject toJson(Personne p,
-                              boolean includeNotifications,
-                              boolean includeCreatedLists,
-                              boolean includeInvitedLists,
-                              boolean includeReservations) {
+    private JSONObject toJson(Personne p, boolean includeNotifications, boolean includeCreatedLists,
+                              boolean includeInvitedLists, boolean includeReservations) {
 
         JSONObject json = p.unparse();
 

@@ -32,16 +32,17 @@
         }
     %>
 
-    <form action="login" method="post" class="mb-3">
+<form action="login" method="post" class="mb-3">
 
-        <label>Email :</label>
-        <input type="email" class="form-control" name="email" required>
+    <label class="form-label">Email :</label>
+    <input type="email" class="form-control" name="email" value="<%= request.getAttribute("email") != null ? request.getAttribute("email") : "" %>" required>
 
-        <label class="mt-2">Mot de passe :</label>
-        <input type="password" class="form-control" name="password" required>
+    <label class="form-label mt-2">Mot de passe :</label>
+    <input type="password" class="form-control" name="password" required>
 
-        <button type="submit" class="btn btn-primary mt-3">Se connecter</button>
-    </form>
+    <button type="submit" class="btn btn-primary mt-3">Se connecter</button>
+</form>
+
 
 </div>
 

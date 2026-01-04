@@ -15,9 +15,16 @@
 
 <%
     Personne user = (Personne) request.getAttribute("user");
+    String error = (String) request.getAttribute("error");
 %>
 
 <h2 class="mb-4">👤 Mon profil</h2>
+
+<% if (error != null && !error.isBlank()) { %>
+    <p class="text-danger fw-bold"><%= error %></p>
+<% } %>
+
+<% if (user != null) { %>
 
 <div class="card shadow-sm p-4" style="max-width:600px;">
 
@@ -43,6 +50,8 @@
     </a>
 
 </div>
+
+<% } %>
 
 </div>
 

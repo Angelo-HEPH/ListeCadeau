@@ -36,15 +36,7 @@ public class ReservationDAO extends RestDAO<Reservation> {
 
         JSONObject json = new JSONObject();
         json.put("amount", r.getAmount());
-
-        if (r.getCadeau() == null) {
-            throw new RuntimeException("Reservation.create : cadeau manquant");
-        }
         json.put("cadeauId", r.getCadeau().getId());
-
-        if (r.getPersonnes() == null || r.getPersonnes().isEmpty()) {
-            throw new RuntimeException("Reservation.create : personne manquante");
-        }
         json.put("personneId", r.getPersonnes().get(0).getId());
 
         ClientResponse response = getResource()
@@ -52,15 +44,22 @@ public class ReservationDAO extends RestDAO<Reservation> {
                 .type(MediaType.APPLICATION_JSON)
                 .post(ClientResponse.class, json.toString());
 
-        if (response.getStatus() != Status.CREATED.getStatusCode()) {
-            throw new RuntimeException(
-                    "Erreur API création réservation (status=" 
-                    		+ response.getStatus() + ", body=" 
-                    		+ readBody(response) + ")"
-            );
+        int status = response.getStatus();
+        String body = readBody(response);
+
+        if (status == Status.CREATED.getStatusCode()) {
+            return extractIdFromLocation(response, "reservation");
         }
 
-        return extractIdFromLocation(response, "reservation");
+        if (status == Status.BAD_REQUEST.getStatusCode()) {
+            throw new IllegalArgumentException(body);
+        }
+
+        if (status == Status.CONFLICT.getStatusCode()) {
+            throw new IllegalStateException(body);
+        }
+
+        throw new RuntimeException(body);
     }
 
     //Find
@@ -79,19 +78,24 @@ public class ReservationDAO extends RestDAO<Reservation> {
                 .accept(MediaType.APPLICATION_JSON)
                 .get(ClientResponse.class);
 
-        if (response.getStatus() == Status.NOT_FOUND.getStatusCode()) {
+        int status = response.getStatus();
+        String body = readBody(response);
+
+        if (status == Status.NOT_FOUND.getStatusCode()) {
             return null;
         }
 
-        if (response.getStatus() != Status.OK.getStatusCode()) {
-            throw new RuntimeException(
-                    "Erreur API find réservation (status=" 
-                    		+ response.getStatus() + ", body=" 
-                    		+ readBody(response) + ")"
-            );
+        if (status != Status.OK.getStatusCode()) {
+            if (status == Status.BAD_REQUEST.getStatusCode()) {
+                throw new IllegalArgumentException(body);
+            }
+            if (status == Status.CONFLICT.getStatusCode()) {
+                throw new IllegalStateException(body);
+            }
+            throw new RuntimeException(body);
         }
 
-        JSONObject json = new JSONObject(readBody(response));
+        JSONObject json = new JSONObject(body);
         Reservation r = fromJsonReservation(json);
 
         if (loadCadeau && json.has("cadeau") && !json.isNull("cadeau")) {
@@ -120,15 +124,20 @@ public class ReservationDAO extends RestDAO<Reservation> {
                 .accept(MediaType.APPLICATION_JSON)
                 .get(ClientResponse.class);
 
-        if (response.getStatus() != Status.OK.getStatusCode()) {
-            throw new RuntimeException(
-                    "Erreur API findAll réservation (status=" 
-                    		+ response.getStatus() + ", body=" 
-                    		+ readBody(response) + ")"
-            );
+        int status = response.getStatus();
+        String body = readBody(response);
+
+        if (status != Status.OK.getStatusCode()) {
+            if (status == Status.BAD_REQUEST.getStatusCode()) {
+                throw new IllegalArgumentException(body);
+            }
+            if (status == Status.CONFLICT.getStatusCode()) {
+                throw new IllegalStateException(body);
+            }
+            throw new RuntimeException(body);
         }
 
-        JSONArray array = new JSONArray(readBody(response));
+        JSONArray array = new JSONArray(body);
         ArrayList<Reservation> list = new ArrayList<>();
 
         for (int i = 0; i < array.length(); i++) {
@@ -164,15 +173,30 @@ public class ReservationDAO extends RestDAO<Reservation> {
                 .type(MediaType.APPLICATION_JSON)
                 .put(ClientResponse.class, json.toString());
 
-        if (response.getStatus() != Status.NO_CONTENT.getStatusCode()) {
-            throw new RuntimeException(
-                    "Erreur API update réservation (status=" 
-                    		+ response.getStatus() + ", body=" 
-                    		+ readBody(response) + ")"
-            );
+        int status = response.getStatus();
+        String body = readBody(response);
+
+        if (status == Status.NO_CONTENT.getStatusCode()) {
+            return true;
         }
 
-        return true;
+        if (status == Status.NOT_FOUND.getStatusCode()) {
+            return false;
+        }
+
+        if (status == Status.SERVICE_UNAVAILABLE.getStatusCode()) {
+            throw new IllegalStateException(body);
+        }
+
+        if (status == Status.BAD_REQUEST.getStatusCode()) {
+            throw new IllegalArgumentException(body);
+        }
+
+        if (status == Status.CONFLICT.getStatusCode()) {
+            throw new IllegalStateException(body);
+        }
+
+        throw new RuntimeException(body);
     }
 
     //Delete
@@ -184,18 +208,29 @@ public class ReservationDAO extends RestDAO<Reservation> {
                 .path(String.valueOf(r.getId()))
                 .delete(ClientResponse.class);
 
-        if (response.getStatus() != Status.NO_CONTENT.getStatusCode()) {
-            throw new RuntimeException(
-                    "Erreur API delete réservation (status=" 
-                    		+ response.getStatus() + ", body=" 
-                    		+ readBody(response) + ")"
-            );
+        int status = response.getStatus();
+        String body = readBody(response);
+
+        if (status == Status.NO_CONTENT.getStatusCode()) {
+            return true;
         }
 
-        return true;
+        if (status == Status.NOT_FOUND.getStatusCode()) {
+            return false;
+        }
+
+        if (status == Status.BAD_REQUEST.getStatusCode()) {
+            throw new IllegalArgumentException(body);
+        }
+
+        if (status == Status.CONFLICT.getStatusCode()) {
+            throw new IllegalStateException(body);
+        }
+
+        throw new RuntimeException(body);
     }
 
-    // JSON -> Model
+    //JSON -> Model
     private Reservation fromJsonReservation(JSONObject json) {
 
         Reservation r = new Reservation();

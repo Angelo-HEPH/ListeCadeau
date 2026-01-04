@@ -62,9 +62,11 @@ public class PersonneDAO extends RestDAO<Personne> {
             throw new IllegalArgumentException(body);
         }
 
-        throw new RuntimeException("API_ERROR");
+        if (body == null || body.isBlank()) {
+            throw new RuntimeException("Erreur : Erreur API (" + status + ").");
+        }
+        throw new RuntimeException(body);
     }
-
 
     //Find
     @Override
@@ -88,19 +90,21 @@ public class PersonneDAO extends RestDAO<Personne> {
                 .accept(MediaType.APPLICATION_JSON)
                 .get(ClientResponse.class);
 
-        if (response.getStatus() == Status.NOT_FOUND.getStatusCode()) {
+        int status = response.getStatus();
+        String body = readBody(response);
+
+        if (status == Status.NOT_FOUND.getStatusCode()) {
             return null;
         }
 
-        if (response.getStatus() != Status.OK.getStatusCode()) {
-            throw new RuntimeException(
-                    "Erreur API find personne (status=" 
-                    		+ response.getStatus() + ", body=" 
-                    		+ readBody(response) + ")"
-            );
+        if (status != Status.OK.getStatusCode()) {
+            if (body == null || body.isBlank()) {
+                throw new RuntimeException("Erreur : Erreur API (" + status + ").");
+            }
+            throw new RuntimeException(body);
         }
 
-        JSONObject json = new JSONObject(readBody(response));
+        JSONObject json = new JSONObject(body);
         Personne p = fromJsonPersonne(json);
 
         if (loadNotifications && json.has("notifications")) {
@@ -131,19 +135,25 @@ public class PersonneDAO extends RestDAO<Personne> {
                 .accept(MediaType.APPLICATION_JSON)
                 .get(ClientResponse.class);
 
-        if (response.getStatus() == Status.NOT_FOUND.getStatusCode()) {
+        int status = response.getStatus();
+        String body = readBody(response);
+
+        if (status == Status.NOT_FOUND.getStatusCode()) {
             return null;
         }
 
-        if (response.getStatus() != Status.OK.getStatusCode()) {
-            throw new RuntimeException(
-                    "Erreur API findByEmail (status=" + response.getStatus() +
-                    ", body=" + readBody(response) + ")"
-            );
+        if (status == Status.BAD_REQUEST.getStatusCode()) {
+            throw new IllegalArgumentException(body);
         }
 
-        JSONObject json = new JSONObject(readBody(response));
-        return fromJsonPersonne(json);
+        if (status != Status.OK.getStatusCode()) {
+            if (body == null || body.isBlank()) {
+                throw new RuntimeException("Erreur : Erreur API (" + status + ").");
+            }
+            throw new RuntimeException(body);
+        }
+
+        return fromJsonPersonne(new JSONObject(body));
     }
 
     //FindAll
@@ -166,16 +176,17 @@ public class PersonneDAO extends RestDAO<Personne> {
                 .accept(MediaType.APPLICATION_JSON)
                 .get(ClientResponse.class);
 
-        if (response.getStatus() != Status.OK.getStatusCode()) {
-            throw new RuntimeException(
-                    "Erreur API findAll personne (status=" 
-                    		+ response.getStatus() + ", body=" 
-                    		+ readBody(response) + ")"
-            );
+        int status = response.getStatus();
+        String body = readBody(response);
+
+        if (status != Status.OK.getStatusCode()) {
+            if (body == null || body.isBlank()) {
+                throw new RuntimeException("Erreur : Erreur API (" + status + ").");
+            }
+            throw new RuntimeException(body);
         }
 
-        JSONArray array = new JSONArray(readBody(response));
-
+        JSONArray array = new JSONArray(body);
         ArrayList<Personne> list = new ArrayList<>();
 
         for (int i = 0; i < array.length(); i++) {
@@ -229,15 +240,29 @@ public class PersonneDAO extends RestDAO<Personne> {
                 .type(MediaType.APPLICATION_JSON)
                 .put(ClientResponse.class, json.toString());
 
-        if (response.getStatus() != Status.NO_CONTENT.getStatusCode()) {
-            throw new RuntimeException(
-                    "Erreur API update personne (status=" 
-                    		+ response.getStatus() + ", body=" 
-                    		+ readBody(response) + ")"
-            );
+        int status = response.getStatus();
+        String body = readBody(response);
+
+        if (status == Status.NO_CONTENT.getStatusCode()) {
+            return true;
         }
 
-        return true;
+        if (status == Status.NOT_FOUND.getStatusCode()) {
+            return false;
+        }
+
+        if (status == Status.SERVICE_UNAVAILABLE.getStatusCode()) {
+            throw new IllegalStateException(body);
+        }
+
+        if (status == Status.BAD_REQUEST.getStatusCode()) {
+            throw new IllegalArgumentException(body);
+        }
+
+        if (body == null || body.isBlank()) {
+            throw new RuntimeException("Erreur : Erreur API (" + status + ").");
+        }
+        throw new RuntimeException(body);
     }
 
     //Delete
@@ -249,15 +274,25 @@ public class PersonneDAO extends RestDAO<Personne> {
                 .path(String.valueOf(p.getId()))
                 .delete(ClientResponse.class);
 
-        if (response.getStatus() != Status.NO_CONTENT.getStatusCode()) {
-            throw new RuntimeException(
-                    "Erreur API delete personne (status=" 
-                    		+ response.getStatus() + ", body=" 
-                    		+ readBody(response) + ")"
-            );
+        int status = response.getStatus();
+        String body = readBody(response);
+
+        if (status == Status.NO_CONTENT.getStatusCode()) {
+            return true;
         }
 
-        return true;
+        if (status == Status.NOT_FOUND.getStatusCode()) {
+            return false;
+        }
+
+        if (status == Status.BAD_REQUEST.getStatusCode()) {
+            throw new IllegalArgumentException(body);
+        }
+
+        if (body == null || body.isBlank()) {
+            throw new RuntimeException("Erreur : Erreur API (" + status + ").");
+        }
+        throw new RuntimeException(body);
     }
 
     public Personne authenticate(String email, String password) {
@@ -272,25 +307,26 @@ public class PersonneDAO extends RestDAO<Personne> {
                 .accept(MediaType.APPLICATION_JSON)
                 .post(ClientResponse.class, request.toString());
 
-        if (response.getStatus() == Status.UNAUTHORIZED.getStatusCode()) {
+        int status = response.getStatus();
+        String body = readBody(response);
+
+        if (status == Status.UNAUTHORIZED.getStatusCode()) {
             return null;
         }
 
-        if (response.getStatus() != Status.CREATED.getStatusCode()) {
-            throw new RuntimeException(
-                    "Erreur API login (status=" 
-                    		+ response.getStatus() + ", body=" 
-                    		+ readBody(response) + ")"
-            );
+        if (status != Status.CREATED.getStatusCode()) {
+            if (body == null || body.isBlank()) {
+                throw new RuntimeException("Erreur : Erreur API (" + status + ").");
+            }
+            throw new RuntimeException(body);
         }
 
-        JSONObject body = new JSONObject(readBody(response));
-
+        JSONObject json = new JSONObject(body);
         Personne p = new Personne();
-        p.setId(body.getInt("id"));
-        p.setName(body.getString("name"));
-        p.setFirstName(body.getString("firstName"));
-        p.setEmail(body.getString("email"));
+        p.setId(json.getInt("id"));
+        p.setName(json.getString("name"));
+        p.setFirstName(json.getString("firstName"));
+        p.setEmail(json.getString("email"));
         return p;
     }
 

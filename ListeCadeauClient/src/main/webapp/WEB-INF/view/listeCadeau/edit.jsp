@@ -15,7 +15,14 @@
 
 <%
     ListeCadeau liste = (ListeCadeau) request.getAttribute("liste");
+    String error = (String) request.getAttribute("error");
 %>
+
+<% if (error != null && !error.isBlank()) { %>
+    <div class="alert alert-danger"><%= error %></div>
+<% } %>
+
+<% if (liste == null) { return; } %>
 
 <h2 class="mb-4">Modifier la liste</h2>
 

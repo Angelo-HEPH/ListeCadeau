@@ -272,6 +272,17 @@ public class Cadeau implements Serializable {
 	    }
 	    setStatutCadeau(StatutCadeau.RESERVER);
 	}
+	
+	public void interdireActionSiCreateur(int userId) {
+	    if (getListeCadeau() == null || getListeCadeau().getCreator() == null) {
+	        throw new IllegalStateException("Créateur de la liste introuvable.");
+	    }
+	    if (getListeCadeau().getCreator().getId() == userId) {
+	        throw new IllegalArgumentException("Le créateur ne peut pas contribuer/réserver un cadeau de sa propre liste.");
+	    }
+	}
+
+
 
 	//ToString - hashCode - Equals
 	@Override
@@ -379,7 +390,10 @@ public class Cadeau implements Serializable {
         json.put("photo", getPhoto());
         json.put("linkSite", getLinkSite());
         json.put("priorite", getPriorite().name());
-        json.put("listeCadeauId", getListeCadeau().getId());
+        if (getListeCadeau() != null) {
+            json.put("listeCadeauId", getListeCadeau().getId());
+        }
+
         json.put("statutCadeau", getStatutCadeau().name());
 
         return json;

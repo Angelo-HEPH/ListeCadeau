@@ -25,60 +25,79 @@ public class ListeViewServlet extends HttpServlet {
         HttpSession session = req.getSession(false);
         int userId = (Integer) session.getAttribute("userId");
 
-        String idParam = req.getParameter("id");
-        if (idParam == null || idParam.isBlank()) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Paramètre id manquant");
-            return;
-        }
-
-        int id;
         try {
-            id = Integer.parseInt(idParam);
-        } catch (NumberFormatException e) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Paramètre id invalide");
-            return;
-        }
+            String idParam = req.getParameter("id");
+            if (idParam == null || idParam.isBlank()) {
+                throw new IllegalArgumentException("Paramètre id manquant.");
+            }
 
-        ListeCadeauDAO dao = ListeCadeauDAO.getInstance();
-        ListeCadeau l = ListeCadeau.findById(id, dao, true, false, true);
+            int id;
+            try {
+                id = Integer.parseInt(idParam);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Paramètre id invalide.");
+            }
 
-        if (l == null) {
-            resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Liste introuvable");
-            return;
-        }
+            ListeCadeauDAO dao = ListeCadeauDAO.getInstance();
+            ListeCadeau l = ListeCadeau.findById(id, dao, true, false, true);
 
-        boolean isCreator = (l.getCreator() != null && l.getCreator().getId() == userId);
+            if (l == null) {
+                throw new IllegalStateException("Erreur : Liste introuvable.");
+            }
 
-        if (!l.isStatut() && !isCreator) {
-            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Liste pas encore disponible");
-            return;
-        }
+            boolean isCreator = (l.getCreator() != null && l.getCreator().getId() == userId);
 
-        if (l.getCadeaux() != null && !l.getCadeaux().isEmpty()) {
+            if (!l.isStatut() && !isCreator) {
+                throw new IllegalStateException("Erreur : Liste pas encore disponible.");
+            }
 
-            CadeauDAO cadeauDao = CadeauDAO.getInstance();
-            List<Cadeau> cadeaux = l.getCadeaux();
+            if (l.getCadeaux() != null && !l.getCadeaux().isEmpty()) {
 
-            for (int i = 0; i < cadeaux.size(); i++) {
-                Cadeau cLight = cadeaux.get(i);
+                CadeauDAO cadeauDao = CadeauDAO.getInstance();
+                List<Cadeau> cadeaux = l.getCadeaux();
 
-                Cadeau cFull = Cadeau.findById(cLight.getId(), cadeauDao, false, true);
+                for (int i = 0; i < cadeaux.size(); i++) {
+                    Cadeau cLight = cadeaux.get(i);
 
-                if (cFull != null) {
-                    cFull.setListeCadeau(l);
-                    cadeaux.set(i, cFull);
+                    Cadeau cFull = Cadeau.findById(cLight.getId(), cadeauDao, false, true);
+
+                    if (cFull != null) {
+                        cFull.setListeCadeau(l);
+                        cadeaux.set(i, cFull);
+                    }
                 }
             }
-        }
-        
-        String creatorLabel = "Créateur inconnu";
-        if (l.getCreator() != null) {
-            creatorLabel = l.getCreator().getFirstName() + " " + l.getCreator().getName();
-        }
-        req.setAttribute("creatorLabel", creatorLabel);
 
-        req.setAttribute("liste", l);
-        req.getRequestDispatcher("/WEB-INF/view/listeCadeau/view.jsp").forward(req, resp);
+            String creatorLabel = "Créateur inconnu";
+            if (l.getCreator() != null) {
+                creatorLabel = l.getCreator().getFirstName() + " " + l.getCreator().getName();
+            }
+
+            req.setAttribute("creatorLabel", creatorLabel);
+            req.setAttribute("liste", l);
+            req.getRequestDispatcher("/WEB-INF/view/listeCadeau/view.jsp").forward(req, resp);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            try {
+                String idParam = req.getParameter("id");
+                if (idParam != null && !idParam.isBlank()) {
+                    int id = Integer.parseInt(idParam);
+                    ListeCadeau l = ListeCadeauDAO.getInstance().find(id, true, false, true);
+                    req.setAttribute("liste", l);
+
+                    String creatorLabel = "Créateur inconnu";
+                    if (l != null && l.getCreator() != null) {
+                        creatorLabel = l.getCreator().getFirstName() + " " + l.getCreator().getName();
+                    }
+                    req.setAttribute("creatorLabel", creatorLabel);
+                }
+            } catch (Exception ignore) {}
+
+            req.setAttribute("error", e.getMessage());
+            req.getRequestDispatcher("/WEB-INF/view/listeCadeau/view.jsp").forward(req, resp);
+        }
     }
 
     @Override

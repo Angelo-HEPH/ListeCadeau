@@ -16,6 +16,16 @@
     <h2 class="mb-3">Listes auxquelles vous êtes invités :</h2>
 
 <%
+    String error = (String) request.getAttribute("error");
+    if (error != null && !error.isBlank()) {
+%>
+    <div class="alert alert-danger fw-bold"><%= error %></div>
+<%
+    }
+%>
+
+
+<%
     List<ListeCadeau> listes = (List<ListeCadeau>) request.getAttribute("listesInvite");
     if (listes == null || listes.isEmpty()) {
 %>

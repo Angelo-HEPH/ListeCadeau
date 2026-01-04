@@ -15,6 +15,15 @@
 
     <h2 class="mb-4">Mes listes de cadeaux</h2>
 
+<%
+    String error = (String) request.getAttribute("error");
+    if (error != null && !error.isBlank()) {
+%>
+    <div class="alert alert-danger fw-bold"><%= error %></div>
+<%
+    }
+%>
+
     <%
         List<ListeCadeau> listes = (List<ListeCadeau>) request.getAttribute("listes");
 

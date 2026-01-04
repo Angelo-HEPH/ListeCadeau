@@ -28,62 +28,79 @@ public class ContributionServlet extends HttpServlet {
 
         String cadeauIdParam = req.getParameter("cadeauId");
         String amountParam   = req.getParameter("amount");
+        String listeIdParam  = req.getParameter("listeId");
 
-        if (cadeauIdParam == null || amountParam == null) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Paramètres manquants");
-            return;
-        }
-
-        int cadeauId;
-        double amount;
+        String errorMsg = null;
+        Integer listeIdToReload = null;
 
         try {
-            cadeauId = Integer.parseInt(cadeauIdParam);
-            amount   = Double.parseDouble(amountParam);
-        } catch (NumberFormatException e) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Paramètres invalides");
-            return;
-        }
+            if (cadeauIdParam == null || amountParam == null || listeIdParam == null) {
+                throw new IllegalArgumentException("Paramètres manquants.");
+            }
 
-        CadeauDAO cadeauDao = CadeauDAO.getInstance();
-        ReservationDAO reservationDao = ReservationDAO.getInstance();
+            int cadeauId;
+            double amount;
+            int listeId;
 
-        try {
-            Cadeau c = Cadeau.findById(cadeauId, cadeauDao, false, true);
+            try {
+                cadeauId = Integer.parseInt(cadeauIdParam);
+                amount   = Double.parseDouble(amountParam);
+                listeId  = Integer.parseInt(listeIdParam);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Paramètres invalides.");
+            }
+
+            listeIdToReload = listeId;
+
+            CadeauDAO cadeauDao = CadeauDAO.getInstance();
+            ReservationDAO reservationDao = ReservationDAO.getInstance();
+
+            Cadeau c = Cadeau.findById(cadeauId, cadeauDao, true, true);
             if (c == null) {
-                resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Cadeau introuvable");
-                return;
+                throw new IllegalStateException("Cadeau introuvable.");
+            }
+
+            if (c.getListeCadeau() == null) {
+                throw new IllegalStateException("Liste du cadeau introuvable.");
+            }
+
+            if (c.getListeCadeau().getId() != listeId) {
+                throw new IllegalArgumentException("Incohérence liste/cadeau.");
             }
 
             StatutCadeau statutAvant = c.getStatutCadeau();
-            
+
+            c.interdireActionSiCreateur(userId);
             c.verifierContribution(amount);
 
             Reservation r = Reservation.creerContribution(cadeauId, userId, amount);
             r.create(reservationDao);
-            c.addReservation(r);
 
+            c.addReservation(r);
             c.recalculerStatutApresContribution();
 
             StatutCadeau statutApres = c.getStatutCadeau();
-
             c.update(cadeauDao);
 
             if (statutAvant != StatutCadeau.PARTICIPATION && statutApres == StatutCadeau.PARTICIPATION) {
 
-                ListeCadeau liste = ListeCadeau.findById(c.getListeCadeau().getId(), ListeCadeauDAO.getInstance(),
-                		true, true, false);
+                ListeCadeau liste = ListeCadeau.findById(c.getListeCadeau().getId(), ListeCadeauDAO.getInstance(),true, true, false);
 
                 if (liste != null && liste.getInvites() != null && !liste.getInvites().isEmpty()) {
 
                     NotificationDAO notifDao = NotificationDAO.getInstance();
 
                     String msg = "Participation ouverte pour le cadeau '" + c.getName()
-                               + "' dans la liste '" + liste.getTitle() + "' de " + liste.getCreator().getName() + " " + liste.getCreator().getFirstName() +".";
+                               + "' dans la liste '" + liste.getTitle() + "' de "
+                               + liste.getCreator().getName() + " " + liste.getCreator().getFirstName() + ".";
 
                     for (Personne invite : liste.getInvites()) {
-                        if (invite.getId() == userId) continue;
-                        if (liste.getCreator() != null && invite.getId() == liste.getCreator().getId()) continue;
+                        if (invite.getId() == userId) {
+                        	continue;
+                        }
+                        if (liste.getCreator() != null && invite.getId() == liste.getCreator().getId()) {
+                        	continue;
+                        }
 
                         Notification n = new Notification();
                         n.setMessage(msg);
@@ -97,15 +114,35 @@ public class ContributionServlet extends HttpServlet {
                 }
             }
 
-            int listeIdRedirect = c.getListeCadeau().getId();
-            resp.sendRedirect(req.getContextPath() + "/liste/view?id=" + listeIdRedirect);
+            resp.sendRedirect(req.getContextPath() + "/liste/view?id=" + listeId);
+            return;
 
         } catch (IllegalArgumentException e) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+            errorMsg = e.getMessage();
         } catch (IllegalStateException e) {
-            resp.sendError(HttpServletResponse.SC_CONFLICT, e.getMessage());
+            errorMsg = e.getMessage();
         } catch (Exception e) {
-            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erreur contribution");
+            e.printStackTrace();
+            errorMsg = "Erreur serveur lors de la contribution.";
         }
+
+        if (listeIdToReload != null) {
+            ListeCadeau l = ListeCadeau.findById(listeIdToReload, ListeCadeauDAO.getInstance(), true, false, true);
+
+            req.setAttribute("liste", l);
+
+            String creatorLabel = "Créateur inconnu";
+            if (l != null && l.getCreator() != null) {
+                creatorLabel = l.getCreator().getFirstName() + " " + l.getCreator().getName();
+            }
+            req.setAttribute("creatorLabel", creatorLabel);
+
+            req.setAttribute("error", errorMsg);
+            req.getRequestDispatcher("/WEB-INF/view/listeCadeau/view.jsp").forward(req, resp);
+            return;
+        }
+
+        req.setAttribute("error", errorMsg);
+        req.getRequestDispatcher("/WEB-INF/view/home.jsp").forward(req, resp);
     }
 }
